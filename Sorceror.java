@@ -1,3 +1,6 @@
+//The only reason this isn't abstract is for test running the GUI - I got tired of doing the backbone and switched to making the
+//GUI basics for now instead. So I run Sorceror instead of ArcaneSorceror, for testing.
+
 public class Sorceror extends CharacterClass{
 	
 	public Sorceror(){
