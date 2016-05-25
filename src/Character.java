@@ -3,6 +3,7 @@ package src;
 import src.classes.CharacterClass;
 import src.feats.Feat;
 import src.races.Race;
+import src.spells.Spell;
 
 import javax.swing.*;
 import java.io.Serializable;
@@ -39,8 +40,8 @@ public class Character implements Serializable{
 	public String background = null;
 	public ArrayList<Item> inventory = new ArrayList<>();
 	public ArrayList<Equipable> equipped = new ArrayList<>();
-	public int[] spellsCastToday = new int[10];
-	public int[] spellsPerDay;
+	public int[] spellsCastToday = new int[9];
+	public int[] spellsPerDay = new int[9];
 	public int totalHP = 0;
 	public int currentHP = 0;
 	public int armorACModifier = 0;
@@ -52,7 +53,6 @@ public class Character implements Serializable{
 	public int intel;
 	public int wis;
 	public int cha;
-	public int bab = 0;
 	public int copper = 0;
 	public int silver = 0;
 	public int gold = 0;
@@ -70,19 +70,16 @@ public class Character implements Serializable{
 		cha = baseStats[5] + race.cha;
 		classSkills = charClass.classSkills;
 		notes.addAll(race.notes.stream().collect(Collectors.toList()));
-		levelUp();
 	}
 	
-	public void levelUp(){
+	public void levelUp(JFrame mainFrame){
 		level++;
-		charClass.levelUp(this);
-		knownSpells.addAll(charClass.newSpells.stream().collect(Collectors.toList()));
-		currentFeats.addAll(charClass.newFeats.stream().collect(Collectors.toList()));
-		notes.addAll(charClass.newNotes.stream().collect(Collectors.toList()));
-		spellsPerDay = charClass.spellsPerDay;
-		String hitDie = charClass.hitDiePerLevel + " + " + ((con - 10)/2); 
+		String hitDie = charClass.hitDiePerLevel + " + " + ((con - 10)/2);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
+		charClass.levelUp(this);
 		//Skill ranks! int charClass.skillRanksAvailable(this)
+		
+		mainFrame.repaint();
 	}
 	
 	public String getClassName(){
@@ -114,11 +111,11 @@ public class Character implements Serializable{
 	}
 	
 	public int getMeleeModifier(){
-		return bab + (str - 10)/2 + playerAddedCombatSkillBoosts[5];
+		return charClass.bab + (str - 10)/2 + playerAddedCombatSkillBoosts[5];
 	}
 	
 	public int getRangedModifier(){
-		return bab + (dex - 10)/2 + playerAddedCombatSkillBoosts[6];
+		return charClass.bab + (dex - 10)/2 + playerAddedCombatSkillBoosts[6];
 	}
 	
 	public void equip(Equipable item){
@@ -184,5 +181,9 @@ public class Character implements Serializable{
 	
 	public void forceNewFeat(){
 		//Put something in here -----------------------------------------------------------!
+	}
+	
+	public void forceNewSpell(){
+		//And here ------------------------------------------------------------------------!
 	}
 }

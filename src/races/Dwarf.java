@@ -23,7 +23,7 @@ public class Dwarf extends Race implements Serializable{
 	public static String[] getInfo(){
 		return new String[]{"+4 dodge for giant monsters","Good at appraising metals/jewels",
 			"+1 attacking Orks and Goblins","+4 resisting being knocked down or tripped","+2 Perception for stone things",
-		"Good at seeing in the dark"};
+			"Good at seeing in the dark"};
 	}
 	
 	public static String getDescription(){

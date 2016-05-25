@@ -1,6 +1,8 @@
 package src.feats;
 
-public class EschewMaterials extends Feat{
+import java.io.Serializable;
+
+public class EschewMaterials extends Feat implements Serializable{
 	public EschewMaterials(){
 		name = "Eschew Materials";
 		oneLiner = "Cast Spells without material components";

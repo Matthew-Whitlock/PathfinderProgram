@@ -154,6 +154,11 @@ public class CharacterDisplay extends JPanel{
 		add(level,c);
 		
 		levelUp = new JButton("Level up!");
+		levelUp.addActionListener(e -> {
+			new Thread(() -> me.levelUp((JFrame)(getParent().getParent().getParent().getParent()))).start();
+			((JFrame)(getParent().getParent().getParent().getParent())).setEnabled(false);
+			repaint();
+		});
 		c.gridy = 13;
 		add(levelUp,c);
 		
@@ -339,6 +344,26 @@ public class CharacterDisplay extends JPanel{
 		add(inventoryBox, c);
 	}
 	
+	public void paintComponent(Graphics g){
+		super.paintComponent(g);
+		totalHPField.setText(Integer.toString(me.totalHP));
+		level.setText("Level: " + me.level);
+		strField.setText(Integer.toString(me.str));
+		dexField.setText(Integer.toString(me.dex));
+		conField.setText(Integer.toString(me.con));
+		intField.setText(Integer.toString(me.intel));
+		wisField.setText(Integer.toString(me.wis));
+		chaField.setText(Integer.toString(me.cha));
+		babField.setText(Integer.toString(me.charClass.bab));
+		acField.setText(Integer.toString(me.getAC()));
+		touchACField.setText(Integer.toString(me.getTouchAC()));
+		fortSaveField.setText(Integer.toString(me.getFortSave()));
+		willSaveField.setText(Integer.toString(me.getWillSave()));
+		refSaveField.setText(Integer.toString(me.getRefSave()));
+		meleeModifierField.setText(Integer.toString(me.getMeleeModifier()));
+		rangedModifierField.setText(Integer.toString(me.getRangedModifier()));
+	}
+	
 	private class SkillBox extends JPanel{
 		public SkillBox(){
 			setLayout(new GridBagLayout());
@@ -399,7 +424,7 @@ public class CharacterDisplay extends JPanel{
 				me.notes.add(addNoteField.getText()); 
 				addNoteField.setText("");
 				repaint();});
-
+			
 			String[] model = new String[me.notes.size()];
 			model = me.notes.toArray(model);
 			listContainer = new JList<>(model);
@@ -441,11 +466,13 @@ public class CharacterDisplay extends JPanel{
 	}
 	
 	private class FeatBox extends JPanel{
+		
 		private JList<String> listContainer;
 		private JButton removalButton = new JButton("Remove Selected Feat(s)");
 		private JButton forceNewFeats = new JButton("Force a new Feat");
 		private JButton getFeatDetails = new JButton("Get Feat Details");
 		private JScrollPane listScroll;
+		
 		public FeatBox(){
 			setLayout(new GridBagLayout());
 			String[] model = new String[me.currentFeats.size()];

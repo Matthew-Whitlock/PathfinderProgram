@@ -1,7 +1,12 @@
 package src;
 
-import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.filechooser.*;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Pathfinder{
 	private static final String startPanelName = "startPanel";
@@ -9,13 +14,15 @@ public class Pathfinder{
 	private CardLayout cl = new CardLayout();
 	private JPanel panel = new JPanel(cl);
 	private boolean alreadyMade = false;
+	private static final JFrame frame = new JFrame("Pathfinder Helper");
+	private static int index = -1;
+	private static AtomicBoolean indexSet = new AtomicBoolean();
 
 	public static void main(String[] args){
 		new Pathfinder();
 	}
 	
 	public Pathfinder(){
-		JFrame frame = new JFrame("Pathfinder Helper");
 		frame.setSize(700,500);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.add(panel);
@@ -61,11 +68,47 @@ public class Pathfinder{
 		JOptionPane.showMessageDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
 	}
 	
-	/*public static Spell chooseSpellFromList(Spell[] spellChoices, Spell[] spellsWithoutPreReqs, Feat[] alreadyLearned){
-		
+	public static void spellAddedAutomatically(Spell spell){
+		//Put something here to describe the spell!
 	}
 	
-	public static Feat chooseFeatFromList(Feat[] featChoices, Feat[] featsWithoutPreReqs, Feat[] alreadyLearned){
+	public static void featAddedAutomatically(Feat feat){
+		//Put something here too. Just like the spell version.
+	}
+	
+	public static Spell chooseSpellFromList(ArrayList<Spell> spellChoices, int numberOfSpellCurrentlyChoosing, int totalSpellsOfThisLevelToChoose, int levelOfSpells){
+		String[] choices = new String[spellChoices.size()];
+		for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();;
+		Spell spell = null;
+		JDialog spellChooseFrame = new JDialog((JDialog)null,"Spell "+ numberOfSpellCurrentlyChoosing + " of " + totalSpellsOfThisLevelToChoose + " level " + levelOfSpells + " spells");
+		JPanel panel = new JPanel(new BorderLayout());
+		spellChooseFrame.add(panel);
+		JList<String> list = new JList<String>(choices);
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		JScrollPane scrollList = new JScrollPane(list);
+		panel.add(scrollList,BorderLayout.CENTER);
+		JButton choose = new JButton("Learn selected spell");
+		choose.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				if(list.getSelectedIndex() > -1){
+					index = list.getSelectedIndex();
+					indexSet.set(true);
+				}
+			}});
+		panel.add(choose, BorderLayout.SOUTH);
 		
-	}*/
+		spellChooseFrame.setSize(300, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*10) : 600));
+		//frame.setEnabled(false);
+		spellChooseFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		spellChooseFrame.setVisible(true);
+		
+		while(!indexSet.get()){}
+		indexSet.set(false);
+		spellChooseFrame.dispose();
+		return spellChoices.get(index);
+	}
+	
+	public static Feat chooseFeatFromList(ArrayList<Feat> featChoices){
+		return null; //Implement
+	}
 }
