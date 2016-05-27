@@ -3,6 +3,7 @@ package src.spells;
 import java.util.*;
 import java.io.*;
 import src.Character;
+import src.spells.Spell;
 
 public class Spells implements Comparator<Spell>{
 	public static String[] classTypes = new String[]{"Sorceror","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
@@ -40,7 +41,7 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static ArrayList<Spell> search(Character me, int spellLevelToGet){
-		File dir = new File(System.getProperty("user.dir")+"/Spells");
+		File dir = new File(System.getProperty("user.dir")+"/src/spells/spellObjects");
 		File[] spellFiles = dir.listFiles();
 		ArrayList<Spell> spells = new ArrayList<Spell>();
 		Spell spell = null;
@@ -51,8 +52,10 @@ public class Spells implements Comparator<Spell>{
 				spell = (Spell)(objIn.readObject());
 			} catch(IOException e){
 				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
+				continue;
 			} catch(ClassNotFoundException e){
 				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
+				continue;
 			}
 			if(spell.levelRequirements[Spells.getClassIndex(me.charClass.name)] == spellLevelToGet){
 				boolean alreadyKnown = false;

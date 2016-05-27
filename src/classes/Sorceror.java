@@ -1,10 +1,13 @@
 package src.classes;
 
 import src.Character;
+import src.Pathfinder;
 import src.feats.EschewMaterials;
+import src.spells.Spells;
 import java.io.Serializable;
+import java.util.ArrayList;
 
-public class Sorceror extends CharacterClass implements Serializable{
+public abstract class Sorceror extends CharacterClass implements Serializable{
 	public String bloodline;
 	
 	public Sorceror(){

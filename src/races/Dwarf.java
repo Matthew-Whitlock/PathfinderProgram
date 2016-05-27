@@ -40,10 +40,10 @@ public class Dwarf extends Race implements Serializable{
 	}
 	
 	public static ImageIcon getImageIcon(){
-		return new ImageIcon("Dwarf.jpg");
+		return new ImageIcon("src\\pictures\\Dwarf.jpg");
 	}
 	
 	public ImageIcon getRaceImage(){
-		return new ImageIcon("Dwarf.jpg");
+		return new ImageIcon("src\\pictures\\Dwarf.jpg");
 	}
 }

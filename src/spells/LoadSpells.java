@@ -19,10 +19,14 @@ public class LoadSpells{
 				System.out.println(spellInputString);
 			}
 			try{
-				FileOutputStream fileOut = new FileOutputStream("Spells\\" + Spells.getFileName(spell));
+				FileOutputStream fileOut = new FileOutputStream("src\\spells\\spellObjects\\" + Spells.getFileName(spell));
 				ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 				objectOut.writeObject(spell);
 				objectOut.flush();
+				fileOut.flush();
+				objectOut.close();
+				fileOut.close();
+				
 			} catch (Exception e){
 				System.out.println("Error saving spell: " + spell.name);
 			}

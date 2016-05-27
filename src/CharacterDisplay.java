@@ -184,11 +184,14 @@ public class CharacterDisplay extends JPanel{
 		c.gridheight = 1;
 		c.gridwidth = 2;
 		c.gridy = 14;
+		c.weighty = 0;
 		add(new JLabel("Character Stats"), c);
 		
 		c.fill = GridBagConstraints.BOTH;
 		c.gridwidth = 1;
+		c.weightx = 0.25;
 		c.gridy = 15;
+		c.weighty = 0.0000001;
 		JLabel tempReference = new JLabel("Str");
 		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
 		add(tempReference, c);
@@ -224,6 +227,7 @@ public class CharacterDisplay extends JPanel{
 		add(tempReference, c);
 		
 		strField = new JTextField(Integer.toString(me.str));
+		c.weightx = 0.25;
 		c.gridy = 15;
 		c.gridx = 1;
 		add(strField,c);
@@ -248,7 +252,7 @@ public class CharacterDisplay extends JPanel{
 		c.gridy = 20;
 		add(chaField,c);
 		
-		babField = new JTextField(Integer.toString(me.bab));
+		babField = new JTextField(Integer.toString(me.charClass.bab));
 		c.gridy = 21;
 		add(babField,c);
 		
@@ -260,6 +264,7 @@ public class CharacterDisplay extends JPanel{
 		
 		c.fill = GridBagConstraints.BOTH;
 		c.gridwidth = 1;
+		c.weightx = 0.5;
 		c.gridy = 15;
 		tempReference = new JLabel("AC");
 		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -296,6 +301,7 @@ public class CharacterDisplay extends JPanel{
 		add(tempReference, c);
 		
 		c.gridx = 3;
+		c.weightx = 0.25;
 		c.gridy = 15;
 		acField = new JTextField(Integer.toString(me.getAC()));
 		add(acField,c);

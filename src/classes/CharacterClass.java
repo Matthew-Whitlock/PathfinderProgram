@@ -13,6 +13,7 @@ public abstract class CharacterClass implements Serializable{
 	public int baseFortSave = 0;
 	public int baseRefSave = 0;
 	public int baseWillSave = 0;
+	public int bab = 0;
 	public int[] spellsPerDay = new int[10];
 	public String hitDiePerLevel;
 	public int level = 0;

@@ -2,6 +2,7 @@ package src.spells;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import src.spells.Spells;
 
 public class Spell implements Serializable{
 	public String name;
@@ -42,7 +43,7 @@ public class Spell implements Serializable{
 	public HashMap<String, Integer> bloodlineLevels = new HashMap<String, Integer>();
 	
 	//This expects the spell's details in the format provided by PathfinderCommunity.net's Spell database.
-	public Spell(String detailsLine){
+	Spell(String detailsLine){
 		String[] details = detailsLine.split("\\t");
 		name = details[0];
 		school = details[1];
@@ -89,8 +90,8 @@ public class Spell implements Serializable{
 		if(hasSavingThrow) savingThrow = details[15];
 		hasSpellResistance = !(details[16].equals("") || details[16].equals("no"));
 		if(hasSpellResistance) spellResistance = details[16];
-		formattedDescription = details[17];
-		source = details[18];
+		formattedDescription = details[18];
+		source = details[19];
 		deity = details[41];
 		try{
 			slaLevel = details[42].equalsIgnoreCase("NULL") ? -1 : Integer.parseInt(details[42]);

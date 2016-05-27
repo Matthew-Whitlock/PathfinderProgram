@@ -7,6 +7,8 @@ import javax.swing.filechooser.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import src.spells.Spell;
+import src.feats.Feat;
 
 public class Pathfinder{
 	private static final String startPanelName = "startPanel";
