@@ -16,7 +16,6 @@ public class LoadSpells{
 			} catch(Exception e){
 				e.printStackTrace();
 				System.out.println(Arrays.asList(spellInputString.split("\t")));
-				System.out.println(spellInputString);
 			}
 			try{
 				FileOutputStream fileOut = new FileOutputStream("src\\spells\\spellObjects\\" + Spells.getFileName(spell));
@@ -30,6 +29,8 @@ public class LoadSpells{
 			} catch (Exception e){
 				System.out.println("Error saving spell: " + spell.name);
 			}
+			
+			
 		}
 	}
 }

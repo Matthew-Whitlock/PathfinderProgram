@@ -70,6 +70,14 @@ public class Pathfinder{
 		JOptionPane.showMessageDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
 	}
 	
+	public static void showError(String title, String message){
+		(new Thread() {
+			public void run() {
+				JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+			}
+		}).start();
+	}
+	
 	public static void spellAddedAutomatically(Spell spell){
 		//Put something here to describe the spell!
 	}

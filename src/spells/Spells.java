@@ -2,7 +2,9 @@ package src.spells;
 
 import java.util.*;
 import java.io.*;
+import java.net.URL;
 import src.Character;
+import src.Pathfinder;
 import src.spells.Spell;
 
 public class Spells implements Comparator<Spell>{
@@ -20,19 +22,7 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static Spell searchByName(String spellName){
-		File dir = new File(System.getProperty("user.dir")+"/Spells");
-		File[] spellFiles = dir.listFiles();
-		Spell spell = null;
-		for(File spellFile : spellFiles){
-			try{
-				FileInputStream fileIn = new FileInputStream(spellFile);
-				ObjectInputStream objIn = new ObjectInputStream(fileIn);
-				spell = (Spell)(objIn.readObject());
-			} catch(IOException e){
-				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
-			} catch(ClassNotFoundException e){
-				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
-			}
+		for(Spell spell : getSpells()){
 			if(spell.name.equalsIgnoreCase(spellName)){
 				return spell;
 			}
@@ -41,22 +31,8 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static ArrayList<Spell> search(Character me, int spellLevelToGet){
-		File dir = new File(System.getProperty("user.dir")+"/src/spells/spellObjects");
-		File[] spellFiles = dir.listFiles();
 		ArrayList<Spell> spells = new ArrayList<Spell>();
-		Spell spell = null;
-		for(File spellFile : spellFiles){
-			try{
-				FileInputStream fileIn = new FileInputStream(spellFile);
-				ObjectInputStream objIn = new ObjectInputStream(fileIn);
-				spell = (Spell)(objIn.readObject());
-			} catch(IOException e){
-				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
-				continue;
-			} catch(ClassNotFoundException e){
-				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
-				continue;
-			}
+		for(Spell spell : getSpells()){
 			if(spell.levelRequirements[Spells.getClassIndex(me.charClass.name)] == spellLevelToGet){
 				boolean alreadyKnown = false;
 				for(Spell knownSpell : me.knownSpells){
@@ -70,19 +46,7 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static Spell getBloodLineSpell(String bloodline, int level){
-		File dir = new File(System.getProperty("user.dir")+"/Spells");
-		File[] spellFiles = dir.listFiles();
-		Spell spell = null;
-		for(File spellFile : spellFiles){
-			try{
-				FileInputStream fileIn = new FileInputStream(spellFile);
-				ObjectInputStream objIn = new ObjectInputStream(fileIn);
-				spell = (Spell)(objIn.readObject());
-			} catch(IOException e){
-				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
-			} catch(ClassNotFoundException e){
-				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
-			}
+		for(Spell spell : getSpells()){
 			if(spell.bloodlineLevels.containsKey(bloodline) && spell.bloodlineLevels.get(bloodline) == level){
 				return spell;
 			}
@@ -91,21 +55,9 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static ArrayList<Spell> searchByPartialName(String name){
-		File dir = new File(System.getProperty("user.dir")+"/Spells");
-		File[] spellFiles = dir.listFiles();
 		ArrayList<Spell> spells = new ArrayList<Spell>();
 		name = name.toLowerCase();
-		Spell spell = null;
-		for(File spellFile : spellFiles){
-			try{
-				FileInputStream fileIn = new FileInputStream(spellFile);
-				ObjectInputStream objIn = new ObjectInputStream(fileIn);
-				spell = (Spell)(objIn.readObject());
-			} catch(IOException e){
-				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
-			} catch(ClassNotFoundException e){
-				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
-			}
+		for(Spell spell : getSpells()){
 			if(spell.name.toLowerCase().contains(name)){
 				spells.add(spell);
 			}
@@ -114,20 +66,8 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static ArrayList<Spell> searchByBloodline(String bloodline){
-		File dir = new File(System.getProperty("user.dir")+"/Spells");
-		File[] spellFiles = dir.listFiles();
 		ArrayList<Spell> spells = new ArrayList<Spell>();
-		Spell spell = null;
-		for(File spellFile : spellFiles){
-			try{
-				FileInputStream fileIn = new FileInputStream(spellFile);
-				ObjectInputStream objIn = new ObjectInputStream(fileIn);
-				spell = (Spell)(objIn.readObject());
-			} catch(IOException e){
-				System.out.println("You don't seem to have permission to access file: \"" + spellFile + "\"");
-			} catch(ClassNotFoundException e){
-				System.out.println("The file \"" + spellFile + "\" doesn't seem to be a spell file.");
-			}
+		for(Spell spell : getSpells()){
 			if(spell.bloodlineLevels.containsKey(bloodline)){
 				spells.add(spell);
 			}
@@ -143,6 +83,59 @@ public class Spells implements Comparator<Spell>{
 				break;
 			}
 		}
+	}
+	
+	public static ArrayList<Spell> getSpells(){
+		FileReader fileIn;
+		BufferedReader input;
+		
+		try{
+			fileIn = new FileReader(file);
+			input = new BufferedReader(fileIn);
+		}catch(IOException e){
+			Pathfinder.showError("Error: Cannot access spells","The spell file is either not in the location expected, or I don't have permissions to access it.");
+			return null;
+		}catch(Exception e){
+			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
+			e.printStackTrace();
+			return null;
+		}
+		
+		ArrayList<Spell> spells = new ArrayList<Spell>();
+		Spell spell = null;
+		
+		try{
+			String spellInputString = input.readLine();
+			
+			while((spellInputString = input.readLine()) != null){
+				try{
+					spell = new Spell(spellInputString);
+					spells.add(spell);
+				} catch(Exception e){
+					Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
+					e.printStackTrace();
+					System.out.println(Arrays.asList(spellInputString.split("\t")));
+					return null; //////////////////////////////////////////////////////////////////////////
+				}
+			}
+		}catch(Exception e){
+			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nSome valid spells may not be shown.");
+			e.printStackTrace();
+			return null;
+		}
+		return spells;
+	}
+	
+	public static File getFilePath(){
+		URL url = Spells.class.getResource("Spells.class");
+		File file = new File(url.toURI());
+		if(file.toString().contains("src\\spells\\Spells.class")){
+			file = new File(file.toString().substring(0,file.toString().indexOf("src\\spells\\Spells.class")) + "Resources\\Spells.txt");
+			System.out.println("Not in a jar file");
+		}else{
+			file = new File(file.toString().substring(0,file.toString().indexOf("Pathfinder.jar")) + "Resources\\Spells.txt");
+		}
+		return file;
 	}
 	
 	public int compare(Spell spell1, Spell spell2){
