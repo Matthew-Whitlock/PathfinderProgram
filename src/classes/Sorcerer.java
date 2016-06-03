@@ -2,31 +2,22 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
-import src.feats.EschewMaterials;
 import src.spells.Spells;
+import src.stats.SkillEnum;
+
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-public abstract class Sorceror extends CharacterClass implements Serializable{
+public abstract class Sorcerer extends CharacterClass implements Serializable{
 	public String bloodline;
 	
-	public Sorceror(){
-		name = "Sorceror";
+	public Sorcerer() {
+		//TODO: Fill in the rest
+		classSkills.addAll(Arrays.asList(SkillEnum.APPRAISE, SkillEnum.BLUFF, SkillEnum.CRAFT));
+
+		name = "Sorcerer";
 		hitDiePerLevel = "1d6";
-		classSkills[Character.indexOfSkill("Appraise")] = true;
-		classSkills[Character.indexOfSkill("Bluff")] = true;
-		classSkills[Character.indexOfSkill("Fly")] = true;
-		classSkills[Character.indexOfSkill("Intimidate")] = true;
-		classSkills[Character.indexOfSkill("KN:Arcana")] = true;
-		classSkills[Character.indexOfSkill("Profession")] = true;
-		classSkills[Character.indexOfSkill("Spellcraft")] = true;
-		classSkills[Character.indexOfSkill("Use Magic Device")] = true;
-		classSkills[Character.indexOfSkill("Craft Alchemy")] = true;
-		classSkills[Character.indexOfSkill("Craft Armor")] = true;
-		classSkills[Character.indexOfSkill("Craft Bows")] = true;
-		classSkills[Character.indexOfSkill("Craft Traps")] = true;
-		classSkills[Character.indexOfSkill("Craft Weapons")] = true;
-		classSkills[Character.indexOfSkill("Craft Generic")] = true;
 	}
 	
 	public void levelUp(Character me){
@@ -70,7 +61,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	}
 	
 	public String getClassSkillsAsString(){
-		return "Temporary - fix this at getClassSkillsAsString() within Sorceror class file";
+		return "Temporary - fix this at getClassSkillsAsString() within Sorcerer class file";
 	}
 	
 	public int skillRanksAvailable(Character me){

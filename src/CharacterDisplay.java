@@ -1,5 +1,8 @@
 package src;
 
+import src.stats.AbilityScoreEnum;
+import src.stats.Skill;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -192,34 +195,18 @@ public class CharacterDisplay extends JPanel{
 		c.weightx = 0.25;
 		c.gridy = 15;
 		c.weighty = 0.0000001;
-		JLabel tempReference = new JLabel("Str");
+		JLabel tempReference = new JLabel(AbilityScoreEnum.STR.name());
 		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
 		add(tempReference, c);
-		
-		c.gridy = 16;
-		tempReference = new JLabel("Dex");
-		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
-		add(tempReference, c);
-		
-		c.gridy = 17;
-		tempReference = new JLabel("Con");
-		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
-		add(tempReference, c);
-		
-		c.gridy = 18;
-		tempReference = new JLabel("Int");
-		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
-		add(tempReference, c);
-		
-		c.gridy = 19;
-		tempReference = new JLabel("Wis");
-		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
-		add(tempReference, c);
-		
-		c.gridy = 20;
-		tempReference = new JLabel("Cha");
-		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
-		add(tempReference, c);
+
+		int gridYValue = 16;
+		for (AbilityScoreEnum abilityScore : AbilityScoreEnum.values()) {
+			//Read the value, then increment it
+			c.gridy = gridYValue++;
+			tempReference = new JLabel(abilityScore.name());
+			tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
+			add(tempReference, c);
+		}
 		
 		c.gridy = 21;
 		tempReference = new JLabel("BAB");
@@ -395,22 +382,25 @@ public class CharacterDisplay extends JPanel{
 			classLabel.setBorder(border);
 			add(classLabel, c);
 
-			for(int i = 0; i < Character.skillNames.length; i++){
-				c.gridy = i + 1;
+			int yValue = 1;
+			for (Skill skill : me.getSkillMap().values()) {
+				//Read the yValue, then increment
+				c.gridy = yValue++;
 				c.gridwidth = 2;
 				c.gridx = 0;
-				name = new JLabel(Character.skillNames[i]);
+
+				name = new JLabel(skill.getName());
 				name.setBorder(border);
 				add(name,c);
 				c.gridx = 2;
 				c.gridwidth = 1;
-				JTextField totalField = new JTextField(Integer.toString(me.getTotalSkillModifier(i)));
+				JTextField totalField = new JTextField(Integer.toString(skill.calculateTotalSkillMod()));
 				add(totalField, c);
 				c.gridx = 3;
-				JTextField ranksField = new JTextField(Integer.toString(me.skillPoints[i]));
+				JTextField ranksField = new JTextField(Integer.toString(skill.getnRanks()));
 				add(ranksField, c);
 				c.gridx = 4;
-				JTextField classField = new JTextField(me.classSkills[i] ? "Yes" : "No");
+				JTextField classField = new JTextField(skill.isClassSkill() ? "Yes" : "No");
 				add(classField, c);
 			}
 		}	
