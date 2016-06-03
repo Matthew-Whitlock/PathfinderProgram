@@ -4,10 +4,14 @@ import src.classes.CharacterClass;
 import src.feats.Feat;
 import src.races.Race;
 import src.spells.Spell;
+import src.stats.Skill;
+import src.stats.SkillEnum;
+import src.stats.SkillUtils;
 
 import javax.swing.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Character implements Serializable{
@@ -22,20 +26,10 @@ public class Character implements Serializable{
 	public String job = null;
 	public String alignment = null;
 
-	public static String[] skillNames = new String[]{"Acrobatics","Appraise","Bluff","Climb","Diplomacy","Disable Device",
-	"Disguise","Escape Artist","Fly","Handle Animal","Heal","Intimidate","Linguistics","Perception","Perform","Profession",
-	"Ride","Sense Motive","Sleight of Hand","Spellcraft","Stealth","Survival","Swim","Use Magic Device","KN:Arcana",
-	"KN:Dungeoneering","KN:Engineering","KN:Geography","KN:History","KN:Local","KN:Nature","KN:Nobility","KN:Planes","KN:Religion",
-	"Craft Alchemy","Craft Armor","Craft Bows","Craft Traps","Craft Weapons","Craft Generic"};
+	private Map<SkillEnum, Skill> skillMap;
 
-	public static String[] skillModifiers = new String[]{"dex","int","cha","str","cha","dex","cha","dex","dex","cha","wis",
-	"cha","int","wis","cha","wis","dex","wis","dex","int","dex","wis","str","cha","int","int","int","int","int","int","int","int",
-	"int","int","int","int","int","int","int","int"};
-
-	public int[] skillPoints = new int[skillNames.length];
-	public int[] playerAddedSkillBoosts = new int[skillPoints.length];
 	public int[] playerAddedCombatSkillBoosts = new int[7];
-	public boolean[] classSkills;
+
 	public String physDesc = null;
 	public String background = null;
 	public ArrayList<Item> inventory = new ArrayList<>();
@@ -47,12 +41,15 @@ public class Character implements Serializable{
 	public int armorACModifier = 0;
 	public int armorMaxDexMod = 20;
 	public int level = 0;
+
+	//TODO: Change these to a map of Ability objects like the skills
 	public int str;
 	public int dex;
 	public int con;
 	public int intel;
 	public int wis;
 	public int cha;
+
 	public int copper = 0;
 	public int silver = 0;
 	public int gold = 0;
@@ -62,13 +59,13 @@ public class Character implements Serializable{
 		this.name = name;
 		charRace = race;
 		this.charClass = charClass;
-		str = baseStats[0] + race.str;
-		dex = baseStats[1] + race.dex;
-		con = baseStats[2] + race.con;
-		intel = baseStats[3] + race.intel;
-		wis = baseStats[4] + race.wis;
-		cha = baseStats[5] + race.cha;
-		classSkills = charClass.classSkills;
+
+		skillMap = SkillUtils.createInitialSkillMap();
+		SkillUtils.applyClassSkills(charClass.getClassSkills(), skillMap);
+
+		//TODO: Change the ability scores as necessary from the chosen class
+		//Possibly with a call to a AbilityScoreUtils class?
+
 		notes.addAll(race.notes.stream().collect(Collectors.toList()));
 	}
 	
@@ -134,47 +131,6 @@ public class Character implements Serializable{
 		} else armorMaxDexMod = 20;
 	}
 	
-	public int getTotalSkillModifier(String skillName){
-		int ranks = skillPoints[indexOfSkill(skillName)];
-		return (ranks > 0 && classSkills[indexOfSkill(skillName)]) ? 3 + ranks + getSkillMod(skillName) + playerAddedSkillBoosts[indexOfSkill(skillName)] : ranks + getSkillMod(skillName) + playerAddedSkillBoosts[indexOfSkill(skillName)];
-	}
-	
-	public int getTotalSkillModifier(int i){
-		int ranks = skillPoints[i];
-		return (ranks > 0 && classSkills[i]) ? 3 + ranks + getSkillMod(skillNames[i]) + playerAddedSkillBoosts[i] : ranks + getSkillMod(skillNames[i]) + playerAddedSkillBoosts[i];
-	}
-	
-	public int getSkillMod(String skillName){
-		String modifyingStat = skillModifiers[indexOfSkill(skillName)];
-		if(modifyingStat.equalsIgnoreCase("con")){
-			return (con - 10)/2;
-		}
-		if(modifyingStat.equalsIgnoreCase("wis")){
-			return (wis - 10)/2;
-		}
-		if(modifyingStat.equalsIgnoreCase("int")|| modifyingStat.equalsIgnoreCase("intel")){
-			return (intel - 10)/2;
-		}
-		if(modifyingStat.equalsIgnoreCase("str")){
-			return (str - 10)/2;
-		}
-		if(modifyingStat.equalsIgnoreCase("dex")){
-			return (dex - 10)/2;
-		}
-		if(modifyingStat.equalsIgnoreCase("cha")){
-			return (cha - 10)/2;
-		}
-		return -1000;
-	}
-	
-	public static int indexOfSkill(String skill){
-		int index = -1;
-		for(int i = 0; i < skillNames.length; i++){
-			if(skillNames[i].equalsIgnoreCase(skill)) index = i;
-		}
-		return index;
-	}
-	
 	public ImageIcon getRaceImageIcon(){
 		return charRace.getRaceImage();
 	}
@@ -185,5 +141,11 @@ public class Character implements Serializable{
 	
 	public void forceNewSpell(){
 		//And here ------------------------------------------------------------------------!
+	}
+
+	//Getters
+
+	public Map<SkillEnum, Skill> getSkillMap() {
+		return skillMap;
 	}
 }

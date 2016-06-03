@@ -4,9 +4,8 @@ import src.Character;
 import src.spells.Spell;
 import src.spells.Spells;
 import src.Pathfinder;
-import java.util.ArrayList;
 
-public class AbyssalBloodline extends Sorceror{
+public class AbyssalBloodline extends Sorcerer {
 	public String[] bonusSpells = new String[]{"","Cause Fear","Bull's Strength","Rage","Stoneskin","Dismissal",
 		"Transformation","Great Teleport","Unholy Aura","Summon Monster"};
 	public String[] bonusFeats = new String[]{"Augment Summoning","Cleave","Empower Spell","Great Fortitude",
