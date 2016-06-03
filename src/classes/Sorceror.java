@@ -2,6 +2,7 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
+import src.Skill;
 import src.feats.EschewMaterials;
 import src.spells.Spells;
 import java.io.Serializable;
@@ -11,22 +12,8 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	public String bloodline;
 	
 	public Sorceror(){
-		name = "Sorceror";
+		name = Character.SOR;
 		hitDiePerLevel = "1d6";
-		classSkills[Character.indexOfSkill("Appraise")] = true;
-		classSkills[Character.indexOfSkill("Bluff")] = true;
-		classSkills[Character.indexOfSkill("Fly")] = true;
-		classSkills[Character.indexOfSkill("Intimidate")] = true;
-		classSkills[Character.indexOfSkill("KN:Arcana")] = true;
-		classSkills[Character.indexOfSkill("Profession")] = true;
-		classSkills[Character.indexOfSkill("Spellcraft")] = true;
-		classSkills[Character.indexOfSkill("Use Magic Device")] = true;
-		classSkills[Character.indexOfSkill("Craft Alchemy")] = true;
-		classSkills[Character.indexOfSkill("Craft Armor")] = true;
-		classSkills[Character.indexOfSkill("Craft Bows")] = true;
-		classSkills[Character.indexOfSkill("Craft Traps")] = true;
-		classSkills[Character.indexOfSkill("Craft Weapons")] = true;
-		classSkills[Character.indexOfSkill("Craft Generic")] = true;
 	}
 	
 	public void levelUp(Character me){
@@ -64,7 +51,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 			{0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1}};
 		for(int spellLevel = 0; spellLevel < newSpellsByLevel[me.level].length; spellLevel++){
 			for(int i = 0; i < newSpellsByLevel[me.level][spellLevel]; i++){
-				me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(me,spellLevel),i+1,newSpellsByLevel[me.level][spellLevel],spellLevel));
+				me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(me,spellLevel),"Spell "+ (i + 1) + " of " + newSpellsByLevel[me.level][spellLevel] + " level " + spellLevel + " spells"));
 			}
 		}
 	}

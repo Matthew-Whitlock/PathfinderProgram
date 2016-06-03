@@ -15,6 +15,7 @@ public class Spells implements Comparator<Spell>{
 	public static String[] spellTypeNames = new String[]{"Acid", "Air", "Chaotic", "Cold", "Curse", "Darkness", "Death", "Disease", "Earth", "Electricity",
 		"Emotion", "Evil", "Fear", "Fire", "Force", "Good", "Language Dependent", "Lawful", "Light", "Mind Affecting", "Pain", "Poison",
 		"Shadow", "Sonic", "Water"};
+	
 	private int indexOfClass;
 	
 	public static String getFileName(Spell spell){
@@ -90,7 +91,7 @@ public class Spells implements Comparator<Spell>{
 		BufferedReader input;
 		
 		try{
-			fileIn = new FileReader(file);
+			fileIn = new FileReader(getFilePath());
 			input = new BufferedReader(fileIn);
 		}catch(IOException e){
 			Pathfinder.showError("Error: Cannot access spells","The spell file is either not in the location expected, or I don't have permissions to access it.");
@@ -115,7 +116,6 @@ public class Spells implements Comparator<Spell>{
 					Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
 					e.printStackTrace();
 					System.out.println(Arrays.asList(spellInputString.split("\t")));
-					return null; //////////////////////////////////////////////////////////////////////////
 				}
 			}
 		}catch(Exception e){
@@ -128,10 +128,16 @@ public class Spells implements Comparator<Spell>{
 	
 	public static File getFilePath(){
 		URL url = Spells.class.getResource("Spells.class");
-		File file = new File(url.toURI());
+		File file = null;
+		try{
+			file = new File(url.toURI());
+		}catch(Exception e){
+			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nCannot get correct path to Spells.");
+			return null;
+		}
+		
 		if(file.toString().contains("src\\spells\\Spells.class")){
 			file = new File(file.toString().substring(0,file.toString().indexOf("src\\spells\\Spells.class")) + "Resources\\Spells.txt");
-			System.out.println("Not in a jar file");
 		}else{
 			file = new File(file.toString().substring(0,file.toString().indexOf("Pathfinder.jar")) + "Resources\\Spells.txt");
 		}

@@ -3,6 +3,8 @@ package src;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.*;
+import src.spells.*;
 
 public class CharacterDisplay extends JPanel{
 	private Character me;
@@ -18,7 +20,7 @@ public class CharacterDisplay extends JPanel{
 	private JScrollPane charBackgroundScroll;
 	private JTextArea charBackground;
 	private JButton savePhysDesc;
-	private JLabel totalHPLabel = new JLabel("Total HP:");
+	private JLabel totalHPLabel;
 	private JButton saveBackground;
 	private JTextField totalHPField;
 	private JTextField currentHPField;
@@ -44,6 +46,9 @@ public class CharacterDisplay extends JPanel{
 	private NoteBox noteBox;
 	private FeatBox featBox;
 	private InventoryBox inventoryBox;
+	private EquippedBox equippedBox;
+	private CoinBox coinBox;
+	private KnownSpellBox knownSpellBox;
 
 	public CharacterDisplay(Character me){
 		this.me = me;
@@ -125,6 +130,7 @@ public class CharacterDisplay extends JPanel{
 		c.gridheight = 1;
 		add(new JSeparator(), c);
 		
+		totalHPLabel = new JLabel("Total HP:");
 		c.gridy = 12;
 		c.fill = GridBagConstraints.BOTH;
 		c.gridwidth = 1;
@@ -155,8 +161,7 @@ public class CharacterDisplay extends JPanel{
 		
 		levelUp = new JButton("Level up!");
 		levelUp.addActionListener(e -> {
-			new Thread(() -> me.levelUp((JFrame)(getParent().getParent().getParent().getParent()))).start();
-			((JFrame)(getParent().getParent().getParent().getParent())).setEnabled(false);
+			new Thread(() -> me.levelUp()).start();
 			repaint();
 		});
 		c.gridy = 13;
@@ -227,32 +232,60 @@ public class CharacterDisplay extends JPanel{
 		add(tempReference, c);
 		
 		strField = new JTextField(Integer.toString(me.str));
+		strField.addActionListener(e -> {
+			me.str = Integer.parseInt(strField.getText());
+			repaint();
+		});
 		c.weightx = 0.25;
 		c.gridy = 15;
 		c.gridx = 1;
 		add(strField,c);
 		
 		dexField = new JTextField(Integer.toString(me.dex));
+		dexField.addActionListener(e -> {
+			me.dex = Integer.parseInt(dexField.getText());
+			repaint();
+		});
 		c.gridy = 16;
 		add(dexField,c);
 		
 		conField = new JTextField(Integer.toString(me.con));
+		conField.addActionListener(e -> {
+			me.dex = Integer.parseInt(dexField.getText());
+			repaint();
+		});
 		c.gridy = 17;
 		add(conField,c);
 		
 		intField = new JTextField(Integer.toString(me.intel));
+		intField.addActionListener(e -> {
+			me.intel = Integer.parseInt(intField.getText());
+			repaint();
+		});
 		c.gridy = 18;
 		add(intField,c);
 		
 		wisField = new JTextField(Integer.toString(me.wis));
+		wisField.addActionListener(e -> {
+			me.wis = Integer.parseInt(wisField.getText());
+			repaint();
+		});
 		c.gridy = 19;
 		add(wisField,c);
 		
 		chaField = new JTextField(Integer.toString(me.cha));
+		chaField.addActionListener(e -> {
+			me.cha = Integer.parseInt(chaField.getText());
+			repaint();
+		});
 		c.gridy = 20;
 		add(chaField,c);
 		
-		babField = new JTextField(Integer.toString(me.charClass.bab));
+		babField = new JTextField(Integer.toString(me.getBAB()));
+		babField.addActionListener(e -> {
+			me.setBAB(Integer.parseInt(babField.getText()));
+			repaint();
+		});
 		c.gridy = 21;
 		add(babField,c);
 		
@@ -344,10 +377,30 @@ public class CharacterDisplay extends JPanel{
 		c.gridy = 11;
 		add(featBox, c);
 		
-		inventoryBox = new InventoryBox();
+		inventoryBox = new InventoryBox(this);
 		c.gridy = 0;
 		c.gridx = 8;
+		c.gridheight = 12;
 		add(inventoryBox, c);
+		
+		equippedBox = new EquippedBox(this);
+		c.gridy = 12;
+		c.gridheight = 7;
+		add(equippedBox, c);
+		
+		coinBox = new CoinBox();
+		c.gridy = 19;
+		c.gridheight = 3;
+		c.weighty = 0;
+		add(coinBox, c);
+		
+		knownSpellBox = new KnownSpellBox();
+		c.gridx = 10;
+		c.gridy = 0;
+		c.weighty = 1;
+		c.gridheight = 11;
+		add(knownSpellBox, c);
+		
 	}
 	
 	public void paintComponent(Graphics g){
@@ -360,7 +413,7 @@ public class CharacterDisplay extends JPanel{
 		intField.setText(Integer.toString(me.intel));
 		wisField.setText(Integer.toString(me.wis));
 		chaField.setText(Integer.toString(me.cha));
-		babField.setText(Integer.toString(me.charClass.bab));
+		babField.setText(Integer.toString(me.getBAB()));
 		acField.setText(Integer.toString(me.getAC()));
 		touchACField.setText(Integer.toString(me.getTouchAC()));
 		fortSaveField.setText(Integer.toString(me.getFortSave()));
@@ -368,9 +421,11 @@ public class CharacterDisplay extends JPanel{
 		refSaveField.setText(Integer.toString(me.getRefSave()));
 		meleeModifierField.setText(Integer.toString(me.getMeleeModifier()));
 		rangedModifierField.setText(Integer.toString(me.getRangedModifier()));
+		skillBox.updateTextFields();
 	}
 	
 	private class SkillBox extends JPanel{
+		private JTextField[] fields = new JTextField[Skill.values().length * 3];
 		public SkillBox(){
 			setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
@@ -394,26 +449,79 @@ public class CharacterDisplay extends JPanel{
 			JLabel classLabel = new JLabel("Class");
 			classLabel.setBorder(border);
 			add(classLabel, c);
+			c.gridy++;
+			int indexForFields = 0;
 
-			for(int i = 0; i < Character.skillNames.length; i++){
-				c.gridy = i + 1;
+			for(Skill skill : Skill.values()){
+				c.gridy++;
 				c.gridwidth = 2;
 				c.gridx = 0;
-				name = new JLabel(Character.skillNames[i]);
+				name = new JLabel(skill.toString());
 				name.setBorder(border);
+				
+				name.addMouseListener(new MouseAdapter() {
+					public void mouseClicked(MouseEvent evt) {
+						if (evt.getClickCount() > 1) {
+							Pathfinder.showWebPage(skill.getURL());
+						}
+					}
+				});
+				
 				add(name,c);
+				
 				c.gridx = 2;
 				c.gridwidth = 1;
-				JTextField totalField = new JTextField(Integer.toString(me.getTotalSkillModifier(i)));
+				JTextField totalField = new JTextField(){
+					public void setText(String s){
+						super.setText(Integer.toString(me.getTotalSkillModifier(skill)));
+					}
+				};
+				totalField.addActionListener(e -> {
+					me.modifySkillValue(skill, Integer.parseInt(totalField.getText()));
+					updateTextFields();
+				});
 				add(totalField, c);
+				fields[indexForFields] = totalField;
+				indexForFields++;
+				
 				c.gridx = 3;
-				JTextField ranksField = new JTextField(Integer.toString(me.skillPoints[i]));
+				JTextField ranksField = new JTextField(){
+					public void setText(String s){
+						super.setText(Integer.toString(me.skills.get(skill)[0]));
+					}
+				};
+				ranksField.addActionListener(e -> {
+					me.skills.get(skill)[0] = Integer.parseInt(ranksField.getText());
+					updateTextFields();
+				});
 				add(ranksField, c);
+				fields[indexForFields] = ranksField;
+				indexForFields++;
+				
 				c.gridx = 4;
-				JTextField classField = new JTextField(me.classSkills[i] ? "Yes" : "No");
+				JTextField classField = new JTextField(){
+					public void setText(String s){
+						super.setText(me.hasClassSkill(skill) ? "Y" : "N");
+					}
+				};
+				classField.addActionListener(e -> {
+					String value = classField.getText();
+					if(value.equalsIgnoreCase("Y") || value.equalsIgnoreCase("Yes")){
+						me.setClassSkillValue(skill,true);
+					} else if(value.equalsIgnoreCase("N") || value.equalsIgnoreCase("No")){
+						me.setClassSkillValue(skill,false);
+					}
+					updateTextFields();
+				});
 				add(classField, c);
+				fields[indexForFields] = classField;
+				indexForFields++;
 			}
-		}	
+			updateTextFields();
+		}
+		public void updateTextFields(){
+			for(JTextField field : fields) field.setText("Filler for override");
+		}
 	}
 	
 	private class NoteBox extends JPanel{
@@ -483,7 +591,7 @@ public class CharacterDisplay extends JPanel{
 			setLayout(new GridBagLayout());
 			String[] model = new String[me.currentFeats.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.currentFeats.get(i).toString();
-			listContainer = new JList<>(model);
+			listContainer = new JList<String>(model);
 			removalButton.addActionListener(e -> remove(listContainer.getSelectedIndices()));
 			listScroll = new JScrollPane(listContainer);
 			GridBagConstraints c = new GridBagConstraints();
@@ -543,37 +651,49 @@ public class CharacterDisplay extends JPanel{
 		private JButton addItemButton = new JButton("Add an Item");
 		private JButton sellItemButton = new JButton("Sell Selected Item(s)");
 		private JButton buyItemButton = new JButton("Buy an Item");
+		private JButton equipItemButton = new JButton("Equip selected item(s)");
 		private JScrollPane listScroll;
+		private CharacterDisplay parent;
 
-		public InventoryBox(){
+		public InventoryBox(CharacterDisplay parent){
+			this.parent = parent;
 			setLayout(new GridBagLayout());
 			String[] model = new String[me.inventory.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
 			listContainer = new JList<>(model);
+			
 			removalButton.addActionListener(e -> remove(listContainer.getSelectedIndices()));
 			sellItemButton.addActionListener(e -> sell(listContainer.getSelectedIndices()));
+			equipItemButton.addActionListener(e -> {
+				me.equipItems(listContainer.getSelectedIndices());
+				parent.repaint();
+			});
+			
 			listScroll = new JScrollPane(listContainer);
 			GridBagConstraints c = new GridBagConstraints();
 			c.fill = GridBagConstraints.BOTH;
-			c.gridwidth = 1;
+			c.weightx = 1;
 			c.weighty = 0;
 			add(buyItemButton, c);
 			c.gridx = 1;
 			add(sellItemButton, c);
 			c.gridx = 0;
 			c.weighty = 1;
-			c.weightx = 1;
 			c.gridy = 1;
 			c.gridheight = 9;
 			c.gridwidth = 2;
 			add(listScroll, c);
-			c.weightx = 0;
 			c.weighty = 0;
+			c.gridheight = 1;
 			c.gridy = 10;
 			c.gridwidth = 1;
-			add(removalButton, c);
-			c.gridx = 1;
 			add(addItemButton, c);
+			c.gridx = 1;
+			add(removalButton, c);
+			c.gridwidth = 2;
+			c.gridx = 0;
+			c.gridy = 11;
+			add(equipItemButton, c);
 		}
 		
 		public void sell(int[] indices){
@@ -594,6 +714,7 @@ public class CharacterDisplay extends JPanel{
 			String[] model = new String[me.inventory.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
 			listContainer.setListData(model);
+			parent.repaint();
 		}
 		
 		public void paintComponent(Graphics g){
@@ -601,6 +722,185 @@ public class CharacterDisplay extends JPanel{
 			super.paintComponent(g);
 			String[] model = new String[me.inventory.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
+			listContainer.setListData(model);
+		}
+	}
+	
+	private class EquippedBox extends JPanel{
+
+		private JList<String> listContainer;
+		private JButton removalButton = new JButton("Unequip selected item(s)");
+		private JScrollPane listScroll;
+		private CharacterDisplay parent;
+
+		public EquippedBox(CharacterDisplay parent){
+			this.parent = parent;
+			setLayout(new GridBagLayout());
+			String[] model = new String[me.equipped.size()];
+			for(int i = 0; i < model.length; i++) model[i] = me.equipped.get(i).toString();
+			listContainer = new JList<>(model);
+			listScroll = new JScrollPane(listContainer);
+			GridBagConstraints c = new GridBagConstraints();
+			c.fill = GridBagConstraints.BOTH;
+			c.weighty = 1;
+			c.weightx = 1;
+			c.gridheight = 6;
+			add(listScroll, c);
+			c.weightx = 0;
+			c.weighty = 0;
+			c.gridy = 6;
+			c.gridheight = 1;
+			add(removalButton, c);
+			
+			removalButton.addActionListener(e -> {
+				me.unequipItems(listContainer.getSelectedIndices());
+				parent.repaint();
+			});
+		}
+		
+		public void paintComponent(Graphics g){
+			//If you experience weird GUI problems remove this.
+			super.paintComponent(g);
+			String[] model = new String[me.equipped.size()];
+			for(int i = 0; i < model.length; i++) model[i] = me.equipped.get(i).toString();
+			listContainer.setListData(model);
+		}
+	}
+	
+	private class CoinBox extends JPanel{
+		private JLabel top = new JLabel("Your coins:");
+		private JLabel plat = new JLabel("Platinum:");
+		private JLabel gold = new JLabel("Gold:");
+		private JLabel silv = new JLabel("Silver");
+		private JLabel copp = new JLabel("Copper:");
+		private JTextField platField = new JTextField(Integer.toString(me.platinum));
+		private JTextField goldField = new JTextField(Integer.toString(me.gold));
+		private JTextField silvField = new JTextField(Integer.toString(me.silver));
+		private JTextField coppField = new JTextField(Integer.toString(me.copper));
+		
+		public CoinBox(){
+			setLayout(new GridBagLayout());
+			GridBagConstraints c = new GridBagConstraints();
+			c.fill = GridBagConstraints.NONE;
+			c.gridwidth = 4;
+			c.weightx = 1;
+			add(top, c);
+			
+			c.gridwidth = 1;
+			c.weightx = 0;
+			c.gridy = 1;
+			add(plat, c);
+			c.gridy = 2;
+			add(gold,c);
+			c.gridx = 2;
+			add(copp, c);
+			c.gridy = 1;
+			add(silv, c);
+			
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx = 1;
+			add(platField, c);
+			c.gridy = 2;
+			add(goldField, c);
+			c.gridx = 3;
+			add(coppField, c);
+			c.gridy = 1;
+			add(silvField, c);
+			
+			platField.addActionListener(e -> me.platinum = Integer.parseInt(platField.getText()));
+			goldField.addActionListener(e -> me.gold = Integer.parseInt(goldField.getText()));
+			silvField.addActionListener(e -> me.silver = Integer.parseInt(silvField.getText()));
+			coppField.addActionListener(e -> me.copper = Integer.parseInt(coppField.getText()));
+		}
+		
+		public void paintComponent(Graphics g){
+			super.paintComponent(g);
+			platField.setText(Integer.toString(me.platinum));
+			goldField.setText(Integer.toString(me.gold));
+			silvField.setText(Integer.toString(me.silver));
+			coppField.setText(Integer.toString(me.copper));
+		}
+	}
+	
+	private class KnownSpellBox extends JPanel{
+		
+		private JList<String> listContainer;
+		private JButton removalButton = new JButton("Remove Selected Spell(s)");
+		private JButton forceNewSpells = new JButton("Force a new Spell");
+		private JButton getSpellDetails = new JButton("Get Spell Details");
+		private JScrollPane listScroll;
+		
+		public KnownSpellBox(){
+			setLayout(new GridBagLayout());
+			String[] model = new String[me.knownSpells.size()];
+			for(int i = 0; i < model.length; i++) model[i] = me.knownSpells.get(i).toString();
+			listContainer = new JList<String>(model);
+			
+			listContainer.addMouseListener(new MouseAdapter() {
+				public void mouseClicked(MouseEvent evt) {
+					JList list = (JList)evt.getSource();
+					if (evt.getClickCount() > 1) {
+						int index = list.locationToIndex(evt.getPoint());
+						Pathfinder.showSpellDetails(me.knownSpells.get(index));
+					}
+				}
+			});
+			
+			removalButton.addActionListener(e -> remove(listContainer.getSelectedIndices()));
+			listScroll = new JScrollPane(listContainer);
+			GridBagConstraints c = new GridBagConstraints();
+			getSpellDetails.addActionListener(e -> showDetails(listContainer.getSelectedIndices()));
+			c.fill = GridBagConstraints.BOTH;
+			c.gridheight = 1;
+			c.weighty = 0;
+			c.gridwidth = 1;
+			c.gridy = 0;
+			c.weightx = 1;
+			add(forceNewSpells, c);
+			forceNewSpells.addActionListener(e -> {
+				new Thread(() -> {
+					me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell to add"));
+					repaint();
+					}).start();
+			});
+			c.gridx = 1;
+			add(getSpellDetails, c);
+			c.gridx = 0;
+			c.weighty = 1;
+			c.weightx = 1;
+			c.gridwidth = 2;
+			c.gridy = 1;
+			c.gridheight = 9;
+			add(listScroll, c);
+			c.gridy = 10;
+			c.gridx = 0;
+			c.weighty = 0;
+			c.gridwidth = 2;
+			add(removalButton, c);
+		}
+		
+		public void remove(int[] indices){
+			//Go backward to avoid shifting indices of the next ones to remove;
+			for(int i = indices.length - 1; i >= 0; i--){
+				me.knownSpells.remove(indices[i]);
+			}
+			String[] model = new String[me.knownSpells.size()];
+			for(int i = 0; i < model.length; i++) model[i] = me.knownSpells.get(i).toString();
+			listContainer.setListData(model);
+		}
+		
+		public void showDetails(int[] indices){
+			for(int i : indices){
+				Pathfinder.showSpellDetails(me.knownSpells.get(i));
+			}
+		}
+		
+		public void paintComponent(Graphics g){
+			//If you experience weird GUI problems remove this.
+			super.paintComponent(g);
+			String[] model = new String[me.knownSpells.size()];
+			for(int i = 0; i < model.length; i++) model[i] = me.knownSpells.get(i).toString();
 			listContainer.setListData(model);
 		}
 	}

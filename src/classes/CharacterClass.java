@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 public abstract class CharacterClass implements Serializable{
 	public String name;
-	public boolean[] classSkills = new boolean[Character.skillNames.length];
 	public int baseFortSave = 0;
 	public int baseRefSave = 0;
 	public int baseWillSave = 0;
