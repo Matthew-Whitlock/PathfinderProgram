@@ -2,9 +2,11 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
-import src.Skill;
+import src.stats.Skill;
 import src.feats.EschewMaterials;
 import src.spells.Spells;
+import src.stats.AbilityScoreEnum;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -12,7 +14,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	public String bloodline;
 	
 	public Sorceror(){
-		name = Character.SOR;
+		name = "Sorceror";
 		hitDiePerLevel = "1d6";
 	}
 	
@@ -33,7 +35,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 			{6,6,6,6,6,6,6,6,4},{6,6,6,6,6,6,6,6,6}};
 			
 		ArrayList<Integer> bonusSpells = new ArrayList<Integer>();
-		for(int i = 0; i < (me.cha - 10)/2; i++){
+		for(int i = 0; i < (me.abilities.get(AbilityScoreEnum.CHA) - 10)/2; i++){
 			bonusSpells.add(0, i/4);
 		}
 		
@@ -61,7 +63,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	}
 	
 	public int skillRanksAvailable(Character me){
-		return 2 + (me.intel - 10)/2;
+		return 2 + (me.abilities.get(AbilityScoreEnum.INT) - 10)/2;
 	}
 	
 	public abstract void levelUpBloodline(Character me);

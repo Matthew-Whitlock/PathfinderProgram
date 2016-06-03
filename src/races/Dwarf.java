@@ -1,15 +1,15 @@
 package src.races;
 
 import src.feats.Feat;
+import src.stats.AbilityScoreEnum;
 
-import javax.swing.*;
 import java.io.Serializable;
 
 public class Dwarf extends Race implements Serializable{
 	public Dwarf(){
-		con = 2;
-		wis = 2;
-		cha = 2;
+		abilityScoreChanges.put(AbilityScoreEnum.CON, 2);
+		abilityScoreChanges.put(AbilityScoreEnum.WIS, 2);
+		abilityScoreChanges.put(AbilityScoreEnum.CHA, -2);
 		notes.add("+4 dodge for giant monsters");
 		notes.add("Good with appraising metals/jewels");
 		notes.add("+1 attacking Orks and Goblins");
@@ -39,11 +39,7 @@ public class Dwarf extends Race implements Serializable{
 				"and other such horrors.";
 	}
 	
-	public static ImageIcon getImageIcon(){
-		return new ImageIcon("src\\pictures\\Dwarf.jpg");
-	}
-	
-	public ImageIcon getRaceImage(){
-		return new ImageIcon("src\\pictures\\Dwarf.jpg");
+	public String getDefaultRaceImageLocation(){
+		return "src\\pictures\\Dwarf.jpg";
 	}
 }
