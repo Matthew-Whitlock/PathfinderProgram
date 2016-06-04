@@ -1,25 +1,21 @@
 package src.races;
 
 import src.feats.Feat;
+import src.stats.AbilityScoreEnum;
 
-import javax.swing.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public abstract class Race implements Serializable{
 	public String name;
-	public int str = 0;
-	public int dex = 0;
-	public int con = 0;
-	public int intel = 0;
-	public int wis = 0;
-	public int cha = 0;
 	public ArrayList<String> notes = new ArrayList<>();
+	public HashMap<AbilityScoreEnum, Integer> abilityScoreChanges = new HashMap<AbilityScoreEnum, Integer>();
 	public Feat[] bonusFeats;
 	
 	public String toString(){
 		return name;
 	}
 
-	public abstract ImageIcon getRaceImage();
+	public abstract String getDefaultRaceImageLocation();
 }

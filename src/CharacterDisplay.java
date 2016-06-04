@@ -5,6 +5,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import src.spells.*;
+import src.stats.*;
+import java.util.ArrayList;
 
 public class CharacterDisplay extends JPanel{
 	private Character me;
@@ -58,7 +60,7 @@ public class CharacterDisplay extends JPanel{
 		c.gridwidth = 6;
 		add(name, c);
 		c.fill = GridBagConstraints.BOTH;
-		picture = new JLabel(me.getRaceImageIcon());
+		picture = new JLabel(new ImageIcon(me.getImageLocation()));
 		c.weighty = 1;
 		c.weightx = 0;
 		c.gridy = 1;
@@ -231,9 +233,9 @@ public class CharacterDisplay extends JPanel{
 		tempReference.setBorder(BorderFactory.createLineBorder(Color.black));
 		add(tempReference, c);
 		
-		strField = new JTextField(Integer.toString(me.str));
+		strField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
 		strField.addActionListener(e -> {
-			me.str = Integer.parseInt(strField.getText());
+			me.abilities.put(AbilityScoreEnum.STR, new Integer(strField.getText()));
 			repaint();
 		});
 		c.weightx = 0.25;
@@ -241,41 +243,41 @@ public class CharacterDisplay extends JPanel{
 		c.gridx = 1;
 		add(strField,c);
 		
-		dexField = new JTextField(Integer.toString(me.dex));
+		dexField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
 		dexField.addActionListener(e -> {
-			me.dex = Integer.parseInt(dexField.getText());
+			me.abilities.put(AbilityScoreEnum.DEX, new Integer(dexField.getText()));
 			repaint();
 		});
 		c.gridy = 16;
 		add(dexField,c);
 		
-		conField = new JTextField(Integer.toString(me.con));
+		conField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
 		conField.addActionListener(e -> {
-			me.dex = Integer.parseInt(dexField.getText());
+			me.abilities.put(AbilityScoreEnum.CON, new Integer(conField.getText()));
 			repaint();
 		});
 		c.gridy = 17;
 		add(conField,c);
 		
-		intField = new JTextField(Integer.toString(me.intel));
+		intField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
 		intField.addActionListener(e -> {
-			me.intel = Integer.parseInt(intField.getText());
+			me.abilities.put(AbilityScoreEnum.INT, new Integer(intField.getText()));
 			repaint();
 		});
 		c.gridy = 18;
 		add(intField,c);
 		
-		wisField = new JTextField(Integer.toString(me.wis));
+		wisField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
 		wisField.addActionListener(e -> {
-			me.wis = Integer.parseInt(wisField.getText());
+			me.abilities.put(AbilityScoreEnum.WIS, new Integer(wisField.getText()));
 			repaint();
 		});
 		c.gridy = 19;
 		add(wisField,c);
 		
-		chaField = new JTextField(Integer.toString(me.cha));
+		chaField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
 		chaField.addActionListener(e -> {
-			me.cha = Integer.parseInt(chaField.getText());
+			me.abilities.put(AbilityScoreEnum.CHA, new Integer(chaField.getText()));
 			repaint();
 		});
 		c.gridy = 20;
@@ -407,12 +409,12 @@ public class CharacterDisplay extends JPanel{
 		super.paintComponent(g);
 		totalHPField.setText(Integer.toString(me.totalHP));
 		level.setText("Level: " + me.level);
-		strField.setText(Integer.toString(me.str));
-		dexField.setText(Integer.toString(me.dex));
-		conField.setText(Integer.toString(me.con));
-		intField.setText(Integer.toString(me.intel));
-		wisField.setText(Integer.toString(me.wis));
-		chaField.setText(Integer.toString(me.cha));
+		strField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
+		dexField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
+		conField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
+		intField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
+		wisField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
+		chaField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
 		babField.setText(Integer.toString(me.getBAB()));
 		acField.setText(Integer.toString(me.getAC()));
 		touchACField.setText(Integer.toString(me.getTouchAC()));
@@ -425,7 +427,7 @@ public class CharacterDisplay extends JPanel{
 	}
 	
 	private class SkillBox extends JPanel{
-		private JTextField[] fields = new JTextField[Skill.values().length * 3];
+		private ArrayList<JTextField> fields = new ArrayList<JTextField>();
 		public SkillBox(){
 			setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
@@ -442,17 +444,20 @@ public class CharacterDisplay extends JPanel{
 			total.setBorder(border);
 			add(total, c);
 			c.gridx = 3;
+			JLabel misc = new JLabel("Misc");
+			misc.setBorder(border);
+			add(misc, c);
+			c.gridx = 4;
 			JLabel ranks = new JLabel("Ranks");
 			ranks.setBorder(border);
 			add(ranks, c);
-			c.gridx = 4;
-			JLabel classLabel = new JLabel("Class");
-			classLabel.setBorder(border);
-			add(classLabel, c);
+			c.gridx = 5;
+			JLabel classSkill = new JLabel("Class");
+			classSkill.setBorder(border);
+			add(classSkill, c);
 			c.gridy++;
-			int indexForFields = 0;
-
-			for(Skill skill : Skill.values()){
+			
+			for(Skill skill : me.skillsList){
 				c.gridy++;
 				c.gridwidth = 2;
 				c.gridx = 0;
@@ -473,54 +478,64 @@ public class CharacterDisplay extends JPanel{
 				c.gridwidth = 1;
 				JTextField totalField = new JTextField(){
 					public void setText(String s){
-						super.setText(Integer.toString(me.getTotalSkillModifier(skill)));
+						super.setText(Integer.toString(skill.calculateTotalSkillMod()));
 					}
 				};
-				totalField.addActionListener(e -> {
-					me.modifySkillValue(skill, Integer.parseInt(totalField.getText()));
-					updateTextFields();
-				});
+				totalField.setEditable(false);
 				add(totalField, c);
-				fields[indexForFields] = totalField;
-				indexForFields++;
+				fields.add(totalField);
 				
 				c.gridx = 3;
+				JTextField miscField = new JTextField(){
+					public void setText(String s){
+						super.setText(Integer.toString(skill.getMiscMod()));
+					}
+				};
+				miscField.addActionListener(e -> {
+					skill.setMiscMod(Integer.parseInt(miscField.getText()));
+					updateTextFields();
+				});
+				add(miscField, c);
+				fields.add(miscField);
+				
+				c.gridx = 4;
 				JTextField ranksField = new JTextField(){
 					public void setText(String s){
-						super.setText(Integer.toString(me.skills.get(skill)[0]));
+						super.setText(Integer.toString(skill.getnRanks()));
 					}
 				};
 				ranksField.addActionListener(e -> {
-					me.skills.get(skill)[0] = Integer.parseInt(ranksField.getText());
+					skill.setnRanks(Integer.parseInt(ranksField.getText()));
 					updateTextFields();
 				});
 				add(ranksField, c);
-				fields[indexForFields] = ranksField;
-				indexForFields++;
+				fields.add(ranksField);
 				
-				c.gridx = 4;
+				c.gridx = 5;
 				JTextField classField = new JTextField(){
 					public void setText(String s){
-						super.setText(me.hasClassSkill(skill) ? "Y" : "N");
+						super.setText(skill.isClassSkill() ? "Y" : "N");
 					}
 				};
 				classField.addActionListener(e -> {
 					String value = classField.getText();
 					if(value.equalsIgnoreCase("Y") || value.equalsIgnoreCase("Yes")){
-						me.setClassSkillValue(skill,true);
+						skill.setClassSkill(true);
 					} else if(value.equalsIgnoreCase("N") || value.equalsIgnoreCase("No")){
-						me.setClassSkillValue(skill,false);
+						skill.setClassSkill(false);
 					}
 					updateTextFields();
 				});
 				add(classField, c);
-				fields[indexForFields] = classField;
-				indexForFields++;
+				fields.add(classField);
 			}
 			updateTextFields();
 		}
 		public void updateTextFields(){
 			for(JTextField field : fields) field.setText("Filler for override");
+		}
+		public void addNewSkill(){
+			//Setup system for adding skill subtypes.
 		}
 	}
 	
