@@ -646,7 +646,7 @@ public class CharacterDisplay extends JPanel{
 		
 		public void showDetails(int[] indices){
 			for(int i : indices){
-				Pathfinder.popupDialog(me.currentFeats.get(i).name, me.currentFeats.get(i).inDepthDescription);
+				Pathfinder.popupDialog(me.currentFeats.get(i).name, me.currentFeats.get(i).fullText);
 			}
 		}
 		

@@ -77,6 +77,10 @@ public class Skill{
         this.miscMod = miscMod;
     }
 
+    public boolean hasSubType() {
+        return subType != null;
+    }
+
     public String getSubType() {
         return subType;
     }

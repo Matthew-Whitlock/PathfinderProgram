@@ -32,11 +32,41 @@ public class SkillUtils {
 		return skillList;
 	}
 
-    public static void applyClassSkills(Set<SkillEnum> classSkills, Map<SkillEnum, Skill> playerSkills){
-        for (SkillEnum classSkill : classSkills) {
-            Skill playerSkill = playerSkills.get(classSkill);
+    public static void applyClassSkills(Skill[] classSkills, Character me){
+        for (Skill classSkill : classSkills) {
+
+            Skill playerSkill;
+
+            if(classSkill.hasSubType())
+                playerSkill = getSkill(classSkill.skillEnum, me, classSkill.getSubType());
+            else
+                playerSkill = getSkill(classSkill.skillEnum, me);
 
             playerSkill.setClassSkill(true);
         }
+    }
+
+
+
+    public static Skill getSkill(SkillEnum skillToFind, Character me){
+        for(Skill skill : me.skillsList){
+            if(skill.skillEnum == skillToFind) return skill;
+        }
+
+        Skill toAdd = new Skill(me, skillToFind);
+        me.skillsList.add(toAdd);
+
+        return toAdd;
+    }
+
+    public static Skill getSkill(SkillEnum skillToFind, Character me, String subtype){
+        for(Skill skill : me.skillsList){
+            if(skill.skillEnum == skillToFind && skill.getSubType() != null && skill.getSubType().equals(subtype)) return skill;
+        }
+
+        Skill toAdd = new Skill(me, skillToFind, subtype);
+        me.skillsList.add(toAdd);
+
+        return toAdd;
     }
 }

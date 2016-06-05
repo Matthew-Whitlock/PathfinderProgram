@@ -6,7 +6,6 @@ import src.races.Race;
 import src.spells.Spell;
 import src.stats.*;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,8 +30,7 @@ public class Character implements Serializable{
 	public int[] spellsPerDay = new int[9];
 	
 	public ArrayList<Feat> currentFeats = new ArrayList<>();
-	
-	//public HashMap<SkillEnum,Skill> skills = new HashMap<SkillEnum,Skill>();
+
 	public ArrayList<Skill> skillsList = new ArrayList<Skill>();
 	
 	public HashMap<AbilityScoreEnum, Integer> abilities;
@@ -136,22 +134,6 @@ public class Character implements Serializable{
 		for(int i = indexes.length - 1; i >= 0; i++){
 			equip(inventory.get(indexes[i]));
 		}
-	}
-	
-	public Skill getSkill(SkillEnum skillToFind){
-		for(Skill skill : skillsList){
-			if(skill.skillEnum == skillToFind) return skill;
-		}
-		
-		return null;
-	}
-	
-	public Skill getSkill(SkillEnum skillToFind, String subtype){
-		for(Skill skill : skillsList){
-			if(skill.getSubType() != null && skill.getSubType().equals(subtype)) return skill;
-		}
-		
-		return null;
 	}
 	
 	public String getImageLocation(){

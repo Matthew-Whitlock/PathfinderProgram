@@ -2,10 +2,12 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
+import src.feats.Feats;
 import src.stats.Skill;
-import src.feats.EschewMaterials;
 import src.spells.Spells;
 import src.stats.AbilityScoreEnum;
+import src.stats.SkillEnum;
+import src.stats.SkillUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +23,15 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	public void levelUp(Character me){
 		me.spellsPerDay = getSpellsPerDay(me);
 		if(me.level == 1){
-			//me.currentFeats.add(new EschewMaterials()); Add the feat once they're set up.
+			if(Feats.getFeatByName("Eschew Materials") != null) {
+				me.currentFeats.add(Feats.getFeatByName("Eschew Materials"));
+			}
+
+			Skill[] classSkills = new Skill[]{new Skill(me,SkillEnum.APPRAISE),new Skill(me,SkillEnum.BLUFF), new Skill(me,SkillEnum.FLY),
+					new Skill(me,SkillEnum.INTIMIDATE), new Skill(me,SkillEnum.KNOWLEDGE, "Arcana"), new Skill(me,SkillEnum.SPELLCRAFT),
+					new Skill(me,SkillEnum.USE_MAGIC_DEVICE)};
+
+			SkillUtils.applyClassSkills(classSkills, me);
 		}
 		levelUpBloodline(me);
 		learnNewSpells(me);

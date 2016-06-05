@@ -7,8 +7,7 @@ import src.stats.AbilityScoreEnum;
 import src.stats.Skill;
 import src.stats.SkillEnum;
 import src.Pathfinder;
-import src.stats.Skill;
-import java.util.ArrayList;
+import src.stats.SkillUtils;
 
 public class AbyssalBloodline extends Sorceror{
 	public String[] bonusSpells = new String[]{"","Cause Fear","Bull's Strength","Rage","Stoneskin","Dismissal",
@@ -22,7 +21,7 @@ public class AbyssalBloodline extends Sorceror{
 		if(me.level == 1){
 			me.notes.add("Whenever you cast a spell of the summoning subschool, the creatures summoned gain DR/good equal to 1/2 your sorcerer level (minimum 1). This does not stack with any DR the creature might have.");
 			me.notes.add("Claws (Su): At 1st level, you can grow claws as a free action. These claws are treated as natural weapons, allowing you to make two claw attacks as a full attack action using your full base attack bonus. These attacks deal 1d4 points of damage each (1d3 if you are Small) plus your Strength modifier. At 5th level, these claws are considered magic weapons for the purpose of overcoming DR. At 7th level, the damage increases by one step to 1d6 points of damage (1d4 if you are Small). At 11th level, these claws become f laming weapons, each dealing an additional 1d6 points of fire damage on a successful hit. You can use your claws for a number of rounds per day equal to 3 + your Charisma modifier. These rounds do not need to be consecutive.");
-			Skill knowledgePlanes = me.getSkill(SkillEnum.KNOWLEDGE, "Planes");
+			Skill knowledgePlanes = SkillUtils.getSkill(SkillEnum.KNOWLEDGE,me, "Planes");
 			if(knowledgePlanes != null){
 				knowledgePlanes.setClassSkill(true);
 			} else {
