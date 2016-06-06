@@ -32,6 +32,7 @@ public class Feat implements Serializable{
 	public boolean itemMastery;
 	public boolean armorMastery;
 	public boolean shieldMastery;
+	public String subType = "";
 
 	public Feat(String detailString){
 		String[] details = detailString.split("\t");
@@ -64,5 +65,43 @@ public class Feat implements Serializable{
 		itemMastery = details[31].equals("1");
 		armorMastery = details[32].equals("1");
 		shieldMastery = details[33].equals("1");
+	}
+
+	public Feat(Feat base, String subType){
+		name = base.name;
+		type = base.type;
+		description = base.description;
+		prereqsAsString = base.prereqsAsString;
+		prereqFeatsAsString = base.prereqFeatsAsString;
+		benefit = base.benefit;
+		normal = base.normal;
+		special = base.special;
+		source = base.source;
+		fullText = base.fullText;
+		teamwork = base.teamwork;
+		critical = base.critical;
+		grit = base.grit;
+		style = base.style;
+		performance = base.performance;
+		racial = base.racial;
+		companionOrFamiliar = base.companionOrFamiliar;
+		raceName = base.raceName;
+		canDoMultiple = base.canDoMultiple;
+		prereqsSkillsAsString = base.prereqsSkillsAsString;
+		panache = base.panache;
+		betrayal = base.betrayal;
+		targeting = base.targeting;
+		esoteric = base.esoteric;
+		stare = base.stare;
+		weaponMastery = base.weaponMastery;
+		itemMastery = base.itemMastery;
+		armorMastery = base.armorMastery;
+		shieldMastery = base.shieldMastery;
+		this.subType = subType;
+	}
+
+
+	public String toString(){
+		return name + "(" + type + ")";
 	}
 }
