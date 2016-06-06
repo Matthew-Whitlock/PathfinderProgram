@@ -142,6 +142,19 @@ public class Pathfinder{
 		detailsPanel.add(scrollingText);
 		detailsFrame.setVisible(true);
 	}
+
+	public static void showFeatDetails(Feat feat){
+		JFrame detailsFrame = new JFrame(feat.name);
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
 	
 	
 	//Needs work, doesn't display Skill details webpage properly. Doesn't scroll properly, either.

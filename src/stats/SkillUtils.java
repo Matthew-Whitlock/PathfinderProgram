@@ -46,8 +46,6 @@ public class SkillUtils {
         }
     }
 
-
-
     public static Skill getSkill(SkillEnum skillToFind, Character me){
         for(Skill skill : me.skillsList){
             if(skill.skillEnum == skillToFind) return skill;
@@ -68,5 +66,31 @@ public class SkillUtils {
         me.skillsList.add(toAdd);
 
         return toAdd;
+    }
+
+    public static int maxRanksIn(SkillEnum skillToFind, Character me){
+        int maxRanks = 0;
+        for(Skill skill : me.skillsList){
+            if(skill.skillEnum == skillToFind && skill.getnRanks() > maxRanks) maxRanks = skill.getnRanks();
+        }
+        return maxRanks;
+    }
+
+    public static SkillEnum getSkillEnum(String skillToFind){
+        SkillEnum toReturn = null;
+
+        for(SkillEnum skill : SkillEnum.values()) if(skill.name().equalsIgnoreCase(skillToFind)) toReturn = skill;
+
+        return toReturn;
+    }
+
+    public static boolean characterHasSkill(SkillEnum skill, Character me){
+        for(Skill charSkill : me.skillsList) if(charSkill.skillEnum == skill) return true;
+        return false;
+    }
+
+    public static boolean characterHasSkill(SkillEnum skill, String subskill, Character me){
+        for(Skill charSkill : me.skillsList) if(charSkill.skillEnum == skill && charSkill.hasSubType() && charSkill.getSubType().equalsIgnoreCase(subskill)) return true;
+        return false;
     }
 }

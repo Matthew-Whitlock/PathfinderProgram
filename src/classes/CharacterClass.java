@@ -16,6 +16,7 @@ public abstract class CharacterClass implements Serializable{
 	public int[] spellsPerDay = new int[10];
 	public String hitDiePerLevel;
 	public int level = 0;
+	public boolean isCaster = false;
 	
 	public abstract void levelUp(Character me);
 	public abstract int skillRanksAvailable(Character me);

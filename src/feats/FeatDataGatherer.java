@@ -12,7 +12,7 @@ import java.util.HashMap;
  */
 public class FeatDataGatherer {
     public static void main(String[] args){
-        //for(Feat feat : Feats.getFeats()) System.out.println(feat + ": " + feat.prereqsSkillsAsString);
+        //for(Feat feat : Feats.getFeats()) System.out.println(feat + ": " + feat.prereqsAsString);
 
         HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<AbilityScoreEnum, Integer>();
         for(AbilityScoreEnum ability : AbilityScoreEnum.values()) abilityPoints.put(ability, 10);
@@ -23,9 +23,7 @@ public class FeatDataGatherer {
         me.currentFeats.add(first);
         me.currentFeats.add(second);
         me.currentFeats.add(Feats.getFeatByName("Tenacious Spell"));
-        String featPrereqs = "( ( Skill Focus (Diplomacy, Test) | Street Sweep) or (Tenacious Spell , Timely Coordination), (Street Sweep or Tenacious Spell)) ";
-        System.out.println(Feats.checkReqsAsFeats(featPrereqs, me));
 
-        for(Feat feat : Feats.getFeats()) if(!feat.prereqFeatsAsString.trim().equals("") && Feats.checkReqsAsFeats(feat, me)) System.out.println(feat + ": " + feat.prereqFeatsAsString);
+        for(Feat feat : Feats.getFeats()) if(Feats.characterMeetsAllPrereqs(feat, me)) System.out.println(feat + ": " + feat.prereqsAsString);
     }
 }

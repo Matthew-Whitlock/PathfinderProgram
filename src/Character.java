@@ -152,4 +152,34 @@ public class Character implements Serializable{
 	public int getACPen(){
 		return 0; //////////////////////////////////Do this.
 	}
+
+	public int getTotalLevel(){
+
+		//Here so we can eventually do multiclassing.
+
+		return level;
+	}
+
+	public int getLevelOfClass(String classToGet){
+
+		//Also here for multiclassing in the future.
+
+		if(classToGet.equalsIgnoreCase(charClass.name)) return level;
+
+		return 0;
+	}
+
+	public int highestCasterLevel(){
+		//For multiclassing
+
+		if(charClass.isCaster) return level;
+
+		return 0;
+	}
+
+	public CharacterClass[] getCharacterClasses(){
+		//Early multiclassing support.
+		return new CharacterClass[]{charClass};
+	}
+
 }

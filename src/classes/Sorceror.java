@@ -18,6 +18,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 	public Sorceror(){
 		name = "Sorceror";
 		hitDiePerLevel = "1d6";
+		isCaster = true;
 	}
 	
 	public void levelUp(Character me){
