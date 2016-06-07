@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class Test{
 	public static void main(String[] args){
-		HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<AbilityScoreEnum, Integer>();
+		HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<>();
 		for(AbilityScoreEnum ability : AbilityScoreEnum.values()) abilityPoints.put(ability, 10);
 		JFrame frame = new JFrame("Test");
 		frame.add(new CharacterDisplay(new src.Character("Testing", new Dwarf(), new AbyssalBloodline(), abilityPoints)));

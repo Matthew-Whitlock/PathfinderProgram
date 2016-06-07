@@ -29,9 +29,9 @@ public class Character implements Serializable{
 	public int[] spellsCastToday = new int[9];
 	public int[] spellsPerDay = new int[9];
 	
-	public ArrayList<Feat> currentFeats = new ArrayList<Feat>();
+	public ArrayList<Feat> currentFeats = new ArrayList<>();
 
-	public ArrayList<Skill> skillsList = new ArrayList<Skill>();
+	public ArrayList<Skill> skillsList = new ArrayList<>();
 	
 	public HashMap<AbilityScoreEnum, Integer> abilities;
 	

@@ -9,19 +9,9 @@ import src.Character;
  * @since 6/2/2016.
  */
 public class SkillUtils {
-
-    public static Map<SkillEnum, Skill> createInitialSkillMap(Character me) {
-        Map<SkillEnum, Skill> skillMap = new HashMap<>();
-
-        for (SkillEnum skillEnum : SkillEnum.values()) {
-            skillMap.put(skillEnum, new Skill(me, skillEnum));
-        }
-
-        return skillMap;
-    }
 	
 	public static ArrayList<Skill> createInitialSkillList(Character me) {
-		ArrayList<Skill> skillList = new ArrayList<Skill>();
+		ArrayList<Skill> skillList = new ArrayList<>();
 		
 		for(SkillEnum skillEnum : SkillEnum.values()) {
 			if(!skillEnum.hasSubTypes()){

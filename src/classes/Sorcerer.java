@@ -12,11 +12,11 @@ import src.stats.SkillUtils;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Sorceror extends CharacterClass implements Serializable{
+public abstract class Sorcerer extends CharacterClass implements Serializable{
 	public String bloodline;
 	
-	public Sorceror(){
-		name = "Sorceror";
+	public Sorcerer(){
+		name = "Sorcerer";
 		hitDiePerLevel = "1d6";
 		isCaster = true;
 	}
@@ -45,7 +45,7 @@ public abstract class Sorceror extends CharacterClass implements Serializable{
 			{6,6,6,6,6,5,3,0,0},{6,6,6,6,6,6,4,0,0},{6,6,6,6,6,6,5,3,0},{6,6,6,6,6,6,6,4,0},{6,6,6,6,6,6,6,5,3},
 			{6,6,6,6,6,6,6,6,4},{6,6,6,6,6,6,6,6,6}};
 			
-		ArrayList<Integer> bonusSpells = new ArrayList<Integer>();
+		ArrayList<Integer> bonusSpells = new ArrayList<>();
 		for(int i = 0; i < (me.abilities.get(AbilityScoreEnum.CHA) - 10)/2; i++){
 			bonusSpells.add(0, i/4);
 		}

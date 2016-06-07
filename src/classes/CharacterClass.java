@@ -1,11 +1,8 @@
 package src.classes;
 
 import src.Character;
-import src.spells.Spell;
-import src.feats.Feat;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 public abstract class CharacterClass implements Serializable{
 	public String name;

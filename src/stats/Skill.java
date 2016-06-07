@@ -2,9 +2,6 @@ package src.stats;
 
 import src.Character;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author VestOfHolding
  * @since 6/2/2016.
