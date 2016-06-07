@@ -1,6 +1,5 @@
 package src.feats;
 
-import com.sun.org.apache.xpath.internal.operations.Number;
 import src.Pathfinder;
 
 import java.io.BufferedReader;
@@ -10,6 +9,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import src.Character;
 import src.stats.AbilityScoreEnum;
@@ -24,32 +25,42 @@ public class Feats {
 
     public static Feat getFeatByName(String name){
         for(Feat feat : getFeats()){
-            if(feat.name.equalsIgnoreCase(name)) return feat;
+            if(feat.name.equalsIgnoreCase(name))
+                return feat;
         }
         return null;
     }
 
-    public static ArrayList<Feat> getFeats(){
+    public static List<Feat> getFeats(){
         FileReader fileIn;
-        BufferedReader input;
+        BufferedReader input = null;
 
         try{
-            fileIn = new FileReader(getFilePath());
-            input = new BufferedReader(fileIn);
+            File file = getFilePath();
+
+            if (file != null) {
+                fileIn = new FileReader(file);
+                input = new BufferedReader(fileIn);
+            }
         }catch(IOException e){
             Pathfinder.showError("Error: Cannot access feats","The feat file is either not in the location expected, or I don't have permissions to access it.");
-            return null;
+            return Collections.emptyList();
         }catch(Exception e){
             Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
             e.printStackTrace();
-            return null;
+            return Collections.emptyList();
         }
 
-        ArrayList<Feat> feats = new ArrayList<Feat>();
-        Feat feat = null;
+        List<Feat> feats = new ArrayList<>();
+
+        if (input == null) {
+            return feats;
+        }
+
+        Feat feat;
 
         try{
-            String spellInputString = input.readLine();
+            String spellInputString;
 
             while((spellInputString = input.readLine()) != null){
                 try{
@@ -64,14 +75,14 @@ public class Feats {
         }catch(Exception e){
             Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nSome valid feats may not be shown.");
             e.printStackTrace();
-            return null;
+            return Collections.emptyList();
         }
         return feats;
     }
 
     private static File getFilePath(){
         URL url = Feats.class.getResource("Feats.class");
-        File file = null;
+        File file;
         try{
             file = new File(url.toURI());
         }catch(Exception e){
@@ -89,8 +100,7 @@ public class Feats {
     //Checking for requirements.
 
     public static boolean characterMeetsAllPrereqs(Feat feat, Character me){
-        if(checkGeneralReqs(feat.prereqsAsString, me) && checkReqsAsFeats(feat.prereqFeatsAsString, me) && characterMeetsSkillSpecificPrereqs(feat.prereqsSkillsAsString, me)) return true;
-        return false;
+        return checkGeneralReqs(feat.prereqsAsString, me) && checkReqsAsFeats(feat.prereqFeatsAsString, me) && characterMeetsSkillSpecificPrereqs(feat.prereqsSkillsAsString, me);
     }
 
     private static boolean checkGeneralReqs(String prereqs, Character me){
@@ -98,7 +108,8 @@ public class Feats {
 
         prereqs = prereqs.trim();
 
-        if(prereqs.charAt(prereqs.length() - 1) == '.') prereqs = prereqs.substring(0,prereqs.length() - 1);
+        if(prereqs.charAt(prereqs.length() - 1) == '.')
+            prereqs = prereqs.substring(0,prereqs.length() - 1);
 
         prereqs = prereqs.replace("; ",", ");
 
@@ -108,47 +119,49 @@ public class Feats {
 
             if(parts.length > 1){
                 if(parts[parts.length - 1].substring(0,3).equals("or ")){
-                    for(String requirement : parts) if(checkGeneralReqs(requirement, me)) return true;
-                    return false;
+                    return Arrays.stream(parts).anyMatch(part -> checkGeneralReqs(part, me));
+
                 }
-                for(String requirement : parts) if(!checkGeneralReqs(requirement, me)) return false;
-                return true;
+
+                return !Arrays.stream(parts).anyMatch(part -> !checkGeneralReqs(part, me));
             }
 
-            parts[0] = parts[0].trim();
+            //First part is used a lot, so let's pull it out
+            String firstPart = parts[0];
 
-            if(parts[0].charAt(0) == '(' && parts[0].charAt(parts[0].length() - 1) == ')'){
-                String inside = parts[0].substring(1,parts[0].length() - 1);
+            firstPart = firstPart.trim();
+
+            if(firstPart.charAt(0) == '(' && firstPart.charAt(firstPart.length() - 1) == ')'){
+                String inside = firstPart.substring(1, firstPart.length() - 1);
                 if(!(netOpens(inside) || netCloses(inside))) {
                     return checkGeneralReqs(inside, me);
                 }
             }
 
-            if(parts[0].charAt(0) == '\"' && parts[0].charAt(parts[0].length() - 1) == '\"' && parts[0].length() - parts[0].replace("\"","").length() == 2){
+            if(firstPart.charAt(0) == '\"' && firstPart.charAt(firstPart.length() - 1) == '\"' && firstPart.length() - firstPart.replace("\"","").length() == 2){
                 return characterMeetsThisGeneralPrereq(parts[0], me);
             }
-
         }
 
         if(prereqs.contains("|")) {
             String[] parts = fixParenthesisIssues(fixQuotationIssues(prereqs.split("\\|"), "|"), "|");
+            String firstPart = parts[0];
 
             if (parts.length > 1) {
-                for (String requirement : parts) if (checkGeneralReqs(requirement, me)) return true;
-                return false;
+                return Arrays.stream(parts).anyMatch(part -> checkGeneralReqs(part, me));
             }
 
-            parts[0] = parts[0].trim();
+            firstPart = firstPart.trim();
 
-            if (parts[0].charAt(0) == '(' && parts[0].charAt(parts[0].length() - 1) == ')') {
-                String inside = parts[0].substring(1, parts[0].length() - 1);
+            if (firstPart.charAt(0) == '(' && firstPart.charAt(firstPart.length() - 1) == ')') {
+                String inside = firstPart.substring(1, firstPart.length() - 1);
                 if (!(netOpens(inside) || netCloses(inside))) {
                     return checkGeneralReqs(inside, me);
                 }
             }
 
-            if(parts[0].charAt(0) == '\"' && parts[0].charAt(parts[0].length() - 1) == '\"' && parts[0].length() - parts[0].replace("\"","").length() == 2){
-                return characterMeetsThisGeneralPrereq(parts[0], me);
+            if(firstPart.charAt(0) == '\"' && firstPart.charAt(firstPart.length() - 1) == '\"' && firstPart.length() - firstPart.replace("\"","").length() == 2){
+                return characterMeetsThisGeneralPrereq(firstPart, me);
             }
         }
 
@@ -398,36 +411,47 @@ public class Feats {
             String[] parts = fixParenthesisIssues(fixQuotationIssues(toCheck.split(", "), ", "), ", ");
             if(parts.length > 1){
                 if(parts[parts.length - 1].substring(0,3).equals("or ")){
-                    for(String preReq : parts) if(characterHasFeatSubTypes(preReq, baseFeat, me)) return true;
+                    for(String preReq : parts)
+                        if(characterHasFeatSubTypes(preReq, baseFeat, me))
+                            return true;
                     return false;
                 }
-                for(String preReq : parts) if(!characterHasFeatSubTypes(preReq,baseFeat, me)) return false;
+                for(String preReq : parts)
+                    if(!characterHasFeatSubTypes(preReq,baseFeat, me))
+                        return false;
                 return true;
             }
 
-            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')') return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
+            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')')
+                return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
         }
 
         if(toCheck.contains("|")){
             String[] parts = fixParenthesisIssues(fixQuotationIssues(toCheck.split("\\|"), "|"), "|");
 
             if(parts.length > 1){
-                for(String preReq : parts) if(characterHasFeatSubTypes(preReq, baseFeat, me)) return true;
+                for(String preReq : parts)
+                    if(characterHasFeatSubTypes(preReq, baseFeat, me))
+                        return true;
                 return false;
             }
 
-            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')') return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
+            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')')
+                return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
         }
 
         if(toCheck.contains(" or ")) {
             String[] parts = fixParenthesisIssues(fixQuotationIssues(toCheck.split(" or "), " or "), " or ");
 
             if(parts.length > 1){
-                for(String preReq : parts) if(characterHasFeatSubTypes(preReq, baseFeat, me)) return true;
+                for(String preReq : parts)
+                    if(characterHasFeatSubTypes(preReq, baseFeat, me))
+                        return true;
                 return false;
             }
 
-            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')') return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
+            if(parts[0].trim().charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')')
+                return characterHasFeatSubTypes(parts[0].trim().substring(1,parts[0].trim().length() - 1), baseFeat,  me);
         }
 
         return characterHasFeat(baseFeat + " (" + toCheck + ")", me);
@@ -468,7 +492,7 @@ public class Feats {
         while(!java.lang.Character.isDigit(prereq.charAt(i))) i++;
 
         String skillName = prereq.substring(0,i).trim();
-        int minRanks = 0;
+        int minRanks;
         try {
             minRanks = Integer.parseInt(prereq.substring(i).trim());
         } catch(NumberFormatException e){
@@ -480,22 +504,18 @@ public class Feats {
             String subSkill = skillName.substring(skillName.indexOf("(") + 1, skillName.length() - 1).trim();
             skillName = skillName.substring(0,skillName.indexOf("(")).trim();
 
-            if(SkillUtils.characterHasSkill(SkillUtils.getSkillEnum(skillName), subSkill, me) && SkillUtils.getSkill(SkillUtils.getSkillEnum(skillName),me,subSkill).getnRanks() >= minRanks) return true;
-
-            return false;
+            return SkillUtils.characterHasSkill(SkillUtils.getSkillEnum(skillName), subSkill, me)
+                    && SkillUtils.getSkill(SkillUtils.getSkillEnum(skillName), me, subSkill).getnRanks() >= minRanks;
         }
 
         if(skillName.charAt(0) == '@'){
             skillName = skillName.substring(1).trim();
 
-            if(SkillUtils.maxRanksIn(SkillUtils.getSkillEnum(skillName), me) >= minRanks) return true;
-
-            return false;
+            return SkillUtils.maxRanksIn(SkillUtils.getSkillEnum(skillName), me) >= minRanks;
         }
 
-        if(SkillUtils.characterHasSkill(SkillUtils.getSkillEnum(skillName), me) && SkillUtils.getSkill(SkillUtils.getSkillEnum(skillName),me).getnRanks() >= minRanks) return true;
-
-        return false;
+        return SkillUtils.characterHasSkill(SkillUtils.getSkillEnum(skillName), me)
+                && SkillUtils.getSkill(SkillUtils.getSkillEnum(skillName), me).getnRanks() >= minRanks;
     }
 
     //Returns true very often, as the general prereqs aren't in a format that can be parsed as easily. Could modify this to greater complexity, or modify database. Would have to constantly update database with updates from website, though.
@@ -503,12 +523,10 @@ public class Feats {
 
         prereq = prereq.trim().toLowerCase();
 
-
         //Issue with prereqs like "Con, Dex, or Wis 13" - this just gets "Con", then "Dex", then "Wis 13". Since it doesn't understand the first two, it always returns true
         for(AbilityScoreEnum ability : AbilityScoreEnum.values()){
             if(prereq.length() > 3 && ability.getShortName().equalsIgnoreCase(prereq.substring(0,3))){
-                if(me.abilities.get(ability) >= getNumberFromString(prereq.substring(3))) return true;
-                return false;
+                return me.abilities.get(ability) >= getNumberFromString(prereq.substring(3));
             }
         }
 
@@ -532,7 +550,6 @@ public class Feats {
         return true;
     }
 
-
     //Generic parsing tools.
 
     private static String[] fixParenthesisIssues(String[] parts, String seperatedBy){
@@ -541,17 +558,15 @@ public class Feats {
                 for(int j = i + 1; j < parts.length; j++){
                     if(netCloses(parts[j])){
                         String[] partiallyFixed = new String[parts.length - (j - i)];
-                        for(int k = 0; k < i; k++){
-                            partiallyFixed[k] = parts[k];
-                        }
+                        System.arraycopy(parts, 0, partiallyFixed, 0, i);
                         partiallyFixed[i] = "";
+
                         for(int k = i; k <= j; k++){
                             partiallyFixed[i] += parts[k] + seperatedBy;
                         }
+
                         partiallyFixed[i] = partiallyFixed[i].substring(0,partiallyFixed[i].length() - seperatedBy.length());
-                        for(int k = j + 1; k < parts.length; k++){
-                            partiallyFixed[k - (j - i)] = parts[k];
-                        }
+                        System.arraycopy(parts, j + 1, partiallyFixed, j + 1 - (j - i), parts.length - (j + 1));
                         return fixParenthesisIssues(partiallyFixed, seperatedBy);
                     }
                 }
@@ -595,11 +610,11 @@ public class Feats {
 
                     if((parts[0].length() - parts[0].replace("\"", "").length())%2 == 1){
                         String newParts[] = new String[parts.length - (j - i)];
-                        for(int k = 0; k < i; k++) newParts[k] = parts[k];
+                        System.arraycopy(parts, 0, newParts, 0, i);
                         parts[i] = "";
                         for(int k = i; k <= j; k++) newParts[i] += parts[k] + separatedBy;
                         newParts[i] = newParts[i].substring(0,newParts[i].length() - separatedBy.length());
-                        for(int k = j; k < parts.length; k++) newParts[k - (j - i)] = parts[k];
+                        System.arraycopy(parts, j, newParts, j - (j - i), parts.length - j);
                         return fixQuotationIssues(newParts, separatedBy);
                     }
 

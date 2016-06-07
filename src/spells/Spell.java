@@ -40,7 +40,7 @@ public class Spell implements Serializable{
 	public String shortDescription;
 	public boolean hasAugment;
 	public String augmentText;
-	public HashMap<String, Integer> bloodlineLevels = new HashMap<String, Integer>();
+	public HashMap<String, Integer> bloodlineLevels = new HashMap<>();
 	
 	//This expects the spell's details in the format provided by PathfinderCommunity.net's Spell database.
 	Spell(String detailsLine){

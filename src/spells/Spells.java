@@ -3,9 +3,10 @@ package src.spells;
 import java.util.*;
 import java.io.*;
 import java.net.URL;
+import java.util.stream.Collectors;
+
 import src.Character;
 import src.Pathfinder;
-import src.spells.Spell;
 
 public class Spells implements Comparator<Spell>{
 	public static String[] classTypes = new String[]{"Sorceror","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
@@ -31,15 +32,17 @@ public class Spells implements Comparator<Spell>{
 		return null;
 	}
 	
-	public static ArrayList<Spell> search(Character me, int spellLevelToGet){
-		ArrayList<Spell> spells = new ArrayList<Spell>();
+	public static List<Spell> search(Character me, int spellLevelToGet){
+		ArrayList<Spell> spells = new ArrayList<>();
 		for(Spell spell : getSpells()){
 			if(spell.levelRequirements[Spells.getClassIndex(me.charClass.name)] == spellLevelToGet){
 				boolean alreadyKnown = false;
 				for(Spell knownSpell : me.knownSpells){
-					if(spell.toString().equals(knownSpell.toString())) alreadyKnown = true;
+					if(spell.toString().equals(knownSpell.toString()))
+						alreadyKnown = true;
 				}
-				if(alreadyKnown) continue;
+				if(alreadyKnown)
+					continue;
 				spells.add(spell);
 			}
 		}
@@ -55,8 +58,8 @@ public class Spells implements Comparator<Spell>{
 		return null;
 	}
 	
-	public static ArrayList<Spell> searchByPartialName(String name){
-		ArrayList<Spell> spells = new ArrayList<Spell>();
+	public static List<Spell> searchByPartialName(String name){
+		ArrayList<Spell> spells = new ArrayList<>();
 		name = name.toLowerCase();
 		for(Spell spell : getSpells()){
 			if(spell.name.toLowerCase().contains(name)){
@@ -66,14 +69,12 @@ public class Spells implements Comparator<Spell>{
 		return spells;
 	}
 	
-	public static ArrayList<Spell> searchByBloodline(String bloodline){
-		ArrayList<Spell> spells = new ArrayList<Spell>();
-		for(Spell spell : getSpells()){
-			if(spell.bloodlineLevels.containsKey(bloodline)){
-				spells.add(spell);
-			}
-		}
+	public static List<Spell> searchByBloodline(String bloodline){
+		List<Spell> spells = getSpells().stream().filter(spell -> spell.bloodlineLevels.containsKey(bloodline))
+				.collect(Collectors.toCollection(ArrayList::new));
+
 		Collections.sort(spells, new Spells(bloodline));
+
 		return spells;
 	}
 	
@@ -86,27 +87,36 @@ public class Spells implements Comparator<Spell>{
 		}
 	}
 	
-	public static ArrayList<Spell> getSpells(){
+	public static List<Spell> getSpells(){
 		FileReader fileIn;
-		BufferedReader input;
+		BufferedReader input = null;
 		
 		try{
-			fileIn = new FileReader(getFilePath());
-			input = new BufferedReader(fileIn);
+			File file = getFilePath();
+
+			if (file != null) {
+				fileIn = new FileReader(getFilePath());
+				input = new BufferedReader(fileIn);
+			}
 		}catch(IOException e){
 			Pathfinder.showError("Error: Cannot access spells","The spell file is either not in the location expected, or I don't have permissions to access it.");
-			return null;
+			return Collections.emptyList();
 		}catch(Exception e){
 			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
 			e.printStackTrace();
-			return null;
+			return Collections.emptyList();
 		}
 		
-		ArrayList<Spell> spells = new ArrayList<Spell>();
-		Spell spell = null;
+		List<Spell> spells = new ArrayList<>();
+
+		if (input == null) {
+			return spells;
+		}
+
+		Spell spell;
 		
 		try{
-			String spellInputString = input.readLine();
+			String spellInputString;
 			
 			while((spellInputString = input.readLine()) != null){
 				try{
@@ -121,14 +131,14 @@ public class Spells implements Comparator<Spell>{
 		}catch(Exception e){
 			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nSome valid spells may not be shown.");
 			e.printStackTrace();
-			return null;
+			return Collections.emptyList();
 		}
 		return spells;
 	}
 	
 	public static File getFilePath(){
 		URL url = Spells.class.getResource("Spells.class");
-		File file = null;
+		File file;
 		try{
 			file = new File(url.toURI());
 		}catch(Exception e){
@@ -145,8 +155,10 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public int compare(Spell spell1, Spell spell2){
-		if(spell1.levelRequirements[indexOfClass] > spell2.levelRequirements[indexOfClass]) return -1;
-		else if(spell1.levelRequirements[indexOfClass] < spell2.levelRequirements[indexOfClass]) return 1;
+		if(spell1.levelRequirements[indexOfClass] > spell2.levelRequirements[indexOfClass])
+			return -1;
+		else if(spell1.levelRequirements[indexOfClass] < spell2.levelRequirements[indexOfClass])
+			return 1;
 		return spell1.name.compareTo(spell2.name);
 	}
 	

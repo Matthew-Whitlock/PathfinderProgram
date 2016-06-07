@@ -14,7 +14,7 @@ public class FeatDataGatherer {
     public static void main(String[] args){
         //for(Feat feat : Feats.getFeats()) System.out.println(feat + ": " + feat.prereqsAsString);
 
-        HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<AbilityScoreEnum, Integer>();
+        HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<>();
         for(AbilityScoreEnum ability : AbilityScoreEnum.values()) abilityPoints.put(ability, 10);
         Character me = new Character("Testing", new Dwarf(), new AbyssalBloodline(), abilityPoints);
 
@@ -24,6 +24,7 @@ public class FeatDataGatherer {
         me.currentFeats.add(second);
         me.currentFeats.add(Feats.getFeatByName("Tenacious Spell"));
 
-        for(Feat feat : Feats.getFeats()) if(Feats.characterMeetsAllPrereqs(feat, me)) System.out.println(feat + ": " + feat.prereqsAsString);
+        Feats.getFeats().stream().filter(feat -> Feats.characterMeetsAllPrereqs(feat, me))
+                .forEach(feat -> System.out.println(feat + ": " + feat.prereqsAsString));
     }
 }

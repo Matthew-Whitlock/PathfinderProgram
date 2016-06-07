@@ -9,14 +9,17 @@ import src.stats.SkillEnum;
 import src.Pathfinder;
 import src.stats.SkillUtils;
 
-public class AbyssalBloodline extends Sorceror{
+public class AbyssalBloodline extends Sorcerer{
 	public String[] bonusSpells = new String[]{"","Cause Fear","Bull's Strength","Rage","Stoneskin","Dismissal",
 		"Transformation","Great Teleport","Unholy Aura","Summon Monster"};
+
 	public String[] bonusFeats = new String[]{"Augment Summoning","Cleave","Empower Spell","Great Fortitude",
 		"Improved Bull Rush","Improved Sunder","Power Attack","Skill Focus (Knowledge [planes])"};
+
 	public AbyssalBloodline(){
 		bloodline = "Abyssal";
 	}
+
 	public void levelUpBloodline(Character me){
 		if(me.level == 1){
 			me.notes.add("Whenever you cast a spell of the summoning subschool, the creatures summoned gain DR/good equal to 1/2 your sorcerer level (minimum 1). This does not stack with any DR the creature might have.");

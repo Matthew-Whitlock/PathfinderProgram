@@ -3,9 +3,7 @@ package src;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.filechooser.*;
-import java.io.*;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import src.spells.Spell;
 import src.feats.Feat;
@@ -86,13 +84,13 @@ public class Pathfinder{
 		//Put something here too. Just like the spell version.
 	}
 	
-	public static Spell chooseSpellFromList(ArrayList<Spell> spellChoices, String title){
+	public static Spell chooseSpellFromList(List<Spell> spellChoices, String title){
 		String[] choices = new String[spellChoices.size()];
 		for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();
 		JFrame spellChooseFrame = new JFrame(title);
 		JPanel panel = new JPanel(new BorderLayout());
 		spellChooseFrame.add(panel);
-		JList<String> list = new JList<String>(choices);
+		JList<String> list = new JList<>(choices);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		
 		list.addMouseListener(new MouseAdapter() {
@@ -108,13 +106,12 @@ public class Pathfinder{
 		JScrollPane scrollList = new JScrollPane(list);
 		panel.add(scrollList,BorderLayout.CENTER);
 		JButton choose = new JButton("Learn selected spell");
-		choose.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				if(list.getSelectedIndex() > -1){
-					index = list.getSelectedIndex();
-					indexSet.set(true);
-				}
-			}});
+		choose.addActionListener(e -> {
+            if(list.getSelectedIndex() > -1){
+                index = list.getSelectedIndex();
+                indexSet.set(true);
+            }
+        });
 		panel.add(choose, BorderLayout.SOUTH);
 		
 		spellChooseFrame.setSize(300, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*15) : 600));
@@ -126,7 +123,7 @@ public class Pathfinder{
 		return spellChoices.get(index);
 	}
 	
-	public static Feat chooseFeatFromList(ArrayList<Feat> featChoices){
+	public static Feat chooseFeatFromList(List<Feat> featChoices){
 		return null; //Implement
 	}
 	

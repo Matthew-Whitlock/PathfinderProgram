@@ -163,7 +163,7 @@ public class CharacterDisplay extends JPanel{
 		
 		levelUp = new JButton("Level up!");
 		levelUp.addActionListener(e -> {
-			new Thread(() -> me.levelUp()).start();
+			new Thread(me::levelUp).start();
 			repaint();
 		});
 		c.gridy = 13;
@@ -427,7 +427,7 @@ public class CharacterDisplay extends JPanel{
 	}
 	
 	private class SkillBox extends JPanel{
-		private ArrayList<JTextField> fields = new ArrayList<JTextField>();
+		private ArrayList<JTextField> fields = new ArrayList<>();
 		public SkillBox(){
 			setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
@@ -531,9 +531,11 @@ public class CharacterDisplay extends JPanel{
 			}
 			updateTextFields();
 		}
+
 		public void updateTextFields(){
 			for(JTextField field : fields) field.setText("Filler for override");
 		}
+
 		public void addNewSkill(){
 			//Setup system for adding skill subtypes.
 		}
@@ -606,7 +608,7 @@ public class CharacterDisplay extends JPanel{
 			setLayout(new GridBagLayout());
 			String[] model = new String[me.currentFeats.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.currentFeats.get(i).toString();
-			listContainer = new JList<String>(model);
+			listContainer = new JList<>(model);
 			removalButton.addActionListener(e -> remove(listContainer.getSelectedIndices()));
 			listScroll = new JScrollPane(listContainer);
 			GridBagConstraints c = new GridBagConstraints();
@@ -850,7 +852,7 @@ public class CharacterDisplay extends JPanel{
 			setLayout(new GridBagLayout());
 			String[] model = new String[me.knownSpells.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.knownSpells.get(i).toString();
-			listContainer = new JList<String>(model);
+			listContainer = new JList<>(model);
 			
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
@@ -873,12 +875,10 @@ public class CharacterDisplay extends JPanel{
 			c.gridy = 0;
 			c.weightx = 1;
 			add(forceNewSpells, c);
-			forceNewSpells.addActionListener(e -> {
-				new Thread(() -> {
-					me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell to add"));
-					repaint();
-					}).start();
-			});
+			forceNewSpells.addActionListener(e -> new Thread(() -> {
+                me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell to add"));
+                repaint();
+                }).start());
 			c.gridx = 1;
 			add(getSpellDetails, c);
 			c.gridx = 0;
