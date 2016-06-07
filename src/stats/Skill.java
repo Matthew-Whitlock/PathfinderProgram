@@ -1,5 +1,7 @@
 package src.stats;
 
+import src.Character;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,28 +9,41 @@ import java.util.Set;
  * @author VestOfHolding
  * @since 6/2/2016.
  */
-public class Skill {
-    //The enum information behind this skill
-    private SkillEnum skillEnum;
-
-    private boolean isClassSkill;
-
-    private int nRanks;
-
-    private int miscMod;
-
-    private String subType;
-
-    public Skill(SkillEnum skillEnum) {
+public class Skill{
+	
+	public final SkillEnum skillEnum;
+	private boolean isClassSkill = false;
+	private int nRanks = 0;
+	private int miscMod = 0;
+	private String subType = null;
+	private Character me;
+	
+	public Skill(Character me, SkillEnum skillEnum) {
+		this.me = me;
         this.skillEnum = skillEnum;
     }
 
-    public Skill(SkillEnum skillEnum, boolean isClassSkill) {
+    public Skill(Character me, SkillEnum skillEnum, boolean isClassSkill) {
+		this.me = me;
         this.skillEnum = skillEnum;
         this.isClassSkill = isClassSkill;
     }
+	
+	public Skill(Character me, SkillEnum skillEnum, String subType){
+		this.me = me;
+		this.skillEnum = skillEnum;
+		this.subType = subType;
+	}
+	
+	public Skill(Character me, SkillEnum skillEnum, boolean isClassSkill, String subType){
+		this.me = me;
+		this.skillEnum = skillEnum;
+        this.isClassSkill = isClassSkill;
+		this.subType = subType;
+	}
 
-    public Skill(SkillEnum skillEnum, boolean isClassSkill, int nRanks, int miscMod, String subType) {
+    public Skill(Character me, SkillEnum skillEnum, boolean isClassSkill, int nRanks, int miscMod, String subType) {
+		this.me = me;
         this.skillEnum = skillEnum;
         this.isClassSkill = isClassSkill;
         this.nRanks = nRanks;
@@ -62,6 +77,10 @@ public class Skill {
         this.miscMod = miscMod;
     }
 
+    public boolean hasSubType() {
+        return subType != null;
+    }
+
     public String getSubType() {
         return subType;
     }
@@ -73,20 +92,24 @@ public class Skill {
     //Getters for the information inside the enum
 
     public String getName() {
-        return skillEnum.getFullName();
+        return skillEnum.toString();
     }
 
     public boolean canBeUntrained() {
-        return skillEnum.canBeUntrained();
+        return skillEnum.isUntrained();
     }
 
     public boolean doesACPApply() {
-        return skillEnum.isDoesACPApply();
+        return skillEnum.doesACPApply();
     }
 
     public AbilityScoreEnum getKeyAbility() {
         return skillEnum.getKeyAbility();
     }
+	
+	public String getURL(){
+		return skillEnum.getURL();
+	}
 
     //Other methods
 
@@ -103,12 +126,10 @@ public class Skill {
             result += 3;
         }
 
-        result += nRanks + miscMod;
+        result += nRanks + miscMod + me.getAbilityMod(getKeyAbility());
 
-        //Add the appropriate modifier
-
-        //Check that ACP applies to this skill and subtract if necessary
-
+        if(doesACPApply()) result += me.getACPen();
+		
         return result;
     }
 
@@ -116,4 +137,5 @@ public class Skill {
     public String toString() {
         return getName() + (subType != null ? " (" + subType + ")" : "");
     }
+	
 }

@@ -2,28 +2,37 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
+import src.feats.Feats;
+import src.stats.Skill;
 import src.spells.Spells;
+import src.stats.AbilityScoreEnum;
 import src.stats.SkillEnum;
+import src.stats.SkillUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public abstract class Sorcerer extends CharacterClass implements Serializable{
+public abstract class Sorceror extends CharacterClass implements Serializable{
 	public String bloodline;
 	
-	public Sorcerer() {
-		//TODO: Fill in the rest
-		classSkills.addAll(Arrays.asList(SkillEnum.APPRAISE, SkillEnum.BLUFF, SkillEnum.CRAFT));
-
-		name = "Sorcerer";
+	public Sorceror(){
+		name = "Sorceror";
 		hitDiePerLevel = "1d6";
+		isCaster = true;
 	}
 	
 	public void levelUp(Character me){
 		me.spellsPerDay = getSpellsPerDay(me);
 		if(me.level == 1){
-			//me.currentFeats.add(new EschewMaterials()); Add the feat once they're set up.
+			if(Feats.getFeatByName("Eschew Materials") != null) {
+				me.currentFeats.add(Feats.getFeatByName("Eschew Materials"));
+			}
+
+			Skill[] classSkills = new Skill[]{new Skill(me,SkillEnum.APPRAISE),new Skill(me,SkillEnum.BLUFF), new Skill(me,SkillEnum.FLY),
+					new Skill(me,SkillEnum.INTIMIDATE), new Skill(me,SkillEnum.KNOWLEDGE, "Arcana"), new Skill(me,SkillEnum.SPELLCRAFT),
+					new Skill(me,SkillEnum.USE_MAGIC_DEVICE)};
+
+			SkillUtils.applyClassSkills(classSkills, me);
 		}
 		levelUpBloodline(me);
 		learnNewSpells(me);
@@ -37,7 +46,7 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 			{6,6,6,6,6,6,6,6,4},{6,6,6,6,6,6,6,6,6}};
 			
 		ArrayList<Integer> bonusSpells = new ArrayList<Integer>();
-		for(int i = 0; i < (me.cha - 10)/2; i++){
+		for(int i = 0; i < (me.abilities.get(AbilityScoreEnum.CHA) - 10)/2; i++){
 			bonusSpells.add(0, i/4);
 		}
 		
@@ -55,17 +64,17 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 			{0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1}};
 		for(int spellLevel = 0; spellLevel < newSpellsByLevel[me.level].length; spellLevel++){
 			for(int i = 0; i < newSpellsByLevel[me.level][spellLevel]; i++){
-				me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(me,spellLevel),i+1,newSpellsByLevel[me.level][spellLevel],spellLevel));
+				me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(me,spellLevel),"Spell "+ (i + 1) + " of " + newSpellsByLevel[me.level][spellLevel] + " level " + spellLevel + " spells"));
 			}
 		}
 	}
 	
 	public String getClassSkillsAsString(){
-		return "Temporary - fix this at getClassSkillsAsString() within Sorcerer class file";
+		return "Temporary - fix this at getClassSkillsAsString() within Sorceror class file";
 	}
 	
 	public int skillRanksAvailable(Character me){
-		return 2 + (me.intel - 10)/2;
+		return 2 + (me.abilities.get(AbilityScoreEnum.INT) - 10)/2;
 	}
 	
 	public abstract void levelUpBloodline(Character me);

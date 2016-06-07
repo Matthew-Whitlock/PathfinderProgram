@@ -90,7 +90,7 @@ public class Spell implements Serializable{
 		if(hasSavingThrow) savingThrow = details[15];
 		hasSpellResistance = !(details[16].equals("") || details[16].equals("no"));
 		if(hasSpellResistance) spellResistance = details[16];
-		formattedDescription = details[18];
+		formattedDescription = details[20];
 		source = details[19];
 		deity = details[41];
 		try{

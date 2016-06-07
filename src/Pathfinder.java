@@ -86,15 +86,25 @@ public class Pathfinder{
 		//Put something here too. Just like the spell version.
 	}
 	
-	public static Spell chooseSpellFromList(ArrayList<Spell> spellChoices, int numberOfSpellCurrentlyChoosing, int totalSpellsOfThisLevelToChoose, int levelOfSpells){
+	public static Spell chooseSpellFromList(ArrayList<Spell> spellChoices, String title){
 		String[] choices = new String[spellChoices.size()];
-		for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();;
-		Spell spell = null;
-		JDialog spellChooseFrame = new JDialog((JDialog)null,"Spell "+ numberOfSpellCurrentlyChoosing + " of " + totalSpellsOfThisLevelToChoose + " level " + levelOfSpells + " spells");
+		for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();
+		JFrame spellChooseFrame = new JFrame(title);
 		JPanel panel = new JPanel(new BorderLayout());
 		spellChooseFrame.add(panel);
 		JList<String> list = new JList<String>(choices);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		
+		list.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				JList list = (JList)evt.getSource();
+				if (evt.getClickCount() > 1) {
+					int index = list.locationToIndex(evt.getPoint());
+					showSpellDetails(spellChoices.get(index));
+				}
+			}
+		});
+		
 		JScrollPane scrollList = new JScrollPane(list);
 		panel.add(scrollList,BorderLayout.CENTER);
 		JButton choose = new JButton("Learn selected spell");
@@ -107,9 +117,7 @@ public class Pathfinder{
 			}});
 		panel.add(choose, BorderLayout.SOUTH);
 		
-		spellChooseFrame.setSize(300, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*10) : 600));
-		//frame.setEnabled(false);
-		spellChooseFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		spellChooseFrame.setSize(300, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*15) : 600));
 		spellChooseFrame.setVisible(true);
 		
 		while(!indexSet.get()){}
@@ -120,5 +128,52 @@ public class Pathfinder{
 	
 	public static Feat chooseFeatFromList(ArrayList<Feat> featChoices){
 		return null; //Implement
+	}
+	
+	public static void showSpellDetails(Spell spell){
+		JFrame detailsFrame = new JFrame(spell.name);
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + spell.formattedDescription + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
+
+	public static void showFeatDetails(Feat feat){
+		JFrame detailsFrame = new JFrame(feat.name);
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
+	
+	
+	//Needs work, doesn't display Skill details webpage properly. Doesn't scroll properly, either.
+	public static void showWebPage(String url){
+		JFrame pageFrame = new JFrame(url);
+		try{
+			JPanel topPanel = new JPanel();
+			JEditorPane display = new JEditorPane(url);
+			display.setEditable(false);
+			JScrollPane scrollPane = new JScrollPane(display);
+			pageFrame.add(topPanel);
+			topPanel.add(scrollPane);
+			pageFrame.setSize(800,800);
+			pageFrame.setVisible(true);
+			pageFrame.repaint();
+		} catch(Exception e){
+			showError("Could not load page","Run this in command for more details");
+			e.printStackTrace();
+			pageFrame.dispose();
+		}
 	}
 }
