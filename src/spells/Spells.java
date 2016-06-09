@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import src.Character;
 import src.Pathfinder;
+import src.classes.CharacterClass;
 
 public class Spells implements Comparator<Spell>{
 	public static String[] classTypes = new String[]{"Sorceror","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
@@ -32,12 +33,12 @@ public class Spells implements Comparator<Spell>{
 		return null;
 	}
 	
-	public static List<Spell> search(Character me, int spellLevelToGet){
+	public static List<Spell> search(CharacterClass charClass, int spellLevelToGet){
 		ArrayList<Spell> spells = new ArrayList<>();
 		for(Spell spell : getSpells()){
-			if(spell.levelRequirements[Spells.getClassIndex(me.charClass.name)] == spellLevelToGet){
+			if(spell.levelRequirements[Spells.getClassIndex(charClass.name)] == spellLevelToGet){
 				boolean alreadyKnown = false;
-				for(Spell knownSpell : me.knownSpells){
+				for(Spell knownSpell : charClass.knownSpells){
 					if(spell.toString().equals(knownSpell.toString()))
 						alreadyKnown = true;
 				}
@@ -116,7 +117,7 @@ public class Spells implements Comparator<Spell>{
 		Spell spell;
 		
 		try{
-			String spellInputString;
+			String spellInputString = input.readLine();
 			
 			while((spellInputString = input.readLine()) != null){
 				try{

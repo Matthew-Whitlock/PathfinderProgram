@@ -17,7 +17,7 @@ public enum SkillEnum{
 	HANDLE_ANIMAL(false,AbilityScoreEnum.CHA,"Handle Animal","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-handle-animal"),
 	HEAL(true,AbilityScoreEnum.WIS,"Heal","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-heal"),
 	INTIMIDATE(true,AbilityScoreEnum.CHA,"Intimidate","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-intimidate"),
-	KNOWLEDGE(false,AbilityScoreEnum.INT,"Knowledge (Arcana)","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-knowledge"),
+	KNOWLEDGE(false,AbilityScoreEnum.INT,"Knowledge","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-knowledge"),
 	LINQUISTICS(false,AbilityScoreEnum.INT,"Linguistics","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-linguistics"),
 	PERCEPTION(true,AbilityScoreEnum.WIS,"Perception","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-perception"),
 	PERFORM(true,AbilityScoreEnum.CHA,"Perform","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-perform"),

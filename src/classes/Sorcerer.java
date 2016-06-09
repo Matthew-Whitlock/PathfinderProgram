@@ -13,17 +13,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public abstract class Sorcerer extends CharacterClass implements Serializable{
-	public String bloodline;
 	
-	public Sorcerer(){
+	public Sorcerer(Character me) {
+		super(me);
 		name = "Sorcerer";
 		hitDiePerLevel = "1d6";
 		isCaster = true;
 	}
 	
-	public void levelUp(Character me){
-		me.spellsPerDay = getSpellsPerDay(me);
-		if(me.level == 1){
+	public void levelUp(){
+		level++;
+		if(level == 1){
 			if(Feats.getFeatByName("Eschew Materials") != null) {
 				me.currentFeats.add(Feats.getFeatByName("Eschew Materials"));
 			}
@@ -34,11 +34,11 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 
 			SkillUtils.applyClassSkills(classSkills, me);
 		}
-		levelUpBloodline(me);
-		learnNewSpells(me);
+		levelUpBloodline();
+		learnNewSpells();
 	}
 	
-	public int[] getSpellsPerDay(Character me){
+	public int[] getSpellsPerDay(){
 		int[][] defaultSpellsPerDayByLevel = new int[][]{{0,0,0,0,0,0,0,0,0},{3,0,0,0,0,0,0,0,0},{4,0,0,0,0,0,0,0,0},{5,0,0,0,0,0,0,0,0},
 			{6,3,0,0,0,0,0,0,0},{6,4,0,0,0,0,0,0,0},{6,5,3,0,0,0,0,0,0},{6,6,4,0,0,0,0,0,0},{6,6,5,3,0,0,0,0,0},
 			{6,6,6,4,0,0,0,0,0},{6,6,6,5,3,0,0,0,0},{6,6,6,6,4,0,0,0,0},{6,6,6,6,5,3,0,0,0},{6,6,6,6,6,4,0,0,0},
@@ -50,7 +50,7 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 			bonusSpells.add(0, i/4);
 		}
 		
-		int[] toReturn = defaultSpellsPerDayByLevel[me.level < 20 ? me.level : 20];
+		int[] toReturn = defaultSpellsPerDayByLevel[level < 20 ? level : 20];
 		for(int i = 0; i < bonusSpells.size() && 1 < defaultSpellsPerDayByLevel.length; i++){
 			toReturn[i] += bonusSpells.get(i);
 		}
@@ -58,28 +58,46 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 		return toReturn;
 	}
 	
-	public void learnNewSpells(Character me){
-		int[][] newSpellsByLevel = new int[][]{{0},{4,2},{1},{0,1},{1,0,1},{0,1,1},{1,0,0,1},{0,1,1,1},{1,0,0,0,1},{0,0,1,1,1},//9 before this.
-			{1,0,0,0,0,1},{0,0,1,1,1,1},{0,0,0,0,0,0,1},{0,0,0,0,1,1,1},{0,0,0,0,0,0,0,1},{0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,1},//16
+	public void learnNewSpells(){
+		int[][] newSpellsByLevel = new int[][]{{0},{4,2},{1},{0,1},{1,0,1},{0,1,1},{1,0,0,1},{0,1,1,1},{1,0,0,0,1},{0,0,1,1,1},
+			{1,0,0,0,0,1},{0,0,1,1,1,1},{0,0,0,0,0,0,1},{0,0,0,0,1,1,1},{0,0,0,0,0,0,0,1},{0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,1},
 			{0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1}};
-		for(int spellLevel = 0; spellLevel < newSpellsByLevel[me.level].length; spellLevel++){
-			for(int i = 0; i < newSpellsByLevel[me.level][spellLevel]; i++){
-				me.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(me,spellLevel),"Spell "+ (i + 1) + " of " + newSpellsByLevel[me.level][spellLevel] + " level " + spellLevel + " spells"));
+		for(int spellLevel = 0; spellLevel < newSpellsByLevel[level].length; spellLevel++){
+			if(spellLevel > me.getAbilityMod(AbilityScoreEnum.CHA)) break;
+			for(int i = 0; i < newSpellsByLevel[level][spellLevel]; i++){
+				knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(this,spellLevel),"Spell "+ (i + 1) + " of " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells"));
 			}
 		}
 	}
 	
-	public String getClassSkillsAsString(){
-		return "Temporary - fix this at getClassSkillsAsString() within Sorceror class file";
-	}
-	
-	public int skillRanksAvailable(Character me){
+	public int skillRanksAvailable(){
 		return 2 + (me.abilities.get(AbilityScoreEnum.INT) - 10)/2;
 	}
 	
-	public abstract void levelUpBloodline(Character me);
+	public abstract void levelUpBloodline();
 	
 	public String toString(){
 		return bloodline + " " + name;
+	}
+
+	public int[] getBAB(){
+		int[][] bab = new int[][]{{0},{1},{1},{2},{2},{3},{3},{4},{4},{5},{5},{6,1},{6,1},{7,2},{7,2},{8,3},{8,3},{9,4},{9,4},{10,5}};
+		return bab[level];
+	}
+
+	public int getBaseFortSave(){
+		return (level - 1)/2;
+	}
+
+	public int getBaseRefSave(){
+		return (level - 1)/2;
+	}
+
+	public int getBaseWillSave(){
+		return (level/2)+2;
+	}
+
+	public AbilityScoreEnum getSpellSkillEnumChecker(){
+		return AbilityScoreEnum.CHA;
 	}
 }

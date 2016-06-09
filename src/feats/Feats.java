@@ -354,56 +354,6 @@ public class Feats {
         toCheck = toCheck.substring(toCheck.indexOf("(") + 1, toCheck.lastIndexOf(")"));
 
         return characterHasFeatSubTypes(toCheck, baseFeat, me);
-
-        /*if(toCheck.contains(", ")){
-            String[] parts = fixParenthesisIssues(toCheck.split(", "), ", ");
-            if(parts.length > 1){
-                if(parts[parts.length - 1].substring(0,3).equals("or ")){
-                    for(String preReq : parts) if(characterHasFeatSubTypes(toCheck, baseFeat, me)) return true;
-                    return false;
-                }
-                for(String preReq : parts) if(!characterHasFeatSubTypes(toCheck,baseFeat, me)) return false;
-                return true;
-            }
-
-            if(parts[0].charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')'){
-                String inside = parts[0].substring(1,parts[0].length() - 1);
-                if(!(netOpens(inside) || netCloses(inside)))
-                    return characterHasFeatSubTypes(parts[0].substring(1,parts[0].length() - 1), baseFeat,  me);
-            }
-        }
-
-        if(toCheck.contains("|")){
-            String[] parts = fixParenthesisIssues(toCheck.split("\\|"),"|");
-
-            if(parts.length > 1){
-                for(String preReq : parts) if(characterHasFeatSubTypes(preReq, baseFeat, me)) return true;
-                return false;
-            }
-
-            if(parts[0].charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')'){
-                String inside = parts[0].substring(1,parts[0].length() - 1);
-                if(!(netOpens(inside) || netCloses(inside)))
-                    return characterHasFeatSubTypes(parts[0].substring(1,parts[0].length() - 1), baseFeat,  me);
-            }
-        }
-
-        if(toCheck.contains(" or ")) {
-            String[] parts = fixParenthesisIssues(toCheck.split(" or "), " or ");
-
-            if(parts.length > 1){
-                for(String preReq : parts) if(characterHasFeatSubTypes(preReq, baseFeat, me)) return true;
-                return false;
-            }
-
-            if(parts[0].charAt(0) == '(' && parts[0].trim().charAt(parts[0].trim().length() - 1) == ')'){
-                String inside = parts[0].substring(1,parts[0].length() - 1);
-                if(!(netOpens(inside) || netCloses(inside)))
-                    return characterHasFeatSubTypes(parts[0].substring(1,parts[0].length() - 1), baseFeat,  me);
-            }
-        }
-
-        return characterHasFeat(baseFeat + " (" + toCheck + ")", me);*/
     }
 
     private static boolean characterHasFeatSubTypes(String toCheck, String baseFeat, Character me){
@@ -543,7 +493,7 @@ public class Feats {
         }
 
         if(prereq.contains("base attack bonus +")){
-            return me.getBAB() >= Integer.parseInt(prereq.substring("base attack bonus +".length()));
+            return me.getBAB()[0] >= Integer.parseInt(prereq.substring("base attack bonus +".length()));
         }
 
         //Guarantee that if the prereq is not understood, assume it is met.

@@ -5,6 +5,12 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import src.spells.Spell;
 import src.feats.Feat;
 
@@ -123,8 +129,43 @@ public class Pathfinder{
 		return spellChoices.get(index);
 	}
 	
-	public static Feat chooseFeatFromList(List<Feat> featChoices){
-		return null; //Implement
+	public static Feat chooseFeatFromList(List<Feat> featChoices, String title){
+		String[] choices = new String[featChoices.size()];
+		for(int i = 0; i < choices.length; i++) choices[i] = featChoices.get(i).toString();
+		JFrame spellChooseFrame = new JFrame(title);
+		JPanel panel = new JPanel(new BorderLayout());
+		spellChooseFrame.add(panel);
+		JList<String> list = new JList<>(choices);
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		list.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				JList list = (JList)evt.getSource();
+				if (evt.getClickCount() > 1) {
+					int index = list.locationToIndex(evt.getPoint());
+					showFeatDetails(featChoices.get(index));
+				}
+			}
+		});
+
+		JScrollPane scrollList = new JScrollPane(list);
+		panel.add(scrollList,BorderLayout.CENTER);
+		JButton choose = new JButton("Learn selected spell");
+		choose.addActionListener(e -> {
+			if(list.getSelectedIndex() > -1){
+				index = list.getSelectedIndex();
+				indexSet.set(true);
+			}
+		});
+		panel.add(choose, BorderLayout.SOUTH);
+
+		spellChooseFrame.setSize(300, ((60+featChoices.size()*20) < 600 ? (20+featChoices.size()*15) : 600));
+		spellChooseFrame.setVisible(true);
+
+		while(!indexSet.get()){}
+		indexSet.set(false);
+		spellChooseFrame.dispose();
+		return featChoices.get(index);
 	}
 	
 	public static void showSpellDetails(Spell spell){
@@ -154,16 +195,21 @@ public class Pathfinder{
 	}
 	
 	
-	//Needs work, doesn't display Skill details webpage properly. Doesn't scroll properly, either.
-	public static void showWebPage(String url){
-		JFrame pageFrame = new JFrame(url);
+	public static void showWebPage(String url, String title){
+		JFrame pageFrame = new JFrame(title);
 		try{
-			JPanel topPanel = new JPanel();
-			JEditorPane display = new JEditorPane(url);
-			display.setEditable(false);
-			JScrollPane scrollPane = new JScrollPane(display);
-			pageFrame.add(topPanel);
-			topPanel.add(scrollPane);
+			JFXPanel topPanel = new JFXPanel();
+
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					WebView browser = new WebView();
+					WebEngine webEngine = browser.getEngine();
+					webEngine.load(url);
+					pageFrame.add(topPanel);
+					topPanel.setScene(new Scene(browser));
+				}
+			});
 			pageFrame.setSize(800,800);
 			pageFrame.setVisible(true);
 			pageFrame.repaint();

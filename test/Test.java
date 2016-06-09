@@ -4,6 +4,8 @@ import src.classes.AbyssalBloodline;
 import src.races.Dwarf;
 import src.*;
 import src.stats.AbilityScoreEnum;
+import src.stats.SkillEnum;
+import src.stats.SkillUtils;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -13,11 +15,11 @@ public class Test{
 		HashMap<AbilityScoreEnum, Integer> abilityPoints = new HashMap<>();
 		for(AbilityScoreEnum ability : AbilityScoreEnum.values()) abilityPoints.put(ability, 10);
 		JFrame frame = new JFrame("Test");
-		frame.add(new CharacterDisplay(new src.Character("Testing", new Dwarf(), new AbyssalBloodline(), abilityPoints)));
-		frame.setSize(700,500);
+		src.Character me = new src.Character("Testing", new Dwarf(), abilityPoints, new String[]{"Sorceror","Wizard"});
+		me.classes.add(new AbyssalBloodline(me));
+		frame.add(new CharacterDisplay(me));
+		frame.setSize(600,500);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		
-		//Pathfinder.showWebPage("http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-craft");
 	}
 }
