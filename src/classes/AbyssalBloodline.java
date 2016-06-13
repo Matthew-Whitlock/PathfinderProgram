@@ -54,7 +54,7 @@ public class AbyssalBloodline extends Sorcerer{
 			if((level - (i * 7))%6 == 0){
 				ArrayList<Feat> bonusFeatsList = new ArrayList<Feat>();
 				for(String s : bonusFeats) bonusFeatsList.add(Feats.getFeatByName(s));
-				me.currentFeats.add(Pathfinder.chooseFeatFromList(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat."));
+				me.currentFeats.addAll(Pathfinder.chooseFeatFromList(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat.", 1));
 			}
 		}
 	}

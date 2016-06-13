@@ -102,6 +102,6 @@ public class Feat implements Serializable{
 
 
 	public String toString(){
-		return name + "(" + type + ")";
+		return name + " (" + type + ")";
 	}
 }

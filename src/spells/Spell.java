@@ -41,6 +41,7 @@ public class Spell implements Serializable{
 	public boolean hasAugment;
 	public String augmentText;
 	public HashMap<String, Integer> bloodlineLevels = new HashMap<>();
+	public String basicDescription;
 	
 	//This expects the spell's details in the format provided by PathfinderCommunity.net's Spell database.
 	Spell(String detailsLine){
@@ -90,8 +91,9 @@ public class Spell implements Serializable{
 		if(hasSavingThrow) savingThrow = details[15];
 		hasSpellResistance = !(details[16].equals("") || details[16].equals("no"));
 		if(hasSpellResistance) spellResistance = details[16];
-		formattedDescription = details[20];
+		basicDescription = details[18];
 		source = details[19];
+		formattedDescription = details[20];
 		deity = details[41];
 		try{
 			slaLevel = details[42].equalsIgnoreCase("NULL") ? -1 : Integer.parseInt(details[42]);

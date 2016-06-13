@@ -58,7 +58,7 @@ public class Character implements Serializable{
 	public Character(String name, Race race, HashMap<AbilityScoreEnum, Integer> abilities, String[] favoredClassNames){
 		this.name = name;
 		this.race = race;
-		notes.addAll(race.notes.stream().collect(Collectors.toList()));
+		miscAbilities.addAll(race.notes.stream().collect(Collectors.toList()));
 		this.abilities = abilities;
 		this.favoredClassNames = favoredClassNames;
 
@@ -70,15 +70,13 @@ public class Character implements Serializable{
 
 		skillsList = SkillUtils.createInitialSkillList(this);
 	}
-	
-	//Eventually refactor this for multiple classes. For now, put as much logic as possible inside individual classes, to minimize changes needed here.
+
 	public void levelUp(CharacterClass charClass){
 		charClass.levelUp();
 
 		String hitDie = charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
 
-		//Skill ranks! int charClass.skillRanksAvailable(this)
 	}
 	
 	public int getAC(){

@@ -60,7 +60,7 @@ public class Feats {
         Feat feat;
 
         try{
-            String spellInputString;
+            String spellInputString = input.readLine();
 
             while((spellInputString = input.readLine()) != null){
                 try{

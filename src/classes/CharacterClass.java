@@ -2,6 +2,7 @@ package src.classes;
 
 import src.Character;
 import src.spells.Spell;
+import src.spells.Spells;
 import src.stats.AbilityScoreEnum;
 import src.stats.SkillEnum;
 
@@ -17,6 +18,8 @@ public abstract class CharacterClass implements Serializable{
 	public int[] spellsCastToday = new int[9];
 	public String bloodline;
 	public Character me;
+
+	public int[] modifiedSpellsPerDay = new int[9];
 
 	public CharacterClass(Character me){
 		this.me = me;
@@ -36,4 +39,17 @@ public abstract class CharacterClass implements Serializable{
 
 	public ArrayList<Spell> knownSpells = new ArrayList<>();
 	public HashMap<Spell, Integer> preppedSpells = new HashMap<>();
+
+	public int getSpellLevel(Spell spell){
+		return Spells.spellLevelFor(name, spell);
+	}
+
+	public int[] getSpellsPerDay(){
+		return new int[]{0,0,0,0,0,0,0,0,0};
+	}
+
+	public void modifySpellsPerDay(int level, int newValue){
+		modifiedSpellsPerDay[level - 1] += newValue - getSpellsPerDay()[level - 1];
+	}
+
 }

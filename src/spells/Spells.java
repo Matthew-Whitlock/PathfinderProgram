@@ -10,7 +10,7 @@ import src.Pathfinder;
 import src.classes.CharacterClass;
 
 public class Spells implements Comparator<Spell>{
-	public static String[] classTypes = new String[]{"Sorceror","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
+	public static String[] classTypes = new String[]{"Sorcerer","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
 		"Witch","Inquisitor","Oracle","AntiPaladin","Magus","Adept","Deity","Bloodrager","Shaman","Psychic","Medium","Mesmerist",
 		"Occultist","Spiritualist","Skald"};
 	public static String[] componentTypes = new String[]{"Verbal", "Somatic", "Material", "Focus", "Divine Focus","Costly Components"};
@@ -79,9 +79,9 @@ public class Spells implements Comparator<Spell>{
 		return spells;
 	}
 	
-	public Spells(String bloodline){
+	public Spells(String className){
 		for(int i = 0; i < classTypes.length; i++){
-			if(classTypes[i].equalsIgnoreCase(bloodline)){
+			if(classTypes[i].equalsIgnoreCase(className)){
 				indexOfClass = i;
 				break;
 			}
@@ -157,9 +157,9 @@ public class Spells implements Comparator<Spell>{
 	
 	public int compare(Spell spell1, Spell spell2){
 		if(spell1.levelRequirements[indexOfClass] > spell2.levelRequirements[indexOfClass])
-			return -1;
-		else if(spell1.levelRequirements[indexOfClass] < spell2.levelRequirements[indexOfClass])
 			return 1;
+		else if(spell1.levelRequirements[indexOfClass] < spell2.levelRequirements[indexOfClass])
+			return -1;
 		return spell1.name.compareTo(spell2.name);
 	}
 	
@@ -169,4 +169,36 @@ public class Spells implements Comparator<Spell>{
 		}
 		return -1;
 	}
+
+	public static boolean spellHasType(String type, Spell spell){
+		int index = -1;
+
+		for(int i = 0; i < spellTypeNames.length; i++){
+			if(spellTypeNames[i].equalsIgnoreCase(type)){
+				index = i;
+				break;
+			}
+		}
+
+		if(index == -1) return false;
+
+		return spell.spellTypes[index];
+	}
+
+	public static int spellLevelFor(String className, Spell spell){
+		int index = -1;
+
+		for(int i = 0; i < classTypes.length; i++){
+			if(classTypes[i].equalsIgnoreCase(className)){
+				index = i;
+				break;
+			}
+		}
+
+		if(index == -1) {
+			return -1;
+		}
+		return spell.levelRequirements[index];
+	}
+
 }

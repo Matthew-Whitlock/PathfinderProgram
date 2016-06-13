@@ -1,18 +1,25 @@
 package src;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 
 import src.classes.CharacterClass;
+import src.feats.Feats;
 import src.spells.*;
 import src.stats.*;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class CharacterDisplay extends JTabbedPane{
 	private Character me;
 	private ArrayList<CharacterClass> currentCasters = new ArrayList<>();
+	private JLabel picture;
+	private String currentlyDisplayedPictureLocation;
 
 	public CharacterDisplay(Character me){
 		this.me = me;
@@ -25,7 +32,27 @@ public class CharacterDisplay extends JTabbedPane{
 		genPan.add(name, c);
 
 		c.fill = GridBagConstraints.BOTH;
-		JLabel picture = new JLabel(new ImageIcon(me.getImageLocation()));
+
+		try {
+			picture = new JLabel(new ImageIcon(ImageIO.read(new File(me.getImageLocation())).getScaledInstance(250,250,Image.SCALE_SMOOTH)));
+			currentlyDisplayedPictureLocation = me.getImageLocation();
+		} catch(IOException e) {
+			picture = new JLabel();
+			Pathfinder.showError("Could not access image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
+			e.printStackTrace();
+			currentlyDisplayedPictureLocation = me.getImageLocation();
+		}
+
+		picture.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount() > 1) {
+					String newFile = Pathfinder.getImageOverrideLocation();
+					if(!newFile.equals("")) me.imageOverrideLocation = newFile;
+					repaint();
+				}
+			}
+		});
 		c.weightx = 0;
 		c.gridy = 1;
 		c.gridwidth = 2;
@@ -124,6 +151,15 @@ public class CharacterDisplay extends JTabbedPane{
 
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
+		if(!currentlyDisplayedPictureLocation.equalsIgnoreCase(me.getImageLocation())) {
+			try {
+				picture.setIcon(new ImageIcon(ImageIO.read(new File(me.getImageLocation())).getScaledInstance(250, 250, Image.SCALE_SMOOTH)));
+			} catch (IOException e) {
+				Pathfinder.showError("Could not acces image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
+				e.printStackTrace();
+			}
+			currentlyDisplayedPictureLocation = me.getImageLocation();
+		}
 
 		for(CharacterClass toCheck : me.classes){
 			if(toCheck.isCaster && !currentCasters.contains(toCheck)){
@@ -165,6 +201,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 			totalHPField = new JTextField();
 			totalHPField.setText(Integer.toString(me.totalHP));
+			totalHPField.addActionListener(e -> me.totalHP = Integer.parseInt(totalHPField.getText()));
 			c.fill = GridBagConstraints.BOTH;
 			c.gridx = 1;
 			c.weightx = 1;
@@ -177,6 +214,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 			c.ipadx = 0;
 			currentHPField = new JTextField(Integer.toString(me.currentHP));
+			currentHPField.addActionListener(e -> me.currentHP = Integer.parseInt(currentHPField.getText()));
 			c.weightx = 1;
 			c.gridx = 1;
 			topPanel.add(currentHPField, c);
@@ -193,6 +231,7 @@ public class CharacterDisplay extends JTabbedPane{
 			topPanel.add(nonlethal, c);
 
 			tempHPField = new JTextField(Integer.toString(me.tempHP));
+			tempHPField.addActionListener(e -> me.tempHP = Integer.parseInt(tempHPField.getText()));
 			c.weightx = 1;
 			c.ipadx = 0;
 			c.gridx = 3;
@@ -200,6 +239,7 @@ public class CharacterDisplay extends JTabbedPane{
 			topPanel.add(tempHPField, c);
 
 			nonlethalField = new JTextField(Integer.toString(me.nonlethalDamage));
+			nonlethalField.addActionListener(e -> me.nonlethalDamage = Integer.parseInt(nonlethalField.getText()));
 			c.gridy = 1;
 			topPanel.add(nonlethalField, c);
 
@@ -273,13 +313,13 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 
 		public void paintComponent(Graphics g){
-			super.paintComponent(g);
 			totalHPField.setText(Integer.toString(me.totalHP));
 			level.setText("Level: " + me.getTotalLevel());
 			currentHPField.setText(Integer.toString(me.currentHP));
 			tempHPField.setText(Integer.toString(me.tempHP));
 			nonlethalField.setText(Integer.toString(me.nonlethalDamage));
 			skillBox.updateTextFields();
+			super.paintComponent(g);
 		}
 
 		public void chooseLevelUp(){
@@ -521,6 +561,7 @@ public class CharacterDisplay extends JTabbedPane{
 			strField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.STR, new Integer(strField.getText()));
 				parent.repaint();
+				repaint();
 			});
 			c.gridy = 1;
 			c.gridx = 1;
@@ -529,6 +570,7 @@ public class CharacterDisplay extends JTabbedPane{
 			dexField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
 			dexField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.DEX, new Integer(dexField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 2;
@@ -537,6 +579,7 @@ public class CharacterDisplay extends JTabbedPane{
 			conField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
 			conField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.CON, new Integer(conField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 3;
@@ -545,6 +588,7 @@ public class CharacterDisplay extends JTabbedPane{
 			intField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
 			intField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.INT, new Integer(intField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 4;
@@ -553,6 +597,7 @@ public class CharacterDisplay extends JTabbedPane{
 			wisField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
 			wisField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.WIS, new Integer(wisField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 5;
@@ -561,6 +606,7 @@ public class CharacterDisplay extends JTabbedPane{
 			chaField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
 			chaField.addActionListener(e -> {
 				me.abilities.put(AbilityScoreEnum.CHA, new Integer(chaField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 6;
@@ -569,6 +615,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempSTRField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.STR)));
 			tempSTRField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.STR, new Integer(tempSTRField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 1;
@@ -578,6 +625,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempDEXField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.DEX)));
 			tempDEXField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.DEX, new Integer(tempDEXField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 2;
@@ -586,6 +634,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempCONField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CON)));
 			tempCONField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.CON, new Integer(tempCONField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 3;
@@ -594,6 +643,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempINTField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.INT)));
 			tempINTField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.INT, new Integer(tempINTField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 4;
@@ -602,6 +652,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempWISField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.WIS)));
 			tempWISField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.WIS, new Integer(tempWISField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 5;
@@ -610,6 +661,7 @@ public class CharacterDisplay extends JTabbedPane{
 			tempCHAField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CHA)));
 			tempCHAField.addActionListener(e -> {
 				me.tempAbilities.put(AbilityScoreEnum.CHA, new Integer(tempCHAField.getText()));
+				repaint();
 				parent.repaint();
 			});
 			c.gridy = 6;
@@ -617,32 +669,38 @@ public class CharacterDisplay extends JTabbedPane{
 
 			strMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.STR)));
 			strMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			strMod.setOpaque(true);
 			c.gridx = 3;
 			c.gridy = 1;
 			add(strMod, c);
 
 			dexMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.DEX)));
 			dexMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			dexMod.setOpaque(true);
 			c.gridy = 2;
 			add(dexMod, c);
 
 			conMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.CON)));
 			conMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			conMod.setOpaque(true);
 			c.gridy = 3;
 			add(conMod, c);
 
 			intMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.INT)));
 			intMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			intMod.setOpaque(true);
 			c.gridy = 4;
 			add(intMod, c);
 
 			wisMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.WIS)));
 			wisMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			wisMod.setOpaque(true);
 			c.gridy = 5;
 			add(wisMod, c);
 
 			chaMod = new JLabel(Integer.toString(me.getAbilityMod(AbilityScoreEnum.CHA)));
 			chaMod.setBorder(BorderFactory.createLineBorder(Color.black));
+			chaMod.setOpaque(true);
 			c.gridy = 6;
 			add(chaMod, c);
 
@@ -709,14 +767,23 @@ public class CharacterDisplay extends JTabbedPane{
 				c.gridx = 0;
 				c.gridwidth = 5;
 				c.weightx = 1;
+				c.ipadx = 0;
 				JLabel effectLabel = new JLabel(effect);
 				effectLabel.setBorder(BorderFactory.createLineBorder(Color.black));
 				insidePanel.add(effectLabel, c);
 
 				c.weightx = 0;
+				c.ipadx = 20;
 				JTextField effectTime = new JTextField(Integer.toString(me.effects.get(effect)));
 				effectTime.addActionListener(e -> {
-					me.effects.put(effect,Integer.parseInt(effectTime.getText()));
+					if(effectTime.getText().equals("0")) {
+						me.effects.remove(effect);
+						insidePanel.removeAll();
+						setupStuff();
+						insidePanel.revalidate();
+						insidePanel.repaint();
+					}
+					 else me.effects.put(effect,Integer.parseInt(effectTime.getText()));
 				});
 				c.gridx = 5;
 				c.gridwidth = 1;
@@ -733,7 +800,6 @@ public class CharacterDisplay extends JTabbedPane{
 			ArrayList<String> toRemove = new ArrayList<String>();
 			for(String effect : me.effects.keySet())
 				if(me.effects.get(effect) == 0) toRemove.add(effect);
-
 
 			for(String effect : toRemove)
 				me.effects.remove(effect);
@@ -1190,6 +1256,11 @@ public class CharacterDisplay extends JTabbedPane{
 			c.weighty = 0;
 			c.gridwidth = 2;
 			add(removalButton, c);
+
+			forceNewFeats.addActionListener(e -> new Thread(() -> {
+				me.currentFeats.addAll(Pathfinder.chooseFeatFromList(Feats.getFeats(), "Choose the feats(s) to add", -1));
+				repaint();
+			}).start());
 		}
 		
 		public void remove(int[] indices){
@@ -1429,8 +1500,21 @@ public class CharacterDisplay extends JTabbedPane{
 			add(preppedBox, c);
 
 			c.gridy = 7;
-			c.gridheight = 3;
+			c.gridheight = 2;
+			c.weighty = 0.01;
+			c.weightx = 1;
 			add(new SpellsCastBox(spellcaster), c);
+
+			JButton rest = new JButton("Reset spells cast today.");
+			c.gridheight = 1;
+			c.weighty = 0;
+			c.gridy = 9;
+			add(rest,c);
+
+			rest.addActionListener(e -> {
+				spellcaster.spellsCastToday = new int[9];
+				repaint();
+			});
 		}
 
 		public void prepareSpells(int[] indices){
@@ -1460,7 +1544,7 @@ public class CharacterDisplay extends JTabbedPane{
 			this.spellcaster = spellcaster;
 			setLayout(new GridBagLayout());
 			String[] model = new String[spellcaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = spellcaster.knownSpells.get(i).toString();
+			for(int i = 0; i < model.length; i++) model[i] = "L" + spellcaster.getSpellLevel(spellcaster.knownSpells.get(i)) + ": " + spellcaster.knownSpells.get(i).name;
 			listContainer = new JList<>(model);
 			
 			listContainer.addMouseListener(new MouseAdapter() {
@@ -1484,10 +1568,12 @@ public class CharacterDisplay extends JTabbedPane{
 			c.gridy = 0;
 			c.weightx = 1;
 			add(forceNewSpells, c);
+
 			forceNewSpells.addActionListener(e -> new Thread(() -> {
-                spellcaster.knownSpells.add(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell to add"));
+                spellcaster.knownSpells.addAll(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell(s) to add", -1));
                 repaint();
-                }).start());
+			}).start());
+
 			c.gridx = 1;
 			add(getSpellDetails, c);
 			c.gridx = 0;
@@ -1510,7 +1596,7 @@ public class CharacterDisplay extends JTabbedPane{
 				spellcaster.knownSpells.remove(indices[i]);
 			}
 			String[] model = new String[spellcaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = spellcaster.knownSpells.get(i).toString();
+			for(int i = 0; i < model.length; i++) model[i] = "L" + spellcaster.getSpellLevel(spellcaster.knownSpells.get(i)) + ": " + spellcaster.knownSpells.get(i).name;
 			listContainer.setListData(model);
 		}
 		
@@ -1527,8 +1613,9 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
+			spellcaster.knownSpells.sort(new Spells(spellcaster.name));
 			String[] model = new String[spellcaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = spellcaster.knownSpells.get(i).toString();
+			for(int i = 0; i < model.length; i++) model[i] = "L" + spellcaster.getSpellLevel(spellcaster.knownSpells.get(i)) + ": " + spellcaster.knownSpells.get(i).name;
 			listContainer.setListData(model);
 		}
 	}
@@ -1575,16 +1662,21 @@ public class CharacterDisplay extends JTabbedPane{
 			GridBagConstraints c = new GridBagConstraints();
 			c.fill = GridBagConstraints.BOTH;
 
+			c.gridy = 0;
 			for(Spell spell : spellcaster.preppedSpells.keySet()){
 				c.weightx = 1;
 				c.gridx = 0;
+				c.ipadx = 0;
 				JLabel spellName = new JLabel(spell.name);
 				innerPanel.add(spellName,c);
 
 				JButton cast = new JButton("Cast Spell");
 				cast.addActionListener(e -> {
-					spellcaster.preppedSpells.put(spell, spellcaster.preppedSpells.get(spell) -1);
+					spellcaster.preppedSpells.put(spell, spellcaster.preppedSpells.get(spell) - 1);
 					if(spellcaster.preppedSpells.get(spell) == 0) spellcaster.preppedSpells.remove(spell);
+					if(spellcaster.getSpellLevel(spell) >= 0)
+						spellcaster.spellsCastToday[spellcaster.getSpellLevel(spell) - 1]++;
+					getParent().repaint();
 					setupPreppedSpells();
 				});
 				c.weightx = 0;
@@ -1593,6 +1685,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 				JTextField prepped = new JTextField(Integer.toString(spellcaster.preppedSpells.get(spell)));
 				prepped.addActionListener(e -> spellcaster.preppedSpells.put(spell, Integer.parseInt(prepped.getText())));
+				c.ipadx = 20;
 				c.gridx = 2;
 				innerPanel.add(prepped, c);
 
@@ -1604,7 +1697,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 	}
 
-	private class SpellsCastBox extends JScrollPane{
+	private class SpellsCastBox extends JPanel{
 		private CharacterClass spellcaster;
 
 		private JTextField levelOne = new JTextField();
@@ -1617,69 +1710,209 @@ public class CharacterDisplay extends JTabbedPane{
 		private JTextField levelEight = new JTextField();
 		private JTextField levelNine = new JTextField();
 
+		private JTextField l1 = new JTextField();
+		private JTextField l2 = new JTextField();
+		private JTextField l3 = new JTextField();
+		private JTextField l4 = new JTextField();
+		private JTextField l5 = new JTextField();
+		private JTextField l6 = new JTextField();
+		private JTextField l7 = new JTextField();
+		private JTextField l8 = new JTextField();
+		private JTextField l9 = new JTextField();
+
 		public SpellsCastBox(CharacterClass spellcaster){
 			this.spellcaster = spellcaster;
-
-			JPanel inner = new JPanel(new GridBagLayout());
-			add(inner);
+			
+			setLayout(new GridBagLayout());
 
 			GridBagConstraints c = new GridBagConstraints();
 
 			c.fill = GridBagConstraints.BOTH;
 
-			c.weighty = 0;
-			c.weightx = 1;
+			c.weightx = 0.1;
+			c.weighty = 1;
+			c.gridy = 0;
 			add(new JLabel("Level One Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Two Spells: "));
+			add(new JLabel("Level Two Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Three Spells: "));
+			add(new JLabel("Level Three Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Four Spells: "));
+			add(new JLabel("Level Four Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Five Spells: "));
+			add(new JLabel("Level Five Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Six Spells: "));
+			add(new JLabel("Level Six Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Seven Spells: "));
+			add(new JLabel("Level Seven Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Eight Spells: "));
+			this.add(new JLabel("Level Eight Spells: "),c);
 			c.gridy++;
-			add(new JLabel("Level Nine Spells: "));
+			this.add(new JLabel("Level Nine Spells: "),c);
 
 			c.gridy = 0;
 			c.gridx = 1;
 			c.weightx = 0.5;
-			add(levelOne, c);
+			this.add(levelOne, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l1, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelTwo, c);
+			this.add(levelTwo, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l2, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelThree, c);
+			this.add(levelThree, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l3, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelFour, c);
+			this.add(levelFour, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l4, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelFive, c);
+			this.add(levelFive, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l5, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelSix, c);
+			this.add(levelSix, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l6, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelSeven, c);
+			this.add(levelSeven, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l7, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelEight, c);
+			this.add(levelEight, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l8, c);
+			c.gridx = 1;
 			c.gridy++;
-			add(levelNine, c);
+			this.add(levelNine, c);
+			c.gridx++;
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.ipadx = 15;
+			this.add(new JLabel("/"),c);
+			c.ipadx = 0;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridx++;
+			this.add(l9, c);
+
+
+			levelOne.addActionListener(e -> spellcaster.spellsCastToday[0] = Integer.parseInt(levelOne.getText()));
+			levelTwo.addActionListener(e -> spellcaster.spellsCastToday[1] = Integer.parseInt(levelTwo.getText()));
+			levelThree.addActionListener(e -> spellcaster.spellsCastToday[2] = Integer.parseInt(levelThree.getText()));
+			levelFour.addActionListener(e -> spellcaster.spellsCastToday[3] = Integer.parseInt(levelFour.getText()));
+			levelFive.addActionListener(e -> spellcaster.spellsCastToday[4] = Integer.parseInt(levelFive.getText()));
+			levelSix.addActionListener(e -> spellcaster.spellsCastToday[5] = Integer.parseInt(levelSix.getText()));
+			levelSeven.addActionListener(e -> spellcaster.spellsCastToday[6] = Integer.parseInt(levelSeven.getText()));
+			levelEight.addActionListener(e -> spellcaster.spellsCastToday[7] = Integer.parseInt(levelEight.getText()));
+			levelNine.addActionListener(e -> spellcaster.spellsCastToday[8] = Integer.parseInt(levelNine.getText()));
+
+			l1.addActionListener(e -> spellcaster.modifySpellsPerDay(1,Integer.parseInt(l1.getText())));
+			l2.addActionListener(e -> spellcaster.modifySpellsPerDay(2,Integer.parseInt(l2.getText())));
+			l3.addActionListener(e -> spellcaster.modifySpellsPerDay(3,Integer.parseInt(l3.getText())));
+			l4.addActionListener(e -> spellcaster.modifySpellsPerDay(4,Integer.parseInt(l4.getText())));
+			l5.addActionListener(e -> spellcaster.modifySpellsPerDay(5,Integer.parseInt(l5.getText())));
+			l6.addActionListener(e -> spellcaster.modifySpellsPerDay(6,Integer.parseInt(l6.getText())));
+			l7.addActionListener(e -> spellcaster.modifySpellsPerDay(7,Integer.parseInt(l7.getText())));
+			l8.addActionListener(e -> spellcaster.modifySpellsPerDay(8,Integer.parseInt(l8.getText())));
+			l9.addActionListener(e -> spellcaster.modifySpellsPerDay(9,Integer.parseInt(l9.getText())));
 		}
 
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
 			levelOne.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelTwo.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelThree.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelFour.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelFive.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelSix.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelSeven.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelEight.setText(Integer.toString(spellcaster.spellsCastToday[0]));
-			levelNine.setText(Integer.toString(spellcaster.spellsCastToday[0]));
+			levelTwo.setText(Integer.toString(spellcaster.spellsCastToday[1]));
+			levelThree.setText(Integer.toString(spellcaster.spellsCastToday[2]));
+			levelFour.setText(Integer.toString(spellcaster.spellsCastToday[3]));
+			levelFive.setText(Integer.toString(spellcaster.spellsCastToday[4]));
+			levelSix.setText(Integer.toString(spellcaster.spellsCastToday[5]));
+			levelSeven.setText(Integer.toString(spellcaster.spellsCastToday[6]));
+			levelEight.setText(Integer.toString(spellcaster.spellsCastToday[7]));
+			levelNine.setText(Integer.toString(spellcaster.spellsCastToday[8]));
+
+			l1.setText(Integer.toString(spellcaster.getSpellsPerDay()[0]));
+			l2.setText(Integer.toString(spellcaster.getSpellsPerDay()[1]));
+			l3.setText(Integer.toString(spellcaster.getSpellsPerDay()[2]));
+			l4.setText(Integer.toString(spellcaster.getSpellsPerDay()[3]));
+			l5.setText(Integer.toString(spellcaster.getSpellsPerDay()[4]));
+			l6.setText(Integer.toString(spellcaster.getSpellsPerDay()[5]));
+			l7.setText(Integer.toString(spellcaster.getSpellsPerDay()[6]));
+			l8.setText(Integer.toString(spellcaster.getSpellsPerDay()[7]));
+			l9.setText(Integer.toString(spellcaster.getSpellsPerDay()[8]));
+
 		}
 	}
 

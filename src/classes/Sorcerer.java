@@ -54,6 +54,9 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 		for(int i = 0; i < bonusSpells.size() && 1 < defaultSpellsPerDayByLevel.length; i++){
 			toReturn[i] += bonusSpells.get(i);
 		}
+		for(int i = 0; i < modifiedSpellsPerDay.length; i++){
+			toReturn[i] += modifiedSpellsPerDay[i];
+		}
 		
 		return toReturn;
 	}
@@ -64,9 +67,8 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 			{0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1}};
 		for(int spellLevel = 0; spellLevel < newSpellsByLevel[level].length; spellLevel++){
 			if(spellLevel > me.getAbilityMod(AbilityScoreEnum.CHA)) break;
-			for(int i = 0; i < newSpellsByLevel[level][spellLevel]; i++){
-				knownSpells.add(Pathfinder.chooseSpellFromList(Spells.search(this,spellLevel),"Spell "+ (i + 1) + " of " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells"));
-			}
+
+			knownSpells.addAll(Pathfinder.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 		}
 	}
 	
@@ -95,9 +97,5 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 
 	public int getBaseWillSave(){
 		return (level/2)+2;
-	}
-
-	public AbilityScoreEnum getSpellSkillEnumChecker(){
-		return AbilityScoreEnum.CHA;
 	}
 }
