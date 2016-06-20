@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import src.Character;
 import src.stats.AbilityScoreEnum;
@@ -60,16 +61,16 @@ public class Feats {
         Feat feat;
 
         try{
-            String spellInputString = input.readLine();
+            String featInputString = input.readLine();
 
-            while((spellInputString = input.readLine()) != null){
+            while((featInputString = input.readLine()) != null){
                 try{
-                    feat = new Feat(spellInputString);
+                    feat = new Feat(featInputString);
                     feats.add(feat);
                 } catch(Exception e){
                     Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
                     e.printStackTrace();
-                    System.out.println(Arrays.asList(spellInputString.split("\t")));
+                    System.out.println(Arrays.asList(featInputString.split("\t")));
                 }
             }
         }catch(Exception e){
@@ -77,6 +78,12 @@ public class Feats {
             e.printStackTrace();
             return Collections.emptyList();
         }
+        return feats;
+    }
+
+    public static List<Feat> getAvailableFeats(Character me){
+        ArrayList<Feat> feats = new ArrayList<>();
+        feats.addAll(getFeats().stream().filter(feat -> characterMeetsAllPrereqs(feat, me)).filter(feat -> !characterHasFeat(feat.toString(), me) || feat.canDoMultiple).collect(Collectors.toList()));
         return feats;
     }
 
@@ -578,7 +585,7 @@ public class Feats {
     }
 
     //Used for getting a number from things like "3rd", which is used in the database.
-    private static int getNumberFromString(String number){
+    public static int getNumberFromString(String number){
         number = number.trim();
         int i = 0;
         while(i < number.length() && java.lang.Character.isDigit(number.charAt(i))) i++;

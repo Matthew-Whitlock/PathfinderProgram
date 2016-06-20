@@ -4,19 +4,24 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import java.io.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import src.classes.CharacterClass;
 import src.spells.Spell;
 import src.feats.Feat;
 import src.spells.Spells;
+import src.items.*;
 
 public class Pathfinder{
 	private static final String startPanelName = "startPanel";
@@ -25,8 +30,7 @@ public class Pathfinder{
 	private JPanel panel = new JPanel(cl);
 	private boolean alreadyMade = false;
 	private static final JFrame frame = new JFrame("Pathfinder Character Sheet");
-	private static int indices[];
-	private static AtomicBoolean indexSet = new AtomicBoolean();
+	private static int[] indices;
 
 	public static void main(String[] args){
 		new Pathfinder();
@@ -95,13 +99,13 @@ public class Pathfinder{
 	}
 	
 	public static List<Spell> chooseSpellFromList(List<Spell> spellChoices, String title, int maxPicks){
+		AtomicBoolean indexSet = new AtomicBoolean(false);
 		String[] choices = new String[spellChoices.size()];
 		for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();
 		JFrame spellChooseFrame = new JFrame(title);
 		JPanel panel = new JPanel(new BorderLayout());
 		spellChooseFrame.add(panel);
 		JList<String> list = new JList<>(choices);
-
 		
 		list.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
@@ -145,20 +149,91 @@ public class Pathfinder{
 				}
 			}).start();
 		});
-		panel.add(searchButton, BorderLayout.NORTH);
+
+		JButton customSpell = new JButton("Choose custom spell");
+		customSpell.addActionListener(e -> {
+			JDialog customFeatDialog = new JDialog(spellChooseFrame, "Choose a custom spell");
+			customFeatDialog.setSize(340,80);
+			JPanel customFeatPanel = new JPanel();
+			customFeatDialog.add(customFeatPanel);
+			JButton create = new JButton("Create a new spell");
+			JButton load = new JButton("Load an existing spell");
+			customFeatPanel.add(create);
+			customFeatPanel.add(load);
+			create.addActionListener(evt -> {
+				customFeatDialog.dispose();
+				(new Thread(){
+					public void run(){
+						Spell spell = createNewSpell(spellChooseFrame);
+						if(spell != null){
+							spellChoices.add(spell);
+							String[] newChoices = new String[spellChoices.size()];
+							for(int i = 0; i < newChoices.length; i++) newChoices[i] = spellChoices.get(i).toString();
+							int[] current = list.getSelectedIndices();
+							int[] newIndices = new int[current.length + 1];
+							for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+							newIndices[newIndices.length - 1] = newChoices.length - 1;
+							list.setListData(newChoices);
+							list.setSelectedIndices(newIndices);
+						}
+					}
+				}).start();
+			});
+
+			load.addActionListener(evt -> {
+				customFeatDialog.dispose();
+				JFileChooser loadChooser = new JFileChooser();
+				int returned = loadChooser.showOpenDialog(spellChooseFrame);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					Spell spell = null;
+					try{
+						FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+						ObjectInputStream objIn = new ObjectInputStream(fileIn);
+						spell = (Spell)(objIn.readObject());
+
+					} catch (FileNotFoundException ex){
+						showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Unknown IO Exception","Run this in command for more details.");
+						ex.printStackTrace();
+					} catch (ClassNotFoundException ex){
+						showError("Not a spell","It doesn't seem that there's a spell saved in that file.\nThe file may be corrupt.");
+					} catch (ClassCastException ex){
+						showError("Not a spell", "It appears this is some other kind of Java object.");
+					}
+					if(spell != null){
+						spellChoices.add(spell);
+						String[] newChoices = new String[spellChoices.size()];
+						for(int i = 0; i < newChoices.length; i++) newChoices[i] = spellChoices.get(i).toString();
+						int[] current = list.getSelectedIndices();
+						int[] newIndices = new int[current.length + 1];
+						for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+						newIndices[newIndices.length - 1] = newChoices.length - 1;
+						list.setListData(newChoices);
+						list.setSelectedIndices(newIndices);
+					}
+				}
+			});
+			customFeatDialog.setVisible(true);
+		});
+		JPanel top = new JPanel(new BorderLayout());
+		top.add(searchButton, BorderLayout.CENTER);
+		top.add(customSpell, BorderLayout.WEST);
+		panel.add(top, BorderLayout.NORTH);
 		
-		spellChooseFrame.setSize(300, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*15) : 600));
+		spellChooseFrame.setSize(340, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*15) : 600));
 		spellChooseFrame.setVisible(true);
 		
 		while(!indexSet.get()){}
-		indexSet.set(false);
 		spellChooseFrame.dispose();
 		ArrayList<Spell> toReturn = new ArrayList<>();
 		for(int i : indices) toReturn.add(spellChoices.get(i));
 		return toReturn;
 	}
-	
-	public static List<Feat> chooseFeatFromList(List<Feat> featChoices, String title, int maxPicks){ //Fix this up, needs to have search capabilities, and check for number of spells picked before returning.
+
+	public static List<Feat> chooseFeatFromList(List<Feat> featChoices, String title, int maxPicks){
+		AtomicBoolean indexSet = new AtomicBoolean(false);
 		String[] choices = new String[featChoices.size()];
 		for(int i = 0; i < choices.length; i++) choices[i] = featChoices.get(i).toString();
 		JFrame featChooseFrame = new JFrame(title);
@@ -178,7 +253,7 @@ public class Pathfinder{
 
 		JScrollPane scrollList = new JScrollPane(list);
 		panel.add(scrollList,BorderLayout.CENTER);
-		JButton choose = new JButton("Learn selected spell");
+		JButton choose = new JButton("Learn selected feat");
 		choose.addActionListener(e -> {
 			if(list.getSelectedIndices().length > 0){
 				if(maxPicks == -1 || list.getSelectedIndices().length == maxPicks || (list.getSelectedIndices().length < maxPicks && askYesNo("You have only selected " + list.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (list.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
@@ -209,10 +284,81 @@ public class Pathfinder{
 				}
 			}).start();
 		});
-		panel.add(searchButton, BorderLayout.NORTH);
+
+		JButton customFeat = new JButton("Choose custom feat");
+		customFeat.addActionListener(e -> {
+			JDialog customFeatDialog = new JDialog(featChooseFrame, "Choose a custom feat");
+			customFeatDialog.setSize(320,80);
+			JPanel customFeatPanel = new JPanel();
+			customFeatDialog.add(customFeatPanel);
+			JButton create = new JButton("Create a new feat");
+			JButton load = new JButton("Load an existing feat");
+			customFeatPanel.add(create);
+			customFeatPanel.add(load);
+			create.addActionListener(evt -> {
+				customFeatDialog.dispose();
+				(new Thread(){
+					public void run(){
+						Feat feat = createNewFeat(featChooseFrame);
+						if(feat != null){
+							featChoices.add(feat);
+							String[] newChoices = new String[featChoices.size()];
+							for(int i = 0; i < newChoices.length; i++) newChoices[i] = featChoices.get(i).toString();
+							int[] current = list.getSelectedIndices();
+							int[] newIndices = new int[current.length + 1];
+							for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+							newIndices[newIndices.length - 1] = newChoices.length - 1;
+							list.setListData(newChoices);
+							list.setSelectedIndices(newIndices);
+						}
+					}
+				}).start();
+			});
+
+			load.addActionListener(evt -> {
+				customFeatDialog.dispose();
+				JFileChooser loadChooser = new JFileChooser();
+				int returned = loadChooser.showOpenDialog(featChooseFrame);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					Feat feat = null;
+					try{
+						FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+						ObjectInputStream objIn = new ObjectInputStream(fileIn);
+						feat = (Feat)(objIn.readObject());
+
+					} catch (FileNotFoundException ex){
+						showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Unknown IO Exception","Run this in command for more details.");
+						ex.printStackTrace();
+					} catch (ClassNotFoundException ex){
+						showError("Not a feat","It doesn't seem that there's a feat saved in that file.\nThe file may be corrupt.");
+					} catch (ClassCastException ex){
+						showError("Not a feat","It seems this is some other type of Java object.");
+					}
+					if(feat != null){
+						featChoices.add(feat);
+						String[] newChoices = new String[featChoices.size()];
+						for(int i = 0; i < newChoices.length; i++) newChoices[i] = featChoices.get(i).toString();
+						int[] current = list.getSelectedIndices();
+						int[] newIndices = new int[current.length + 1];
+						for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+						newIndices[newIndices.length - 1] = newChoices.length - 1;
+						list.setListData(newChoices);
+						list.setSelectedIndices(newIndices);
+					}
+				}
+			});
+			customFeatDialog.setVisible(true);
+		});
+		JPanel top = new JPanel(new BorderLayout());
+		top.add(searchButton, BorderLayout.CENTER);
+		top.add(customFeat, BorderLayout.WEST);
+		panel.add(top, BorderLayout.NORTH);
 
 
-		featChooseFrame.setSize(300, ((60+featChoices.size()*20) < 600 ? (20+featChoices.size()*15) : 600));
+		featChooseFrame.setSize(320, ((60+featChoices.size()*20) < 600 ? (20+featChoices.size()*15) : 600));
 		featChooseFrame.setVisible(true);
 
 		while(!indexSet.get()){}
@@ -222,7 +368,7 @@ public class Pathfinder{
 		for(int i : indices) toReturn.add(featChoices.get(i));
 		return toReturn;
 	}
-	
+
 	public static void showSpellDetails(Spell spell){
 		JFrame detailsFrame = new JFrame(spell.name);
 		detailsFrame.setSize(450,550);
@@ -1028,4 +1174,596 @@ public class Pathfinder{
 		return "";
 	}
 
+	public static Feat createNewFeat(JFrame parent){
+		AtomicBoolean featMade = new AtomicBoolean(false);
+		AtomicBoolean closed = new AtomicBoolean(false);
+		JDialog featCreator = new JDialog(parent, "Create a new Feat");
+		JPanel panel = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new BorderLayout());
+		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel middle = new JPanel(new BorderLayout());
+		featCreator.add(panel);
+		panel.add(top, BorderLayout.NORTH);
+		panel.add(bottom, BorderLayout.SOUTH);
+		panel.add(middle, BorderLayout.CENTER);
+		top.add(new JLabel("Name: "), BorderLayout.WEST);
+		middle.add(new JLabel("Feat details (supports HTML formatting): "), BorderLayout.NORTH);
+
+		JTextField name = new JTextField();
+		top.add(name, BorderLayout.CENTER);
+
+		JTextArea description = new JTextArea();
+		JScrollPane descScroll = new JScrollPane(description);
+		middle.add(descScroll, BorderLayout.CENTER);
+
+		JButton add = new JButton("Add this feat");
+		JButton addAndSave = new JButton("Add and save this feat");
+
+		bottom.add(addAndSave, BorderLayout.EAST);
+		bottom.add(add, BorderLayout.CENTER);
+
+		add.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				featMade.set(true);
+			} else {
+				showError("Not enough details","You must write a feat name and description.");
+			}
+		});
+
+		addAndSave.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				Feat feat = new Feat(name.getText(), description.getText());
+				JFileChooser saver = new JFileChooser();
+				int returned = saver.showSaveDialog(featCreator);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					try{
+						FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+						ObjectOutputStream out= new ObjectOutputStream(fileOut);
+						out.writeObject(feat);
+						featMade.set(true);
+					} catch (FileNotFoundException ex){
+						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						ex.printStackTrace();
+					}
+				}
+			} else {
+				showError("Not enough details","You must write a feat name and description.");
+			}
+		});
+
+		featCreator.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				closed.set(true);
+				featMade.set(true);
+			}
+		});
+
+		featCreator.setSize(350,400);
+		featCreator.setVisible(true);
+
+		while(!featMade.get()){}
+
+		featCreator.dispose();
+
+		if(closed.get()) return null;
+		return new Feat(name.getText(), description.getText());
+	}
+
+	public static Spell createNewSpell(JFrame parent){
+		AtomicBoolean spellMade = new AtomicBoolean(false);
+		AtomicBoolean closed = new AtomicBoolean(false);
+		JDialog spellCreator = new JDialog(parent, "Create a new spell");
+		JPanel panel = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new BorderLayout());
+		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel middle = new JPanel(new BorderLayout());
+		spellCreator.add(panel);
+		panel.add(top, BorderLayout.NORTH);
+		panel.add(bottom, BorderLayout.SOUTH);
+		panel.add(middle, BorderLayout.CENTER);
+		top.add(new JLabel("Name: "), BorderLayout.WEST);
+		middle.add(new JLabel("Spell details (supports HTML formatting): "), BorderLayout.NORTH);
+
+		JTextField name = new JTextField();
+		top.add(name, BorderLayout.CENTER);
+
+		JTextArea description = new JTextArea();
+		JScrollPane descScroll = new JScrollPane(description);
+		middle.add(descScroll, BorderLayout.CENTER);
+
+		JButton add = new JButton("Add this spell");
+		JButton addAndSave = new JButton("Add and save this spell");
+
+		bottom.add(addAndSave, BorderLayout.EAST);
+		bottom.add(add, BorderLayout.CENTER);
+
+		add.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				spellMade.set(true);
+			} else {
+				showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		addAndSave.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				Spell spell = new Spell(name.getText(), description.getText());
+				JFileChooser saver = new JFileChooser();
+				int returned = saver.showSaveDialog(spellCreator);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					try{
+						FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+						ObjectOutputStream out= new ObjectOutputStream(fileOut);
+						out.writeObject(spell);
+						spellMade.set(true);
+					} catch (FileNotFoundException ex){
+						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						ex.printStackTrace();
+					}
+				}
+			} else {
+				showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		spellCreator.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				closed.set(true);
+				spellMade.set(true);
+			}
+		});
+
+		spellCreator.setSize(350,400);
+		spellCreator.setVisible(true);
+
+		while(!spellMade.get()){}
+
+		spellCreator.dispose();
+
+		if(closed.get()) return null;
+		return new Spell(name.getText(), description.getText());
+	}
+
+	public static void chooseClassToLevel(Character me, Component characterDisplay){
+
+		String[] classNames = CharacterClass.getClassNames();
+		for(int j = 0; j < classNames.length; j++){
+			for(int i = 0; i < me.classes.size(); i++) {
+				if (me.classes.get(i).toString().contains(classNames[j])) {
+					classNames[j] = me.classes.get(i).toString() + " Level " + me.classes.get(i).level;
+					break;
+				}
+			}
+		}
+
+		for(CharacterClass charClass : me.classes){
+			boolean containsClass = false;
+			for(String name : classNames){
+				if(charClass.name.contains(name)) containsClass = true;
+				break;
+			}
+			if(!containsClass){
+				classNames = Arrays.copyOf(classNames, classNames.length + 1);
+				classNames[classNames.length - 1] = charClass.name + " Level " + charClass.level;
+			}
+		}
+
+		JFrame classChooserFrame = new JFrame("Choose the class to level");
+		JPanel panel = new JPanel(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		JComboBox<String> options = new JComboBox<>(classNames);
+		JButton confirm = new JButton("Confirm");
+		classChooserFrame.add(panel);
+
+		c.fill = GridBagConstraints.BOTH;
+		c.weighty = 1;
+		panel.add(new JLabel("Level up the class "),c);
+		c.gridx = 1;
+		c.weightx = 1;
+		panel.add(options);
+		c.gridx = 2;
+		c.weightx = 0;
+		panel.add(new JLabel("? "), c);
+		c.gridx = 3;
+		c.weightx = 0;
+		panel.add(confirm, c);
+
+		confirm.addActionListener(e -> {
+
+			String chosenClass = (String)(options.getSelectedItem());
+			if(chosenClass.contains(" Level ")) chosenClass = chosenClass.substring(0,chosenClass.indexOf(" Level "));
+
+			if(CharacterClass.getClassInstanceOf(chosenClass,me) != null){
+				new Thread(() -> me.levelUp(CharacterClass.getClassInstanceOf(((String)(options.getSelectedItem())).contains(" Level ") ? ((String)(options.getSelectedItem())).substring(0, ((String)(options.getSelectedItem())).indexOf(" Level ")) : ((String)(options.getSelectedItem())),me))).start();
+				classChooserFrame.dispose();
+				characterDisplay.repaint();
+			} else {
+				options.setModel(new DefaultComboBoxModel<String>(CharacterClass.getSubclassesOf(chosenClass)));
+			}
+
+		});
+
+		classChooserFrame.setSize(400,60);
+		classChooserFrame.setVisible(true);
+	}
+
+	public static void showItemDetails(Item item){
+		JFrame detailsFrame = new JFrame(item.toString());
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + item.getFormattedDetails() + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
+
+	public static List<GenItem> chooseItemFromList(List<Item> itemChoices, String title){
+		AtomicBoolean indexSet = new AtomicBoolean(false);
+		String[] choices = new String[itemChoices.size()];
+		for(int i = 0; i < choices.length; i++) choices[i] = itemChoices.get(i).toString();
+		JFrame itemChooseFrame = new JFrame(title);
+		JPanel panel = new JPanel(new BorderLayout());
+		itemChooseFrame.add(panel);
+		JList<String> list = new JList<>(choices);
+
+		list.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				JList list = (JList)evt.getSource();
+				if (evt.getClickCount() > 1) {
+					int index = list.locationToIndex(evt.getPoint());
+					showItemDetails(itemChoices.get(index));
+				}
+			}
+		});
+
+		JScrollPane scrollList = new JScrollPane(list);
+		panel.add(scrollList,BorderLayout.CENTER);
+		JButton choose = new JButton("Choose selected item(s)");
+		choose.addActionListener(e -> {
+			if(list.getSelectedIndex() > -1){
+				indices = list.getSelectedIndices();
+				indexSet.set(true);
+			}
+		});
+		panel.add(choose, BorderLayout.SOUTH);
+
+		JButton searchButton = new JButton("Search these items");
+		searchButton.addActionListener(e ->{
+			(new Thread(){
+				public void run(){
+					int[] indexes = searchItems(itemChoices, itemChooseFrame);
+					int[] current = list.getSelectedIndices();
+					int[] newSet;
+					if(current.length > 0) {
+						newSet = new int[indexes.length + current.length];
+						for (int i = 0; i < current.length; i++) newSet[i] += current[i];
+						for (int i = current.length; i < newSet.length; i++) {
+							newSet[i] = indexes[i - current.length];
+						}
+					} else newSet = indexes;
+
+					list.setSelectedIndices(newSet);
+				}
+			}).start();
+		});
+
+		JButton customItem = new JButton("Choose custom item");
+		customItem.addActionListener(e -> {
+			JDialog customItemDialog = new JDialog(itemChooseFrame, "Choose a custom item");
+			customItemDialog.setSize(340,80);
+			JPanel customFeatPanel = new JPanel();
+			customItemDialog.add(customFeatPanel);
+			JButton create = new JButton("Create a new item");
+			JButton load = new JButton("Load an existing item");
+			customFeatPanel.add(create);
+			customFeatPanel.add(load);
+			create.addActionListener(evt -> {
+				customItemDialog.dispose();
+				(new Thread(){
+					public void run(){
+						Item item = createNewItem(itemChooseFrame);
+						if(item != null){
+							itemChoices.add(item);
+							String[] newChoices = new String[itemChoices.size()];
+							for(int i = 0; i < newChoices.length; i++) newChoices[i] = itemChoices.get(i).toString();
+							int[] current = list.getSelectedIndices();
+							int[] newIndices = new int[current.length + 1];
+							for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+							newIndices[newIndices.length - 1] = newChoices.length - 1;
+							list.setListData(newChoices);
+							list.setSelectedIndices(newIndices);
+						}
+					}
+				}).start();
+			});
+
+			load.addActionListener(evt -> {
+				customItemDialog.dispose();
+				JFileChooser loadChooser = new JFileChooser();
+				int returned = loadChooser.showOpenDialog(itemChooseFrame);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					Item item = null;
+					try{
+						FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+						ObjectInputStream objIn = new ObjectInputStream(fileIn);
+						item = (Item)(objIn.readObject());
+
+					} catch (FileNotFoundException ex){
+						showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Unknown IO Exception","Run this in command for more details.");
+						ex.printStackTrace();
+					} catch (ClassNotFoundException ex){
+						showError("Not an item","It doesn't seem that there's an item saved in that file.\nThe file may be corrupt.");
+					} catch (ClassCastException ex){
+						showError("Not an item", "It appears this is some other kind of Java object.");
+					}
+					if(item != null){
+						itemChoices.add(item);
+						String[] newChoices = new String[itemChoices.size()];
+						for(int i = 0; i < newChoices.length; i++) newChoices[i] = itemChoices.get(i).toString();
+						int[] current = list.getSelectedIndices();
+						int[] newIndices = new int[current.length + 1];
+						for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+						newIndices[newIndices.length - 1] = newChoices.length - 1;
+						list.setListData(newChoices);
+						list.setSelectedIndices(newIndices);
+					}
+				}
+			});
+			customItemDialog.setVisible(true);
+		});
+		JPanel top = new JPanel(new BorderLayout());
+		top.add(searchButton, BorderLayout.CENTER);
+		top.add(customItem, BorderLayout.WEST);
+		panel.add(top, BorderLayout.NORTH);
+
+		itemChooseFrame.setSize(340, ((20+itemChoices.size()*10) < 600 ? (20+itemChoices.size()*15) : 600));
+		itemChooseFrame.setVisible(true);
+
+		while(!indexSet.get()){}
+		itemChooseFrame.dispose();
+		ArrayList<GenItem> toReturn = new ArrayList<>();
+		for(int i : indices) toReturn.add( itemChoices.get(i) instanceof GenItem ? (GenItem)itemChoices.get(i) : new GenItem(itemChoices.get(i)) );
+		return toReturn;
+	}
+
+	public static GenItem createNewItem(JFrame parent){
+		AtomicBoolean itemMade = new AtomicBoolean(false);
+		AtomicBoolean closed = new AtomicBoolean(false);
+		JDialog itemCreator = new JDialog(parent, "Create a new Item");
+		JPanel panel = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new GridBagLayout());
+		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel middle = new JPanel(new BorderLayout());
+		itemCreator.add(panel);
+		panel.add(top, BorderLayout.NORTH);
+		panel.add(bottom, BorderLayout.SOUTH);
+		panel.add(middle, BorderLayout.CENTER);
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+
+		c.weighty = 0;
+		top.add(new JLabel("Name: "), c);
+		JTextField name = new JTextField();
+		c.gridx = 1;
+		c.weightx = 1;
+		c.gridwidth = 3;
+		top.add(name, c);
+
+		c.gridwidth = 1;
+		c.gridy = 1;
+		c.gridx = 0;
+		c.weightx = 0;
+		top.add(new JLabel("Platinum: "), c);
+		c.gridy = 2;
+		top.add(new JLabel("Gold"), c);
+		c.gridx = 2;
+		top.add(new JLabel("Copper: "), c);
+		c.gridy = 1;
+		top.add(new JLabel("Silver: "), c);
+		c.weightx = 1;
+		c.gridx = 1;
+		JTextField platinum = new JTextField("0");
+		JTextField gold = new JTextField("0");
+		JTextField silver = new JTextField("0");
+		JTextField copper = new JTextField("0");
+		top.add(platinum, c);
+		c.gridy = 2;
+		top.add(gold, c);
+		c.gridx = 3;
+		top.add(copper, c);
+		c.gridx = 1;
+		top.add(silver, c);
+
+		c.gridx = 0;
+		c.gridy = 3;
+		c.weightx = 0;
+		top.add(new JLabel("Amount per purchase: "));
+
+		JLabel amount = new JLabel("1");
+		c.weightx = 1;
+		c.gridx = 1;
+		top.add(amount, c);
+
+		c.gridx = 2;
+		c.weightx = 0;
+		top.add(new JLabel(" Weight: "), c);
+
+		JTextField weight = new JTextField("0.0");
+		c.gridx = 3;
+		c.weightx = 1;
+		top.add(weight, c);
+
+		middle.add(new JLabel("Item details (supports HTML formatting): "), BorderLayout.NORTH);
+
+
+		JTextArea description = new JTextArea();
+		JScrollPane descScroll = new JScrollPane(description);
+		middle.add(descScroll, BorderLayout.CENTER);
+
+		JButton add = new JButton("Add this item");
+		JButton addAndSave = new JButton("Add and save this item");
+
+		bottom.add(addAndSave, BorderLayout.EAST);
+		bottom.add(add, BorderLayout.CENTER);
+
+		add.addActionListener(e -> {
+			if(!(name.getText().equals(""))){
+				itemMade.set(true);
+			} else {
+				showError("Not enough details","You must write an item name.");
+			}
+		});
+
+		addAndSave.addActionListener(e -> {
+			if(!(name.getText().equals(""))){
+				Item item = new GenItem(name.getText(), description.getText(), new int[]{Integer.parseInt(platinum.getText()),Integer.parseInt(gold.getText()),Integer.parseInt(silver.getText()),Integer.parseInt(copper.getText())}, Integer.parseInt(amount.getText()), Double.parseDouble(weight.getText()));
+				JFileChooser saver = new JFileChooser();
+				int returned = saver.showSaveDialog(itemCreator);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					try{
+						FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+						ObjectOutputStream out= new ObjectOutputStream(fileOut);
+						out.writeObject(item);
+						itemMade.set(true);
+					} catch (FileNotFoundException ex){
+						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						ex.printStackTrace();
+					}
+				}
+			} else {
+				showError("Not enough details","You must write an item name.");
+			}
+		});
+
+		itemCreator.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				closed.set(true);
+				itemMade.set(true);
+			}
+		});
+
+		itemCreator.setSize(350,400);
+		itemCreator.setVisible(true);
+
+		while(!itemMade.get()){}
+
+		itemCreator.dispose();
+
+		if(closed.get()) return null;
+		return new GenItem(name.getText(), description.getText(), new int[]{Integer.parseInt(platinum.getText()),Integer.parseInt(gold.getText()),Integer.parseInt(silver.getText()),Integer.parseInt(copper.getText())}, Integer.parseInt(amount.getText()), Double.parseDouble(weight.getText()));
+	}
+
+	public static int[] searchItems(List<Item> items, JFrame parent){
+		JDialog searchDialog = new JDialog(parent, "Item Search");
+		JPanel parentPanel = new JPanel(new GridBagLayout());
+
+		AtomicBoolean selected = new AtomicBoolean(false);
+
+		ArrayList<Item> results = new ArrayList<>();
+		results.addAll(items);
+
+		CardLayout searchConstraintsLayout = new CardLayout();
+		JPanel searchConstraintsParent = new JPanel(searchConstraintsLayout);
+		JPanel genItemSearch = new JPanel(new GridBagLayout());
+		JPanel weaponSearch = new JPanel(new GridBagLayout());
+		JPanel armorSearch = new JPanel(new GridBagLayout());
+		JPanel adventureItemSearch = new JPanel(new GridBagLayout());
+		JPanel magicItemSearch = new JPanel(new GridBagLayout());
+		final String MAGIC_PANEL = "Magic Items";
+		final String GEN_PANEL = "All Items";
+		final String WEAPON_PANEL = "Base Weapons";
+		final String ARMOR_PANEL = "Base Armor/Shields";
+		final String ADVENTURE_PANEL = "Adventure Gear";
+		final String[] PANEL_NAMES = new String[]{GEN_PANEL, WEAPON_PANEL, ARMOR_PANEL, MAGIC_PANEL, ADVENTURE_PANEL};
+		searchConstraintsParent.add(genItemSearch, GEN_PANEL);
+		searchConstraintsParent.add(weaponSearch, WEAPON_PANEL);
+		searchConstraintsParent.add(armorSearch, ARMOR_PANEL);
+		searchConstraintsParent.add(adventureItemSearch, ADVENTURE_PANEL);
+		searchConstraintsParent.add(magicItemSearch, MAGIC_PANEL);
+
+		//Set up parent panel
+		JComboBox<String> searchType = new JComboBox<>(PANEL_NAMES);
+		searchType.addActionListener(e -> searchConstraintsLayout.show(searchConstraintsParent, (String) searchType.getSelectedItem()));
+		searchType.setSelectedIndex(0);
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		parentPanel.add(new JLabel("Search these items as: "));
+		c.gridx = 1;
+		c.weightx = 1;
+		parentPanel.add(searchType, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weighty = 1;
+		c.weightx = 1;
+		parentPanel.add(searchConstraintsParent, c);
+
+		JList<String> resultsList = new JList<>();
+
+		resultsList.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				JList list = (JList)evt.getSource();
+				if (evt.getClickCount() > 1) {
+					int index = list.locationToIndex(evt.getPoint());
+					showItemDetails(results.get(index));
+				}
+			}
+		});
+
+		JScrollPane resultsScroll = new JScrollPane(resultsList){
+			public void paintComponent(Graphics g){
+				String[] model = new String[results.size()];
+				for(int i = 0; i < model.length; i++) model[i] = results.get(i).toString();
+				resultsList.setListData(model);
+			}
+		};
+
+		c.gridy = 2;
+		parentPanel.add(resultsScroll, c);
+
+		JButton select = new JButton("Select chosen spell(s)");
+		select.addActionListener(e -> selected.set(true));
+		c.weighty = 0;
+		c.gridy = 3;
+		parentPanel.add(select, c);
+
+
+		while(!selected.get()){}
+
+		ArrayList<Item> itemsSelected = new ArrayList<>();
+		int[] indices = resultsList.getSelectedIndices();
+		for(int i : indices) itemsSelected.add(results.get(i));
+		int[] toReturn = new int[itemsSelected.size()];
+		int index = 0;
+		for(int i = 0; i < items.size(); i++){
+			if(itemsSelected.contains(items.get(i))){
+				toReturn[index] = i;
+				index++;
+			}
+		}
+
+		searchDialog.dispose();
+
+		return toReturn;
+	}
 }

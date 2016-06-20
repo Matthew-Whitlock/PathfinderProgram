@@ -25,6 +25,10 @@ public class AbyssalBloodline extends Sorcerer{
 		bloodline = "Abyssal";
 	}
 
+	public AbyssalBloodline(){
+		bloodline = "Abyssal";
+	}
+
 	public void levelUpBloodline(){
 		if(level == 1){
 			me.miscAbilities.add("Whenever you cast a spell of the summoning subschool, the creatures summoned gain DR/good equal to 1/2 your sorcerer level (minimum 1). This does not stack with any DR the creature might have.");

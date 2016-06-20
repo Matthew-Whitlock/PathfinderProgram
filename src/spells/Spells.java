@@ -20,10 +20,6 @@ public class Spells implements Comparator<Spell>{
 	
 	private int indexOfClass;
 	
-	public static String getFileName(Spell spell){
-		return spell.name.replace("/","_");
-	}
-	
 	public static Spell searchByName(String spellName){
 		for(Spell spell : getSpells()){
 			if(spell.name.equalsIgnoreCase(spellName)){
@@ -52,7 +48,7 @@ public class Spells implements Comparator<Spell>{
 	
 	public static Spell getBloodLineSpell(String bloodline, int level){
 		for(Spell spell : getSpells()){
-			if(spell.bloodlineLevels.containsKey(bloodline) && spell.bloodlineLevels.get(bloodline) == level){
+			if(spell.hasBloodline && spell.bloodlineLevels.containsKey(bloodline) && spell.bloodlineLevels.get(bloodline) == level){
 				return spell;
 			}
 		}

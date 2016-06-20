@@ -126,6 +126,42 @@ public class Spell implements Serializable{
 		}
 		
 	}
+
+	public Spell(String name, String formattedDescription){
+		this.name = name;
+		this.formattedDescription = formattedDescription;
+
+		//The rest is just for being certain that searching etc. doesn't throw an error if it somehow manages to pull up a custom made spell.
+		//Generally, though, it won't ever find custom spells made like this - as they'll be saved as a file or directly added, not added to the tsv list of spells.
+		//Exception: Spell level requirements could actually be useful to set, so that they spell sits in the right place within the spell list.
+
+		school = "";
+		subschool = "";
+		descriptor = "";
+		basicDescription = "";
+		shortDescription = "";
+		levelReqAsString = "";
+		castingTime = "";
+		componentsRequiredAsString = "";
+		range = "";
+		area = "";
+		effect = "";
+		targets = "";
+		duration = "";
+		savingThrow = "";
+		spellResistance = "";
+		source = "";
+		slaLevel = -1;
+		domain = "";
+		materialCost = 0;
+		mythicText = "";
+		deity = "";
+		augmentText = "";
+
+		for(int i = 0; i < levelRequirements.length; i++){
+			levelRequirements[i] = -1;
+		}
+	}
 	
 	public String toString(){
 		return name + ": " + shortDescription;

@@ -14,7 +14,6 @@ public class Test{
 		for(AbilityScoreEnum ability : AbilityScoreEnum.values()) abilityPoints.put(ability, 10);
 		JFrame frame = new JFrame("Test");
 		src.Character me = new src.Character("Testing", new Dwarf(), abilityPoints, new String[]{"Sorceror","Wizard"});
-		me.classes.add(new AbyssalBloodline(me));
 		frame.add(new CharacterDisplay(me));
 		frame.setSize(600,500);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

@@ -13,12 +13,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public abstract class Sorcerer extends CharacterClass implements Serializable{
-	
+
 	public Sorcerer(Character me) {
 		super(me);
 		name = "Sorcerer";
 		hitDiePerLevel = "1d6";
 		isCaster = true;
+		skillRanksMod = 2;
+	}
+
+	public Sorcerer(){
+		name = "Sorcerer";
 	}
 	
 	public void levelUp(){
@@ -51,10 +56,10 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 		}
 		
 		int[] toReturn = defaultSpellsPerDayByLevel[level < 20 ? level : 20];
-		for(int i = 0; i < bonusSpells.size() && 1 < defaultSpellsPerDayByLevel.length; i++){
+		for(int i = 0; i < bonusSpells.size() && i < toReturn.length; i++){
 			toReturn[i] += bonusSpells.get(i);
 		}
-		for(int i = 0; i < modifiedSpellsPerDay.length; i++){
+		for(int i = 0; i < modifiedSpellsPerDay.length && i < toReturn.length; i++){
 			toReturn[i] += modifiedSpellsPerDay[i];
 		}
 		
@@ -66,14 +71,12 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 			{1,0,0,0,0,1},{0,0,1,1,1,1},{0,0,0,0,0,0,1},{0,0,0,0,1,1,1},{0,0,0,0,0,0,0,1},{0,0,0,0,0,1,1,1},{0,0,0,0,0,0,0,0,1},
 			{0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1},{0,0,0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0,0,1}};
 		for(int spellLevel = 0; spellLevel < newSpellsByLevel[level].length; spellLevel++){
-			if(spellLevel > me.getAbilityMod(AbilityScoreEnum.CHA)) break;
-
+			if(spellLevel > me.getAbilityMod(AbilityScoreEnum.CHA)) {
+				Pathfinder.showError("Cannot learn spell level " + spellLevel,"You do not have a high enough Charisma modifier to learn spells of level " + spellLevel + " and higher.");
+				break;
+			}
 			knownSpells.addAll(Pathfinder.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 		}
-	}
-	
-	public int skillRanksAvailable(){
-		return 2 + (me.abilities.get(AbilityScoreEnum.INT) - 10)/2;
 	}
 	
 	public abstract void levelUpBloodline();

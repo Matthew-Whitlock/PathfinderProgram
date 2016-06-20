@@ -1,9 +1,9 @@
 package src;
 
+import src.items.*;
 import src.classes.CharacterClass;
 import src.feats.Feat;
 import src.races.Race;
-import src.spells.Spell;
 import src.stats.*;
 
 import java.util.Arrays;
@@ -38,8 +38,8 @@ public class Character implements Serializable{
 	public HashMap<AbilityScoreEnum, Integer> abilities;
 	public HashMap<AbilityScoreEnum, Integer> tempAbilities = new HashMap<>();
 	
-	public ArrayList<Item> inventory = new ArrayList<>();
-	public ArrayList<Item> equipped = new ArrayList<>();
+	public HashMap<GenItem, Integer> inventory = new HashMap<>();
+	public HashMap<GenItem, Integer> equipped = new HashMap<>();
 	
 	public int[] playerAddedCombatSkillBoosts = new int[9];
 	public AbilityScoreEnum cmdMod = AbilityScoreEnum.STR;
@@ -49,7 +49,7 @@ public class Character implements Serializable{
 	public int tempHP = 0;
 	public int nonlethalDamage = 0;
 
-	private int[] babMod = new int[30];
+	public int[] babMod = new int[30];
 	public int copper = 0;
 	public int silver = 0;
 	public int gold = 0;
@@ -72,10 +72,14 @@ public class Character implements Serializable{
 	}
 
 	public void levelUp(CharacterClass charClass){
+
+		if(!classes.contains(charClass)) classes.add(charClass);
 		charClass.levelUp();
 
 		String hitDie = charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
+
+		//Also do skill points + Ability points (When needed)
 
 	}
 	
@@ -89,9 +93,9 @@ public class Character implements Serializable{
 	
 	public int getArmorMaxDex(){
 		int toReturn = 100;
-		for(Item item : equipped){
-			if(item instanceof Equipable){
-				if(toReturn > ((Equipable)item).maxDex) toReturn = ((Equipable)item).maxDex;
+		for(GenItem item : equipped.keySet()){
+			if(item.getMaxDex() != -1){
+				if(toReturn > item.getMaxDex()) toReturn = item.getMaxDex();
 			}
 		}
 		return toReturn;
@@ -234,25 +238,29 @@ public class Character implements Serializable{
 
 	}
 	
-	public void equip(Item item){
-		inventory.remove(inventory.indexOf(item));
-		equipped.add(item);
+	public void equip(GenItem item){
+		inventory.put(item, inventory.get(item) - 1);
+		if(inventory.get(item) == 0) inventory.remove(item);
+		if(equipped.get(item) != null) equipped.put(item, equipped.get(item) + 1);
+		else equipped.put(item, 1);
 	}
 	
-	public void unequip(Item item){
-		inventory.add(item);
-		equipped.remove(equipped.indexOf(item));
+	public void unequip(GenItem item){
+		equipped.put(item, equipped.get(item) - 1);
+		if(equipped.get(item) == 0) equipped.remove(item);
+		if(inventory.get(item) != null) inventory.put(item, inventory.get(item) + 1);
+		else inventory.put(item, 1);
 	}
 	
-	public void equipItems(int[] indexes){
-		for(int i = indexes.length - 1; i >= 0; i++){
-			equip(inventory.get(indexes[i]));
+	public void equipItems(GenItem[] items){
+		for(int i = items.length - 1; i >= 0; i++){
+			equip(items[i]);
 		}
 	}
 	
-	public void unequipItems(int[] indexes){
-		for(int i = indexes.length - 1; i >= 0; i++){
-			unequip(inventory.get(indexes[i]));
+	public void unequipItems(GenItem[] items){
+		for(int i = items.length - 1; i >= 0; i++){
+			unequip(items[i]);
 		}
 	}
 	
@@ -262,25 +270,21 @@ public class Character implements Serializable{
 	}
 	
 	public int getAbilityMod(AbilityScoreEnum ability){
-		return (10 - abilities.get(ability) + tempAbilities.get(ability))/2;
+		return (abilities.get(ability) + tempAbilities.get(ability) - 10)/2;
 	}
 
 	public int getArmorACBoost(){
 		int toReturn = 0;
-		for(Item item : equipped){
-			if(item instanceof Equipable){
-				toReturn += ((Equipable)item).acBoost;
-			}
+		for(GenItem item : equipped.keySet()){
+			toReturn += item.getACBoost();
 		}
 		return toReturn;
 	}
 
 	public int getACPen(){
 		int toReturn = 0;
-		for(Item item : equipped){
-			if(item instanceof Equipable){
-				toReturn += ((Equipable)item).acPenalty;
-			}
+		for(Item item : equipped.keySet()){
+			toReturn += item.getACPen();
 		}
 		return toReturn;
 	}

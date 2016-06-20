@@ -100,6 +100,21 @@ public class Feat implements Serializable{
 		this.subType = subType;
 	}
 
+	public Feat(String name, String details){
+		this.name = name;
+		type = "";
+		description = "";
+		prereqsAsString = "";
+		prereqFeatsAsString = "";
+		benefit = "";
+		normal = "";
+		special = "";
+		source = "";
+		fullText = details;
+		raceName = "";
+		prereqsSkillsAsString = "";
+	}
+
 
 	public String toString(){
 		return name + " (" + type + ")";
