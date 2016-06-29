@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import src.classes.CharacterClass;
@@ -1592,9 +1593,9 @@ public class Pathfinder{
 		c.gridx = 0;
 		c.gridy = 3;
 		c.weightx = 0;
-		top.add(new JLabel("Amount per purchase: "));
+		top.add(new JLabel("Amount per purchase: "), c);
 
-		JLabel amount = new JLabel("1");
+		JTextField amount = new JTextField("1");
 		c.weightx = 1;
 		c.gridx = 1;
 		top.add(amount, c);
@@ -1681,7 +1682,29 @@ public class Pathfinder{
 		ArrayList<Item> results = new ArrayList<>();
 		results.addAll(items);
 
-		CardLayout searchConstraintsLayout = new CardLayout();
+		CardLayout searchConstraintsLayout = new CardLayout(){
+			public Dimension preferredLayoutSize(Container parent) {
+				Component current = findCurrentComponent(parent);
+				if (current != null) {
+					Insets insets = parent.getInsets();
+					Dimension pref = current.getPreferredSize();
+					pref.width += insets.left + insets.right;
+					pref.height += insets.top + insets.bottom;
+					return pref;
+				}
+				return super.preferredLayoutSize(parent);
+			}
+
+			public Component findCurrentComponent(Container parent) {
+				for (Component comp : parent.getComponents()) {
+					if (comp.isVisible()) {
+						return comp;
+					}
+				}
+				return null;
+			}
+		};
+
 		JPanel searchConstraintsParent = new JPanel(searchConstraintsLayout);
 		JPanel genItemSearch = new JPanel(new GridBagLayout());
 		JPanel weaponSearch = new JPanel(new GridBagLayout());
@@ -1714,9 +1737,11 @@ public class Pathfinder{
 
 		c.gridx = 0;
 		c.gridy = 1;
-		c.weighty = 1;
+		c.weighty = 0;
 		c.weightx = 1;
+		c.gridwidth = 2;
 		parentPanel.add(searchConstraintsParent, c);
+		c.weighty = 1;
 
 		JList<String> resultsList = new JList<>();
 
@@ -1747,6 +1772,1239 @@ public class Pathfinder{
 		c.gridy = 3;
 		parentPanel.add(select, c);
 
+		//Start making individual search panels
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+
+		c.ipadx = 10;
+		genItemSearch.add(new JLabel("Name: "), c);
+		c.gridy = 1;
+		genItemSearch.add(new JLabel("Cost (Gold only): "), c);
+		c.gridy = 2;
+		genItemSearch.add(new JLabel("Amount Per Purchase: "), c);
+		c.gridy = 3;
+		genItemSearch.add(new JLabel("Weight (lbs): "), c);
+		c.gridy = 4;
+		genItemSearch.add(new JLabel("Description Contains: "), c);
+
+		c.ipadx = 0;
+		c.gridx = 1;
+		c.gridy = 0;
+		c.weightx = 1;
+		JTextField genName = new JTextField();
+		genItemSearch.add(genName, c);
+		JTextField genCost = new JTextField();
+		c.gridy = 1;
+		genItemSearch.add(genCost, c);
+		JTextField genAmount = new JTextField();
+		c.gridy = 2;
+		genItemSearch.add(genAmount, c);
+		JTextField genWeight = new JTextField();
+		c.gridy = 3;
+		genItemSearch.add(genWeight, c);
+		JTextField genDesc = new JTextField();
+		c.gridy = 4;
+		genItemSearch.add(genDesc, c);
+
+		c.gridx = 0;
+		c.gridy = 5;
+		c.gridwidth = 2;
+		JButton genSearch = new JButton("Search with these values");
+		genItemSearch.add(genSearch, c);
+
+		genSearch.addActionListener(e -> {
+			results.clear();
+			results.addAll(items);
+
+			ArrayList<Item> intermediary = new ArrayList<>();
+
+			if(!genName.getText().equals("")){
+				intermediary.addAll(results.stream().filter(item -> item.getItemName().toLowerCase().contains(genName.getText().toLowerCase())).collect(Collectors.toList()));
+				results.clear();
+				results.addAll(intermediary);
+				intermediary.clear();
+			}
+			if(!genCost.getText().equals("")){
+				try {
+					intermediary.addAll(results.stream().filter(item -> item.cost()[1] == Integer.parseInt(genCost.getText())).collect(Collectors.toList()));
+					results.clear();
+					results.addAll(intermediary);
+					intermediary.clear();
+				}catch(NumberFormatException ex){
+					showError("Number Format Error","The value you entered for the cost in gold is not a number.\nI'll ignore that field this time.");
+					intermediary.clear();
+				}
+			}
+			if(!genAmount.getText().equals("")){
+				try {
+					intermediary.addAll(results.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(genWeight.getText())).collect(Collectors.toList()));
+					results.clear();
+					results.addAll(intermediary);
+					intermediary.clear();
+				}catch(NumberFormatException ex){
+					showError("Number Format Error","The value you entered for the amount per purchase is not a number.\nI'll ignore that field this time.");
+					intermediary.clear();
+				}
+			}
+			if(!genWeight.getText().equals("")){
+				try {
+					intermediary.addAll(results.stream().filter(item -> item.weight() == Double.parseDouble(genCost.getText())).collect(Collectors.toList()));
+					results.clear();
+					results.addAll(intermediary);
+					intermediary.clear();
+				}catch(NumberFormatException ex){
+					showError("Number Format Error","The value you entered for the weight is not a number.\nI'll ignore that field this time.");
+					intermediary.clear();
+				}
+			}
+			if(!genDesc.getText().equals("")){
+				intermediary.addAll(results.stream().filter(item -> item.getItemName().toLowerCase().contains(genDesc.getText().toLowerCase())).collect(Collectors.toList()));
+				results.clear();
+				results.addAll(intermediary);
+				intermediary.clear();
+			}
+			resultsScroll.repaint();
+		});
+
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.ipadx = 10;
+		weaponSearch.add(new JLabel("Name: "), c);
+		c.gridy = 1;
+		weaponSearch.add(new JLabel("Cost (Gold): "), c);
+		c.gridy = 2;
+		weaponSearch.add(new JLabel("Weight (lbs): "), c);
+		c.gridy = 3;
+		weaponSearch.add(new JLabel("Weapon Type: "), c);
+		c.gridy = 4;
+		weaponSearch.add(new JLabel("Small DMG Roll: "), c);
+		c.gridy = 5;
+		weaponSearch.add(new JLabel("Min Crit Threat Roll:"), c);
+		c.gridy = 6;
+		weaponSearch.add(new JLabel("Damage Type: "), c);
+		c.gridy = 7;
+		weaponSearch.add(new JLabel("Description Contains: "), c);
+		c.gridy = 0;
+		c.gridx = 2;
+		weaponSearch.add(new JLabel("Source: "), c);
+		c.gridy = 1;
+		weaponSearch.add(new JLabel("Amount per Purchase: "), c);
+		c.gridy = 2;
+		weaponSearch.add(new JLabel("Range (ft): "), c);
+		c.gridy = 3;
+		weaponSearch.add(new JLabel("Weapon Subtype: "), c);
+		c.gridy = 4;
+		weaponSearch.add(new JLabel("Medium DMG Roll: "), c);
+		c.gridy = 5;
+		weaponSearch.add(new JLabel("Crit Multiplier: "), c);
+		c.gridy = 6;
+		weaponSearch.add(new JLabel("Special: "), c);
+
+		JTextField wepName = new JTextField();
+		JTextField wepSource = new JTextField();
+		JTextField wepCost = new JTextField();
+		JTextField wepAmount = new JTextField();
+		JTextField wepWeight = new JTextField();
+		JTextField wepRange = new JTextField();
+		JTextField wepType = new JTextField();
+		JTextField wepSubtype = new JTextField();
+		JTextField wepSDMG = new JTextField();
+		JTextField wepMDMG = new JTextField();
+		JTextField wepMinThreat = new JTextField();
+		JTextField wepCritMult = new JTextField();
+		JTextField wepDMGType = new JTextField();
+		JTextField wepSpecial = new JTextField();
+		JTextField wepDesc = new JTextField();
+
+		c.weightx = 1;
+		c.ipadx = 0;
+		c.gridx = 1;
+		c.gridy = 0;
+		weaponSearch.add(wepName, c);
+		c.gridy = 1;
+		weaponSearch.add(wepCost, c);
+		c.gridy = 2;
+		weaponSearch.add(wepWeight, c);
+		c.gridy = 3;
+		weaponSearch.add(wepType, c);
+		c.gridy = 4;
+		weaponSearch.add(wepSDMG, c);
+		c.gridy = 5;
+		weaponSearch.add(wepMinThreat, c);
+		c.gridy = 6;
+		weaponSearch.add(wepDMGType, c);
+		c.gridy = 0;
+		c.gridx = 3;
+		weaponSearch.add(wepSource, c);
+		c.gridy = 1;
+		weaponSearch.add(wepAmount, c);
+		c.gridy = 2;
+		weaponSearch.add(wepRange, c);
+		c.gridy = 3;
+		weaponSearch.add(wepSubtype, c);
+		c.gridy = 4;
+		weaponSearch.add(wepMDMG, c);
+		c.gridy = 5;
+		weaponSearch.add(wepCritMult, c);
+		c.gridy = 6;
+		weaponSearch.add(wepSpecial, c);
+		c.gridy = 7;
+		c.gridx = 1;
+		c.gridwidth = 3;
+		weaponSearch.add(wepDesc, c);
+
+		JButton wepSearch = new JButton("Search with these values");
+		c.gridx = 0;
+		c.gridy = 8;
+		c.gridwidth = 4;
+		weaponSearch.add(wepSearch, c);
+		wepSearch.addActionListener(e -> {
+			results.clear();
+
+			ArrayList<WeaponEnum> intermediary = new ArrayList<>();
+			for(Item item : items){
+				if(item instanceof WeaponEnum) intermediary.add((WeaponEnum)item);
+			}
+			ArrayList<WeaponEnum> temp = new ArrayList<>();
+
+			if(!wepName.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getItemName().toLowerCase().contains(wepName.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepSource.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(wepSource.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepCost.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(wepCost.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for cost in gold is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepAmount.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(wepAmount.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for amount per purchase is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepWeight.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(wepWeight.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepRange.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.range() == Integer.parseInt(wepRange.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for range is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepMinThreat.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.minThreatRoll() == Integer.parseInt(wepMinThreat.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for the minimum threat roll is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepCritMult.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.critMultiplier()[0] == Integer.parseInt(wepCritMult.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for critical multuplier is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!wepType.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(wepType.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepSubtype.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.subtype().toLowerCase().contains(wepSubtype.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepSDMG.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.sDMG().toLowerCase().contains(wepSDMG.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepMDMG.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.mDMG().toLowerCase().contains(wepMDMG.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepDMGType.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.damageType().toLowerCase().contains(wepDMGType.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepSpecial.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.special().toLowerCase().contains(wepSpecial.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!wepDesc.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getFormattedDetails().toLowerCase().contains(wepDesc.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			results.addAll(intermediary);
+			resultsScroll.repaint();
+		});
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.ipadx = 10;
+		armorSearch.add(new JLabel("Name: "), c);
+		c.gridy = 1;
+		armorSearch.add(new JLabel("Cost (Gold): "), c);
+		c.gridy = 2;
+		armorSearch.add(new JLabel("Armor bonus: "), c);
+		c.gridy = 3;
+		armorSearch.add(new JLabel("Max Dex Modifier: "), c);
+		c.gridy = 4;
+		armorSearch.add(new JLabel("Speed change from 30: "), c);
+		c.gridy = 5;
+		armorSearch.add(new JLabel("Description Contains: "), c);
+		c.gridx = 2;
+		c.gridy = 0;
+		armorSearch.add(new JLabel("Type: "), c);
+		c.gridy = 1;
+		armorSearch.add(new JLabel("Weight (lbs): "), c);
+		c.gridy = 2;
+		armorSearch.add(new JLabel("AC Penalty"), c);
+		c.gridy = 3;
+		armorSearch.add(new JLabel("Spell Fail Percentage: "), c);
+		c.gridy = 4;
+		armorSearch.add(new JLabel("Speed change from 20: "), c);
+
+		JTextField armorName = new JTextField();
+		JTextField armorType = new JTextField();
+		JTextField armorCost = new JTextField();
+		JTextField armorWeight = new JTextField();
+		JTextField armorBonus = new JTextField();
+		JTextField armorPenalty = new JTextField();
+		JTextField armorMaxDex = new JTextField();
+		JTextField armorSpellFail = new JTextField();
+		JTextField armorSpeed30 = new JTextField();
+		JTextField armorSpeed20 = new JTextField();
+		JTextField armorDesc = new JTextField();
+
+		c.ipadx = 0;
+		c.gridy = 0;
+		c.gridx = 1;
+		c.weightx = 1;
+		armorSearch.add(armorName, c);
+		c.gridy = 1;
+		armorSearch.add(armorCost, c);
+		c.gridy = 2;
+		armorSearch.add(armorBonus, c);
+		c.gridy = 3;
+		armorSearch.add(armorMaxDex, c);
+		c.gridy = 4;
+		armorSearch.add(armorSpeed30, c);
+		c.gridy = 0;
+		c.gridx = 3;
+		armorSearch.add(armorType, c);
+		c.gridy = 1;
+		armorSearch.add(armorWeight, c);
+		c.gridy = 2;
+		armorSearch.add(armorPenalty, c);
+		c.gridy = 3;
+		armorSearch.add(armorSpellFail, c);
+		c.gridy = 4;
+		armorSearch.add(armorSpeed20, c);
+		c.gridy = 5;
+		c.gridx = 1;
+		c.gridwidth = 3;
+		armorSearch.add(armorDesc, c);
+
+		JButton armorSearchButton = new JButton("Search with these values");
+		c.gridy = 6;
+		c.gridx = 0;
+		c.gridwidth = 4;
+		armorSearch.add(armorSearchButton, c);
+
+		armorSearchButton.addActionListener(e -> {
+			results.clear();
+
+			ArrayList<ArmorEnum> intermediary = new ArrayList<>();
+			for(Item item : items){
+				if(item instanceof ArmorEnum) intermediary.add((ArmorEnum)item);
+			}
+			ArrayList<ArmorEnum> temp = new ArrayList<>();
+
+			if(!armorName.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getItemName().toLowerCase().contains(armorName.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!armorType.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(armorType.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!armorCost.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(armorCost.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for cost in gold is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorWeight.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(armorWeight.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorBonus.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.getACBoost() == Integer.parseInt(armorBonus.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for the armor bonus is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorPenalty.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.getACPen() == Integer.parseInt(armorPenalty.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for AC Penalty is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorMaxDex.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.getMaxDex() == Integer.parseInt(armorMaxDex.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for maximum Dex modifier is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorSpeed30.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.speedChange(30) == Integer.parseInt(armorSpeed30.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for speed from 30 is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!armorSpeed20.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.speedChange(20) == Integer.parseInt(armorSpeed20.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for speed from 20 is not a number.\nI'll ignore that field for now.");
+				}
+			}
+
+			if(!armorDesc.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getFormattedDetails().toLowerCase().contains(armorDesc.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+
+			results.addAll(intermediary);
+			resultsScroll.repaint();
+		});
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.ipadx = 10;
+		c.gridy = 0;
+
+		magicItemSearch.add(new JLabel("Name: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Aura: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Aura Strength: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Cost (gold): "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Crafting Cost (gold): "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Crafting Prereqs: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Crafting Item Reqs: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Weight (lbs): "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Base Item: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Caster Level: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Is Alive: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Intelligence: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Wisdom: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Communication: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Has Sense: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Has Scaling: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Group: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Source: "), c);
+		c.gridx = 2;
+		c.gridy = 10;
+		magicItemSearch.add(new JLabel("Charisma: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Ego: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Alignment: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Has Power: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Language: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Scaling: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Slot: "), c);
+		c.gridy++;
+		magicItemSearch.add(new JLabel("Description Contains: "), c);
+
+		JTextField magicName = new JTextField();
+		JTextField magicAura = new JTextField();
+		JTextField magicAuraStrength = new JTextField();
+		JTextField magicCost = new JTextField();
+		JTextField magicCraftingCost = new JTextField();
+		JTextField magicCraftingPrereqs = new JTextField();
+		JTextField magicCraftingItemReqs = new JTextField();
+		JTextField magicWeight = new JTextField();
+		JTextField magicBaseItem = new JTextField();
+		JTextField magicCasterLevel = new JTextField();
+		JTextField magicCha = new JTextField();
+		magicCha.setEditable(false);
+		JTextField magicInt = new JTextField();
+		magicInt.setEditable(false);
+		JTextField magicEgo = new JTextField();
+		magicEgo.setEditable(false);
+		JTextField magicWis = new JTextField();
+		magicWis.setEditable(false);
+		JTextField magicAlignment = new JTextField();
+		magicAlignment.setEditable(false);
+		JTextField magicCommunication = new JTextField();
+		magicCommunication.setEditable(false);
+		JTextField magicPowers = new JTextField();
+		magicPowers.setEditable(false);
+		JTextField magicSenses = new JTextField();
+		magicSenses.setEditable(false);
+		JTextField magicLanguage = new JTextField();
+		magicLanguage.setEditable(false);
+		JTextField magicScaling = new JTextField();
+		magicScaling.setEditable(false);
+		JTextField magicGroup = new JTextField();
+		JTextField magicSlot = new JTextField();
+		JTextField magicSource = new JTextField();
+		JTextField magicDesc = new JTextField();
+
+		AtomicBoolean isAlive = new AtomicBoolean(false);
+		AtomicBoolean hasScaling = new AtomicBoolean(false);
+		AtomicBoolean mythic = new AtomicBoolean(false);
+		AtomicBoolean legendaryWeapon = new AtomicBoolean(false);
+		AtomicBoolean illusion = new AtomicBoolean(false);
+		AtomicBoolean universal = new AtomicBoolean(false);
+		AtomicBoolean minorArtifact = new AtomicBoolean(false);
+		AtomicBoolean majorArtifact = new AtomicBoolean(false);
+		AtomicBoolean abjuration = new AtomicBoolean(false);
+		AtomicBoolean conjuration = new AtomicBoolean(false);
+		AtomicBoolean divination = new AtomicBoolean(false);
+		AtomicBoolean enchantment = new AtomicBoolean(false);
+		AtomicBoolean evocation = new AtomicBoolean(false);
+		AtomicBoolean necromancy = new AtomicBoolean(false);
+		AtomicBoolean transmutation = new AtomicBoolean(false);
+
+		JCheckBox isAliveBox = new JCheckBox();
+		isAliveBox.addActionListener(e -> {
+			isAlive.set(!isAlive.get());
+			magicCha.setEditable(isAlive.get());
+			magicInt.setEditable(isAlive.get());
+			magicEgo.setEditable(isAlive.get());
+			magicWis.setEditable(isAlive.get());
+			magicAlignment.setEditable(isAlive.get());
+			magicCommunication.setEditable(isAlive.get());
+			magicPowers.setEditable(isAlive.get());
+			magicSenses.setEditable(isAlive.get());
+			magicLanguage.setEditable(isAlive.get());
+		});
+		JCheckBox hasScalingBox = new JCheckBox();
+		hasScalingBox.addActionListener(e -> {
+			hasScaling.set(!hasScaling.get());
+			magicScaling.setEditable(hasScaling.get());
+		});
+		JCheckBox mythicBox = new JCheckBox();
+		mythicBox.addActionListener(e -> mythic.set(!mythic.get()));
+		JCheckBox legendaryWeaponBox = new JCheckBox();
+		legendaryWeaponBox.addActionListener(e -> legendaryWeapon.set(!legendaryWeapon.get()));
+		JCheckBox illusionBox = new JCheckBox();
+		illusionBox.addActionListener(e -> illusion.set(!illusion.get()));
+		JCheckBox universalBox = new JCheckBox();
+		universalBox.addActionListener(e -> universal.set(!universal.get()));
+		JCheckBox minorArtifactBox = new JCheckBox();
+		minorArtifactBox.addActionListener(e -> minorArtifact.set(!minorArtifact.get()));
+		JCheckBox majorArtifactBox = new JCheckBox();
+		majorArtifactBox.addActionListener(e -> majorArtifact.set(!majorArtifact.get()));
+		JCheckBox abjurationBox = new JCheckBox();
+		abjurationBox.addActionListener(e -> abjuration.set(!abjuration.get()));
+		JCheckBox conjurationBox = new JCheckBox();
+		conjurationBox.addActionListener(e -> conjuration.set(!conjuration.get()));
+		JCheckBox divinationBox = new JCheckBox();
+		divinationBox.addActionListener(e -> divination.set(!divination.get()));
+		JCheckBox enchantmentBox = new JCheckBox();
+		enchantmentBox.addActionListener(e -> enchantment.set(!enchantment.get()));
+		JCheckBox evocationBox = new JCheckBox();
+		evocationBox.addActionListener(e -> evocation.set(!evocation.get()));
+		JCheckBox necromancyBox = new JCheckBox();
+		necromancyBox.addActionListener(e -> necromancy.set(!necromancy.get()));
+		JCheckBox transmutationBox = new JCheckBox();
+		transmutationBox.addActionListener(e -> transmutation.set(!transmutation.get()));
+
+		JPanel magicBoolPanel = new JPanel(new GridBagLayout());
+		JScrollPane magicBoolScroll = new JScrollPane(magicBoolPanel);
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 1;
+		magicBoolPanel.add(new JLabel("Mythic: "), c);
+		c.gridy = 1;
+		magicBoolPanel.add(new JLabel("Legendary Weapon: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Illusion: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Universal: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Minor Artifact: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Major Artifact: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Abjuration: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Conjuration: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Divination: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Enchantment: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Evocation: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Necromancy: "), c);
+		c.gridy++;
+		magicBoolPanel.add(new JLabel("Transmutation: "), c);
+		c.gridy = 0;
+		c.gridx = 1;
+		c.weightx = 0;
+		magicBoolPanel.add(mythicBox, c);
+		c.gridy++;
+		magicBoolPanel.add(legendaryWeaponBox, c);
+		c.gridy++;
+		magicBoolPanel.add(illusionBox, c);
+		c.gridy++;
+		magicBoolPanel.add(universalBox, c);
+		c.gridy++;
+		magicBoolPanel.add(minorArtifactBox, c);
+		c.gridy++;
+		magicBoolPanel.add(majorArtifactBox, c);
+		c.gridy++;
+		magicBoolPanel.add(abjurationBox, c);
+		c.gridy++;
+		magicBoolPanel.add(conjurationBox, c);
+		c.gridy++;
+		magicBoolPanel.add(divinationBox, c);
+		c.gridy++;
+		magicBoolPanel.add(enchantmentBox, c);
+		c.gridy++;
+		magicBoolPanel.add(evocationBox, c);
+		c.gridy++;
+		magicBoolPanel.add(necromancyBox, c);
+		c.gridy++;
+		magicBoolPanel.add(transmutationBox, c);
+
+		c.gridx = 2;
+		c.gridy = 0;
+		c.gridwidth = 2;
+		c.gridheight = 10;
+		c.fill = GridBagConstraints.BOTH;
+		magicBoolScroll.setPreferredSize(magicBoolScroll.getMinimumSize());
+		magicItemSearch.add(magicBoolScroll, c);
+
+		c.weightx = 1;
+		c.gridheight = 1;
+		c.gridwidth = 1;
+		c.gridx = 1;
+		c.gridy = 0;
+		magicItemSearch.add(magicName, c);
+		c.gridy++;
+		magicItemSearch.add(magicAura, c);
+		c.gridy++;
+		magicItemSearch.add(magicAuraStrength, c);
+		c.gridy++;
+		magicItemSearch.add(magicCost, c);
+		c.gridy++;
+		magicItemSearch.add(magicCraftingCost, c);
+		c.gridy++;
+		magicItemSearch.add(magicCraftingPrereqs, c);
+		c.gridy++;
+		magicItemSearch.add(magicCraftingItemReqs, c);
+		c.gridy++;
+		magicItemSearch.add(magicWeight, c);
+		c.gridy++;
+		magicItemSearch.add(magicBaseItem, c);
+		c.gridy++;
+		magicItemSearch.add(magicCasterLevel, c);
+		c.gridy++;
+		magicItemSearch.add(isAliveBox, c);
+		c.gridy++;
+		magicItemSearch.add(magicInt, c);
+		c.gridy++;
+		magicItemSearch.add(magicWis, c);
+		c.gridy++;
+		magicItemSearch.add(magicCommunication, c);
+		c.gridy++;
+		magicItemSearch.add(magicSenses, c);
+		c.gridy++;
+		magicItemSearch.add(hasScalingBox, c);
+		c.gridy++;
+		magicItemSearch.add(magicGroup, c);
+		c.gridy++;
+		magicItemSearch.add(magicSource, c);
+		c.gridy = 10;
+		c.gridx = 3;
+		magicItemSearch.add(magicCha, c);
+		c.gridy++;
+		magicItemSearch.add(magicEgo, c);
+		c.gridy++;
+		magicItemSearch.add(magicAlignment, c);
+		c.gridy++;
+		magicItemSearch.add(magicPowers, c);
+		c.gridy++;
+		magicItemSearch.add(magicLanguage, c);
+		c.gridy++;
+		magicItemSearch.add(magicScaling, c);
+		c.gridy++;
+		magicItemSearch.add(magicSlot, c);
+		c.gridy++;
+		magicItemSearch.add(magicDesc, c);
+
+		c.gridy++;
+		c.gridx = 0;
+		c.gridwidth = 4;
+		JButton magicSearch = new JButton("Search with these values");
+		magicItemSearch.add(magicSearch, c);
+
+		magicSearch.addActionListener(e -> {
+			results.clear();
+
+			ArrayList<MagicItem> intermediary = new ArrayList<>();
+			for(Item item : items){
+				if(item instanceof MagicItem) intermediary.add((MagicItem) item);
+			}
+			ArrayList<MagicItem> temp = new ArrayList<>();
+
+			if(!magicName.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.name.toLowerCase().contains(magicName.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicAura.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.aura.toLowerCase().contains(magicAura.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicAuraStrength.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.auraStrength.toLowerCase().contains(magicAuraStrength.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicCost.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.price == Integer.parseInt(magicCost.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(Exception ex){
+					showError("Number Format Exception", "The value you entered for cost is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!magicCraftingCost.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.craftingCost == Integer.parseInt(magicCraftingCost.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(Exception ex){
+					showError("Number Format Exception", "The value you entered for crafting cost is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!magicCraftingPrereqs.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.craftingRequirements.toLowerCase().contains(magicCraftingPrereqs.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicCraftingItemReqs.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.magicItemRequirements.toLowerCase().contains(magicCraftingItemReqs.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicWeight.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.weight == Double.parseDouble(magicCraftingCost.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(Exception ex){
+					showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
+					System.out.println("|" + magicWeight.getText() + "|");
+				}
+			}
+			if(!magicBaseItem.getText().equals("")){
+				for(MagicItem item : intermediary){
+					for(String s : item.baseItems){
+						if(s.toLowerCase().contains(magicBaseItem.getText().toLowerCase()))
+							temp.add(item);
+					}
+				}
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicCasterLevel.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.casterLevel == Integer.parseInt(magicCasterLevel.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch(Exception ex){
+					showError("Number Format Exception", "The value you entered for caster level is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(isAlive.get()){
+				temp.addAll(intermediary.stream().filter(item -> item.isLiving).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+				if(!magicCha.getText().equals("")){
+					try {
+						temp.addAll(intermediary.stream().filter(item -> item.cha == Integer.parseInt(magicCha.getText())).collect(Collectors.toList()));
+						intermediary.clear();
+						intermediary.addAll(temp);
+						temp.clear();
+					} catch(Exception ex){
+						showError("Number Format Exception", "The value you entered for charisma is not a number.\nI'll ignore that field for now.");
+					}
+				}
+				if(!magicCasterLevel.getText().equals("")){
+					try {
+						temp.addAll(intermediary.stream().filter(item -> item.intel == Integer.parseInt(magicInt.getText())).collect(Collectors.toList()));
+						intermediary.clear();
+						intermediary.addAll(temp);
+						temp.clear();
+					} catch(Exception ex){
+						showError("Number Format Exception", "The value you entered for intelligence is not a number.\nI'll ignore that field for now.");
+					}
+				}
+				if(!magicEgo.getText().equals("")){
+					try {
+						temp.addAll(intermediary.stream().filter(item -> item.ego == Integer.parseInt(magicEgo.getText())).collect(Collectors.toList()));
+						intermediary.clear();
+						intermediary.addAll(temp);
+						temp.clear();
+					} catch(Exception ex){
+						showError("Number Format Exception", "The value you entered for ego is not a number.\nI'll ignore that field for now.");
+					}
+				}
+				if(!magicWis.getText().equals("")){
+					try {
+						temp.addAll(intermediary.stream().filter(item -> item.wis == Integer.parseInt(magicWis.getText())).collect(Collectors.toList()));
+						intermediary.clear();
+						intermediary.addAll(temp);
+						temp.clear();
+					} catch(Exception ex){
+						showError("Number Format Exception", "The value you entered for wisdom is not a number.\nI'll ignore that field for now.");
+					}
+				}
+				if(!magicAlignment.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.alignment.toLowerCase().contains(magicAlignment.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+				if(!magicCommunication.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.communication.toLowerCase().contains(magicCommunication.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+				if(!magicPowers.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.powers.toLowerCase().contains(magicPowers.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+				if(!magicSenses.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.senses.toLowerCase().contains(magicSenses.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+				if(!magicLanguage.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.languages.toLowerCase().contains(magicLanguage.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+			}
+			if(hasScaling.get()){
+				temp.addAll(intermediary.stream().filter(item -> item.hasScaling).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+				if(!magicScaling.getText().equals("")){
+					temp.addAll(intermediary.stream().filter(item -> item.scaling.toLowerCase().contains(magicScaling.getText().toLowerCase())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				}
+			}
+			if(!magicGroup.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.group.toLowerCase().contains(magicGroup.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicSlot.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.slot.toLowerCase().contains(magicSlot.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicSource.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.source.toLowerCase().contains(magicSource.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!magicDesc.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.basicDescription.toLowerCase().contains(magicDesc.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(mythic.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.mythic).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(legendaryWeapon.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.legendaryWeapon).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(illusion.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.illusion).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(universal.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.universal).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(minorArtifact.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.minorArtifact).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(majorArtifact.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.majorArtifact).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(abjuration.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.abjuration).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(conjuration.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.conjuration).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(divination.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.divination).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(enchantment.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.enchantment).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(evocation.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.evocation).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(necromancy.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.necromancy).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(transmutation.get()) {
+				temp.addAll(intermediary.stream().filter(item -> item.transmutation).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			results.addAll(intermediary);
+			resultsScroll.repaint();
+		});
+
+		c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.gridy = 0;
+		c.ipadx = 10;
+		adventureItemSearch.add(new JLabel("Name: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Platinum: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Gold: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Amount Per Purchase: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Source: "), c);
+		c.gridx = 2;
+		c.gridy = 0;
+		adventureItemSearch.add(new JLabel("Type: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Silver: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Copper: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Weight: "), c);
+		c.gridy++;
+		adventureItemSearch.add(new JLabel("Description: "), c);
+
+		JTextField adventureName = new JTextField();
+		JTextField adventureType = new JTextField();
+		JTextField adventurePlatinum = new JTextField();
+		JTextField adventureGold = new JTextField();
+		JTextField adventureSilver = new JTextField();
+		JTextField adventureCopper = new JTextField();
+		JTextField adventureWeight = new JTextField();
+		JTextField adventureAmount = new JTextField();
+		JTextField adventureSource = new JTextField();
+		JTextField adventureDescription = new JTextField();
+
+		c.weightx = 1;
+		c.gridy = 0;
+		c.gridx = 1;
+		adventureItemSearch.add(adventureName, c);
+		c.gridy++;
+		adventureItemSearch.add(adventurePlatinum, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureGold, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureAmount, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureSource, c);
+		c.gridy = 0;
+		c.gridx = 3;
+		adventureItemSearch.add(adventureType, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureSilver, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureCopper, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureWeight, c);
+		c.gridy++;
+		adventureItemSearch.add(adventureDescription, c);
+
+		JButton adventureSearch = new JButton("Search with these values");
+		c.gridy++;
+		c.gridx = 0;
+		c.gridwidth = 4;
+		adventureItemSearch.add(adventureSearch, c);
+
+		adventureSearch.addActionListener(e -> {
+			results.clear();
+
+			ArrayList<AdventureGearEnum> intermediary = new ArrayList<>();
+			for(Item item : items){
+				if(item instanceof AdventureGearEnum) intermediary.add((AdventureGearEnum) item);
+			}
+			ArrayList<AdventureGearEnum> temp = new ArrayList<>();
+
+
+			if(!adventureName.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getItemName().toLowerCase().contains(adventureName.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!adventureType.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(adventureType.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!adventureSource.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(adventureSource.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!adventureDescription.getText().equals("")){
+				temp.addAll(intermediary.stream().filter(item -> item.getFormattedDetails().toLowerCase().contains(adventureDescription.getText().toLowerCase())).collect(Collectors.toList()));
+				intermediary.clear();
+				intermediary.addAll(temp);
+				temp.clear();
+			}
+			if(!adventurePlatinum.getText().equals("")){
+				try {
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[0] == Integer.parseInt(adventurePlatinum.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for platinum is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!adventureGold.getText().equals("")){
+				try{
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(adventureGold.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for gold is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!adventureSilver.getText().equals("")){
+				try{
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[2] == Integer.parseInt(adventureSilver.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for silver is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!adventureCopper.getText().equals("")){
+				try{
+					temp.addAll(intermediary.stream().filter(item -> item.cost()[3] == Integer.parseInt(adventureCopper.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for copper is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!adventureAmount.getText().equals("")){
+				try{
+					temp.addAll(intermediary.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(adventureAmount.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for amount per purchase is not a number.\nI'll ignore that field for now.");
+				}
+			}
+			if(!adventureWeight.getText().equals("")){
+				try{
+					temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(adventureWeight.getText())).collect(Collectors.toList()));
+					intermediary.clear();
+					intermediary.addAll(temp);
+					temp.clear();
+				} catch (NumberFormatException ex){
+					showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
+				}
+			}
+
+			results.addAll(intermediary);
+			resultsScroll.repaint();
+		});
+
+
+		//End making individual search panels
+
+		searchDialog.add(parentPanel);
+		searchDialog.setSize(500,600);
+		searchDialog.setVisible(true);
 
 		while(!selected.get()){}
 

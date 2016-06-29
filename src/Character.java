@@ -6,6 +6,7 @@ import src.feats.Feat;
 import src.races.Race;
 import src.stats.*;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.io.Serializable;
@@ -54,6 +55,7 @@ public class Character implements Serializable{
 	public int silver = 0;
 	public int gold = 0;
 	public int platinum = 0;
+	public double sellMod = 0.7;
 	
 	public Character(String name, Race race, HashMap<AbilityScoreEnum, Integer> abilities, String[] favoredClassNames){
 		this.name = name;
@@ -252,21 +254,15 @@ public class Character implements Serializable{
 		else inventory.put(item, 1);
 	}
 	
-	public void equipItems(GenItem[] items){
-		for(int i = items.length - 1; i >= 0; i++){
-			equip(items[i]);
+	public URL getImageLocation(){
+		if (imageOverrideLocation == null || imageOverrideLocation.equals("")) return race.getDefaultRaceImageLocation();
+		try {
+			return new URL("file:" + imageOverrideLocation);
+		} catch(Exception e){
+			Pathfinder.showError("Unspecified error", "Run this in command for more details");
+			e.printStackTrace();
 		}
-	}
-	
-	public void unequipItems(GenItem[] items){
-		for(int i = items.length - 1; i >= 0; i++){
-			unequip(items[i]);
-		}
-	}
-	
-	public String getImageLocation(){
-		if(imageOverrideLocation == null) return race.getDefaultRaceImageLocation();
-		return imageOverrideLocation;
+		return null;
 	}
 	
 	public int getAbilityMod(AbilityScoreEnum ability){

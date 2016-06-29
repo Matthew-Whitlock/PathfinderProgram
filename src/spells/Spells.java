@@ -137,16 +137,21 @@ public class Spells implements Comparator<Spell>{
 		URL url = Spells.class.getResource("Spells.class");
 		File file;
 		try{
-			file = new File(url.toURI());
+			if(url.getProtocol().equals("jar")){
+				url = new URL(url.getPath());
+			}
+
+			file = new File(url.getPath().split("!")[0].replace("%20", " "));
 		}catch(Exception e){
 			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nCannot get correct path to Spells.");
+			e.printStackTrace();
 			return null;
 		}
 		
 		if(file.toString().contains("src\\spells\\Spells.class")){
 			file = new File(file.toString().substring(0,file.toString().indexOf("src\\spells\\Spells.class")) + "Resources\\Spells.txt");
 		}else{
-			file = new File(file.toString().substring(0,file.toString().indexOf("Pathfinder.jar")) + "Resources\\Spells.txt");
+			file = new File(file.toString().substring(0, file.toString().lastIndexOf("\\")) + "\\Resources\\Spells.txt");
 		}
 		return file;
 	}

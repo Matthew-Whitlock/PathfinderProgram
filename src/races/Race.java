@@ -4,6 +4,7 @@ import src.feats.Feat;
 import src.stats.AbilityScoreEnum;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,5 +18,5 @@ public abstract class Race implements Serializable{
 		return name;
 	}
 
-	public abstract String getDefaultRaceImageLocation();
+	public abstract URL getDefaultRaceImageLocation();
 }

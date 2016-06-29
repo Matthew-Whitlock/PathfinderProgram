@@ -91,7 +91,11 @@ public class Feats {
         URL url = Feats.class.getResource("Feats.class");
         File file;
         try{
-            file = new File(url.toURI());
+            if(url.getProtocol().equals("jar")){
+                url = new URL(url.getPath());
+            }
+
+            file = new File(url.getPath().split("!")[0].replace("%20", " "));
         }catch(Exception e){
             Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nCannot get correct path to Feats.txt");
             return null;
@@ -100,7 +104,7 @@ public class Feats {
         if(file.toString().contains("src\\feats\\Feats.class"))
             file = new File(file.toString().substring(0, file.toString().indexOf("src\\feats\\Feats.class")) + "Resources\\Feats.txt");
         else
-            file = new File(file.toString().substring(0, file.toString().indexOf("Pathfinder.jar")) + "Resources\\Feats.txt");
+            file = new File(file.toString().substring(0, file.toString().lastIndexOf("\\")) + "\\Resources\\Feats.txt");
         return file;
     }
 

@@ -4,6 +4,7 @@ import src.feats.Feat;
 import src.stats.AbilityScoreEnum;
 
 import java.io.Serializable;
+import java.net.URL;
 
 public class Dwarf extends Race implements Serializable{
 	public Dwarf(){
@@ -39,7 +40,7 @@ public class Dwarf extends Race implements Serializable{
 				"and other such horrors.";
 	}
 	
-	public String getDefaultRaceImageLocation(){
-		return "src\\pictures\\Dwarf.jpg";
+	public URL getDefaultRaceImageLocation(){
+		return Dwarf.class.getResource("/src/pictures/Dwarf.jpg");
 	}
 }

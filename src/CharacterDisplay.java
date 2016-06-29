@@ -9,21 +9,22 @@ import java.awt.event.*;
 import src.items.GenItem;
 import src.classes.CharacterClass;
 import src.feats.Feats;
-import src.items.Item;
 import src.items.ItemUtil;
 import src.spells.*;
 import src.stats.*;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CharacterDisplay extends JTabbedPane{
 	private Character me;
 	private ArrayList<CharacterClass> currentCasters = new ArrayList<>();
 	private JLabel picture;
-	private String currentlyDisplayedPictureLocation;
+	private URL currentlyDisplayedPictureLocation;
 	private JLabel charClass;
+	private ClassesBox classesBox;
 
 	public CharacterDisplay(Character me){
 		this.me = me;
@@ -38,8 +39,9 @@ public class CharacterDisplay extends JTabbedPane{
 		c.fill = GridBagConstraints.BOTH;
 
 		try {
-			picture = new JLabel(new ImageIcon(ImageIO.read(new File(me.getImageLocation())).getScaledInstance(250,250,Image.SCALE_SMOOTH)));
+			picture = new JLabel(new ImageIcon(ImageIO.read(me.getImageLocation()).getScaledInstance(250,250,Image.SCALE_SMOOTH)));
 			currentlyDisplayedPictureLocation = me.getImageLocation();
+			picture.setToolTipText("Double click to change this picture.");
 		} catch(IOException e) {
 			picture = new JLabel();
 			Pathfinder.showError("Could not access image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
@@ -111,7 +113,7 @@ public class CharacterDisplay extends JTabbedPane{
 		genPan.add(classesLabel,c);
 
 
-		ClassesBox classesBox = new ClassesBox();
+		classesBox = new ClassesBox();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1;
 		c.gridy = 6;
@@ -151,6 +153,8 @@ public class CharacterDisplay extends JTabbedPane{
 				currentCasters.add(toCheck);
 			}
 		}
+
+		addTab("Settings", null, new JPanel(), "Program Settings");
 	}
 
 	public void paintComponent(Graphics g){
@@ -158,9 +162,11 @@ public class CharacterDisplay extends JTabbedPane{
 
 		charClass.setText(me.getCharacterClassesAsString());
 
-		if(!currentlyDisplayedPictureLocation.equalsIgnoreCase(me.getImageLocation())) {
+		//classesBox.repaint(); Still never calls paintComponent on ClassesBox?
+
+		if(!currentlyDisplayedPictureLocation.getPath().equals(me.getImageLocation().getPath())) {
 			try {
-				picture.setIcon(new ImageIcon(ImageIO.read(new File(me.getImageLocation())).getScaledInstance(250, 250, Image.SCALE_SMOOTH)));
+				picture.setIcon(new ImageIcon(ImageIO.read(me.getImageLocation()).getScaledInstance(250, 250, Image.SCALE_SMOOTH)));
 			} catch (IOException e) {
 				Pathfinder.showError("Could not acces image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
 				e.printStackTrace();
@@ -1028,6 +1034,7 @@ public class CharacterDisplay extends JTabbedPane{
 						}
 					}
 				});
+				name.setToolTipText("Double click this for more information.");
 
 				add(name,c);
 
@@ -1304,8 +1311,6 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 	}
 
-
-	//Inventory Tab needs work after item remodel.
 	private class InventoryBox extends JPanel{
 
 		private JList<String> listContainer;
@@ -1324,6 +1329,16 @@ public class CharacterDisplay extends JTabbedPane{
 			String[] model = new String[me.inventory.size()];
 			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
 			listContainer = new JList<>(model);
+
+			listContainer.addMouseListener(new MouseAdapter() {
+				public void mouseClicked(MouseEvent evt) {
+					JList list = (JList)evt.getSource();
+					if (evt.getClickCount() > 1) {
+						int index = list.locationToIndex(evt.getPoint());
+						Pathfinder.showItemDetails(itemsList.get(index));
+					}
+				}
+			});
 			
 			removalButton.addActionListener(e -> remove(listContainer.getSelectedIndices()));
 			sellItemButton.addActionListener(e -> sell(listContainer.getSelectedIndices()));
@@ -1332,6 +1347,7 @@ public class CharacterDisplay extends JTabbedPane{
 				parent.repaint();
 			});
 			addItemButton.addActionListener(e -> addItem());
+			buyItemButton.addActionListener(e -> buy());
 			
 			listScroll = new JScrollPane(listContainer);
 			GridBagConstraints c = new GridBagConstraints();
@@ -1361,10 +1377,171 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 		
 		public void sell(int[] indices){
+			int[] totalValue = new int[4];
 			for(int i = indices.length -1; i >= 0; i--){
-				//me.gold += me.inventory.get(indices[i]).goldValue;
+				int[] value = itemsList.get(i).cost();
+				for(int j = 0; j < value.length && j < totalValue.length; j++)
+					totalValue[j] += value[j];
 			}
-			remove(indices);
+
+			AtomicBoolean confirmed = new AtomicBoolean(false);
+			AtomicBoolean closedWindow = new AtomicBoolean(false);
+			JFrame sellFrame = new JFrame("Selling Items");
+			JPanel panel = new JPanel(new GridBagLayout());
+			sellFrame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					closedWindow.set(true);
+				}
+			});
+
+			GridBagConstraints c = new GridBagConstraints();
+			c.gridwidth = 4;
+			panel.add(new JLabel("Sell item(s) for this amount?"), c);
+			c.gridwidth = 1;
+			c.gridy = 1;
+			panel.add(new JLabel("Platinum: "), c);
+			c.gridy = 2;
+			panel.add(new JLabel("Gold: "), c);
+			c.gridx = 2;
+			panel.add(new JLabel("Copper: "), c);
+			c.gridy = 1;
+			panel.add(new JLabel("Silver"), c);
+
+			c.fill = GridBagConstraints.BOTH;
+			JTextField platinum = new JTextField(Integer.toString((int) (me.sellMod * totalValue[0])));
+			JTextField gold = new JTextField(Integer.toString((int) (me.sellMod * totalValue[1])));
+			JTextField silver = new JTextField(Integer.toString((int) (me.sellMod * totalValue[2])));
+			JTextField copper = new JTextField(Integer.toString((int) (me.sellMod * totalValue[3])));
+			c.weightx = 1;
+			c.gridx = 1;
+			panel.add(platinum, c);
+			c.gridy = 2;
+			panel.add(gold, c);
+			c.gridx = 3;
+			panel.add(copper, c);
+			c.gridy = 1;
+			panel.add(silver, c);
+			c.gridy = 3;
+			c.gridx = 0;
+			c.gridwidth = 4;
+			c.weighty = 0;
+			panel.add(new JLabel("(Full value is " + totalValue[0] + " platinum, " + totalValue[1] + " gold, " + totalValue[2] + " silver, " + totalValue[3] + " copper.)"), c);
+
+			JButton confirm = new JButton("Sell for the amount written.");
+			c.weighty = 1;
+			c.gridy = 4;
+			panel.add(confirm, c);
+			confirm.addActionListener(e -> {
+				confirmed.set(true);
+				sellFrame.dispose();
+			});
+
+			sellFrame.add(panel);
+			sellFrame.setSize(320,140);
+			sellFrame.setVisible(true);
+
+			(new Thread(){
+				public void run(){
+					while(!closedWindow.get()){
+						if(confirmed.get()){
+							me.platinum += Integer.parseInt(platinum.getText());
+							me.gold += Integer.parseInt(gold.getText());
+							me.silver += Integer.parseInt(silver.getText());
+							me.copper += Integer.parseInt(copper.getText());
+							remove(indices);
+							break;
+						}
+					}
+				}
+			}).start();
+		}
+
+		public void buy(){
+			(new Thread(){
+				public void run(){
+					java.util.List<GenItem> itemsSelected = Pathfinder.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
+					int[] totalValue = new int[4];
+					for(GenItem item : itemsSelected){
+						int[] value = item.cost();
+						for(int j = 0; j < value.length && j < totalValue.length; j++)
+							totalValue[j] += value[j];
+					}
+
+					AtomicBoolean confirmed = new AtomicBoolean(false);
+					AtomicBoolean closedWindow = new AtomicBoolean(false);
+					JFrame sellFrame = new JFrame("Buying Items");
+					JPanel panel = new JPanel(new GridBagLayout());
+					sellFrame.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosing(WindowEvent e) {
+							closedWindow.set(true);
+						}
+					});
+
+					GridBagConstraints c = new GridBagConstraints();
+					c.gridwidth = 4;
+					panel.add(new JLabel("Buy item(s) for this amount?"), c);
+					c.gridwidth = 1;
+					c.gridy = 1;
+					panel.add(new JLabel("Platinum: "), c);
+					c.gridy = 2;
+					panel.add(new JLabel("Gold: "), c);
+					c.gridx = 2;
+					panel.add(new JLabel("Copper: "), c);
+					c.gridy = 1;
+					panel.add(new JLabel("Silver"), c);
+
+					c.fill = GridBagConstraints.BOTH;
+					JTextField platinum = new JTextField(Integer.toString(totalValue[0]));
+					JTextField gold = new JTextField(Integer.toString(totalValue[1]));
+					JTextField silver = new JTextField(Integer.toString(totalValue[2]));
+					JTextField copper = new JTextField(Integer.toString(totalValue[3]));
+					c.weightx = 1;
+					c.gridx = 1;
+					panel.add(platinum, c);
+					c.gridy = 2;
+					panel.add(gold, c);
+					c.gridx = 3;
+					panel.add(copper, c);
+					c.gridy = 1;
+					panel.add(silver, c);
+					c.gridy = 3;
+					c.gridx = 0;
+					c.gridwidth = 4;
+					c.weighty = 0;
+					panel.add(new JLabel("(Full value is " + totalValue[0] + " platinum, " + totalValue[1] + " gold, " + totalValue[2] + " silver, " + totalValue[3] + " copper.)"), c);
+
+					JButton confirm = new JButton("Buy for the amount written.");
+					c.weighty = 1;
+					c.gridy = 4;
+					panel.add(confirm, c);
+					confirm.addActionListener(e -> {
+						confirmed.set(true);
+						sellFrame.dispose();
+					});
+
+					sellFrame.add(panel);
+					sellFrame.setSize(320,140);
+					sellFrame.setVisible(true);
+
+					while(!closedWindow.get()){
+						if(confirmed.get()){
+							me.platinum -= Integer.parseInt(platinum.getText());
+							me.gold -= Integer.parseInt(gold.getText());
+							me.silver -= Integer.parseInt(silver.getText());
+							me.copper -= Integer.parseInt(copper.getText());
+							for(GenItem item : itemsSelected){
+								if(me.inventory.containsKey(item))
+									me.inventory.put(item, me.inventory.get(item) + item.getPurchaseAmount());
+								else me.inventory.put(item, item.getPurchaseAmount());
+							}
+							parent.repaint();
+							break;
+						}
+					}
+				}
+			}).start();
 		}
 
 		public void addItem(){
@@ -1382,13 +1559,16 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 		
 		public void remove(int[] indices){
-			//Go backward to avoid shifting indices of the next ones to remove;
-			for(int i = indices.length - 1; i >= 0; i--){
-				me.inventory.remove(itemsList.get(indices[i]));
+			for(int i : indices){
+				me.inventory.put(itemsList.get(i), me.inventory.get(itemsList.get(i)) - itemsList.get(i).getPurchaseAmount());
 			}
-			/*String[] model = new String[me.inventory.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
-			listContainer.setListData(model);*/
+
+			ArrayList<GenItem> toRemove = new ArrayList<>();
+			for(GenItem item : me.inventory.keySet())
+				if(me.inventory.get(item) == 0) toRemove.add(item);
+			for(GenItem item : toRemove)
+				me.inventory.remove(item);
+
 			parent.repaint();
 		}
 
@@ -1396,6 +1576,7 @@ public class CharacterDisplay extends JTabbedPane{
 			for(int i : indices){
 				me.equip(itemsList.get(i));
 			}
+			parent.repaint();
 		}
 		
 		public void paintComponent(Graphics g){
@@ -1414,14 +1595,25 @@ public class CharacterDisplay extends JTabbedPane{
 		private JList<String> listContainer;
 		private JButton removalButton = new JButton("Unequip selected item(s)");
 		private JScrollPane listScroll;
+		private ArrayList<GenItem> itemsList = new ArrayList<>();
 		private CharacterDisplay parent;
 
 		public EquippedBox(CharacterDisplay parent){
 			this.parent = parent;
+			itemsList = new ArrayList<>(me.equipped.keySet());
 			setLayout(new GridBagLayout());
-			String[] model = new String[me.equipped.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.equipped.get(i).toString();
-			listContainer = new JList<>(model);
+			listContainer = new JList<>();
+
+			listContainer.addMouseListener(new MouseAdapter() {
+				public void mouseClicked(MouseEvent evt) {
+					JList list = (JList)evt.getSource();
+					if (evt.getClickCount() > 1) {
+						int index = list.locationToIndex(evt.getPoint());
+						Pathfinder.showItemDetails(itemsList.get(index));
+					}
+				}
+			});
+
 			listScroll = new JScrollPane(listContainer);
 			GridBagConstraints c = new GridBagConstraints();
 			c.fill = GridBagConstraints.BOTH;
@@ -1436,8 +1628,16 @@ public class CharacterDisplay extends JTabbedPane{
 			add(removalButton, c);
 			
 			removalButton.addActionListener(e -> {
-				GenItem[] items = new GenItem[listContainer.getSelectedIndices().length];
-				//me.unequipItems(listContainer.getSelectedIndices());
+				for(int i : listContainer.getSelectedIndices()){
+					if(me.inventory.containsKey(itemsList.get(i))){
+						me.inventory.put(itemsList.get(i), me.inventory.get(itemsList.get(i)) + (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
+					} else {
+						me.inventory.put(itemsList.get(i), (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
+					}
+					me.equipped.put(itemsList.get(i), me.equipped.get(itemsList.get(i)) - (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
+					if(me.equipped.get(itemsList.get(i)) == 0) me.equipped.remove(itemsList.get(i));
+				}
+				itemsList = new ArrayList<>(me.equipped.keySet());
 				parent.repaint();
 			});
 		}
@@ -1445,8 +1645,9 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			String[] model = new String[me.equipped.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.equipped.get(i).toString();
+			itemsList = new ArrayList<>(me.equipped.keySet());
+			String[] model = new String[itemsList.size()];
+			for(int i = 0; i < model.length; i++) model[i] = itemsList.get(i).toString() + " (x" + me.equipped.get(itemsList.get(i)) + ")";
 			listContainer.setListData(model);
 		}
 	}
@@ -1956,6 +2157,8 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 	}
 
+
+	//paintComponent never seems to be called?
 	private class ClassesBox extends JPanel{
 		private int currentClasses = 0;
 		private JPanel panel;
@@ -1973,6 +2176,8 @@ public class CharacterDisplay extends JTabbedPane{
 			if(currentClasses != me.classes.size()){
 				panel.removeAll();
 				setupClasses();
+				panel.revalidate();
+				panel.repaint();
 			}
 		}
 
@@ -1981,6 +2186,8 @@ public class CharacterDisplay extends JTabbedPane{
 			c.fill = GridBagConstraints.BOTH;
 			c.weightx = 1;
 			c.weighty = 1;
+			c.gridy = 0;
+			currentClasses = 0;
 			for(CharacterClass charClass : me.classes){
 				JLabel label = new JLabel("Level " + charClass.level + " " + charClass.toString());
 				panel.add(label,c);
