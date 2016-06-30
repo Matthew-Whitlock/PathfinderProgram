@@ -12,22 +12,18 @@ import src.stats.SkillUtils;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Sorcerer extends CharacterClass implements Serializable{
+public abstract class Sorcerer extends SpellCaster implements Serializable{
 
-	public Sorcerer(Character me) {
-		super(me);
-		name = "Sorcerer";
+	public String bloodline;
+
+	public Sorcerer(Character me){
+		super(me, "Sorcerer");
 		hitDiePerLevel = "1d6";
-		isCaster = true;
 		skillRanksMod = 2;
 	}
 
-	public Sorcerer(){
-		name = "Sorcerer";
-	}
-	
 	public void levelUp(){
-		level++;
+		super.levelUp();
 		if(level == 1){
 			if(Feats.getFeatByName("Eschew Materials") != null) {
 				me.currentFeats.add(Feats.getFeatByName("Eschew Materials"));
@@ -44,16 +40,17 @@ public abstract class Sorcerer extends CharacterClass implements Serializable{
 	}
 	
 	public int[] getSpellsPerDay(){
-		int[][] defaultSpellsPerDayByLevel = new int[][]{{0,0,0,0,0,0,0,0,0},{3,0,0,0,0,0,0,0,0},{4,0,0,0,0,0,0,0,0},{5,0,0,0,0,0,0,0,0},
-			{6,3,0,0,0,0,0,0,0},{6,4,0,0,0,0,0,0,0},{6,5,3,0,0,0,0,0,0},{6,6,4,0,0,0,0,0,0},{6,6,5,3,0,0,0,0,0},
-			{6,6,6,4,0,0,0,0,0},{6,6,6,5,3,0,0,0,0},{6,6,6,6,4,0,0,0,0},{6,6,6,6,5,3,0,0,0},{6,6,6,6,6,4,0,0,0},
-			{6,6,6,6,6,5,3,0,0},{6,6,6,6,6,6,4,0,0},{6,6,6,6,6,6,5,3,0},{6,6,6,6,6,6,6,4,0},{6,6,6,6,6,6,6,5,3},
-			{6,6,6,6,6,6,6,6,4},{6,6,6,6,6,6,6,6,6}};
+		int[][] defaultSpellsPerDayByLevel = new int[][]{{0,0,0,0,0,0,0,0,0,0},{-1,3,0,0,0,0,0,0,0,0},{-1,4,0,0,0,0,0,0,0,0},{-1,5,0,0,0,0,0,0,0,0},
+			{-1,6,3,0,0,0,0,0,0,0},{-1,6,4,0,0,0,0,0,0,0},{-1,6,5,3,0,0,0,0,0,0},{-1,6,6,4,0,0,0,0,0,0},{-1,6,6,5,3,0,0,0,0,0},
+			{-1,6,6,6,4,0,0,0,0,0},{-1,6,6,6,5,3,0,0,0,0},{-1,6,6,6,6,4,0,0,0,0},{-1,6,6,6,6,5,3,0,0,0},{-1,6,6,6,6,6,4,0,0,0},
+			{-1,6,6,6,6,6,5,3,0,0},{-1,6,6,6,6,6,6,4,0,0},{-1,6,6,6,6,6,6,5,3,0},{-1,6,6,6,6,6,6,6,4,0},{-1,6,6,6,6,6,6,6,5,3},
+			{-1,6,6,6,6,6,6,6,6,4},{-1,6,6,6,6,6,6,6,6,6}};
 			
 		ArrayList<Integer> bonusSpells = new ArrayList<>();
-		for(int i = 0; i < (me.abilities.get(AbilityScoreEnum.CHA) - 10)/2; i++){
-			bonusSpells.add(0, i/4);
+		for(int i = 0; i < me.getAbilityMod(AbilityScoreEnum.CHA); i++){
+			bonusSpells.add(0, i/4 + 1);
 		}
+		bonusSpells.add(0,0);
 		
 		int[] toReturn = defaultSpellsPerDayByLevel[level < 20 ? level : 20];
 		for(int i = 0; i < bonusSpells.size() && i < toReturn.length; i++){

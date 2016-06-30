@@ -14,8 +14,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import src.classes.CharacterClass;
@@ -1226,7 +1226,7 @@ public class Pathfinder{
 						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
 						ex.printStackTrace();
 					} catch (IOException ex){
-						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
 						ex.printStackTrace();
 					}
 				}
@@ -1305,7 +1305,7 @@ public class Pathfinder{
 						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
 						ex.printStackTrace();
 					} catch (IOException ex){
-						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
 						ex.printStackTrace();
 					}
 				}
@@ -1336,20 +1336,15 @@ public class Pathfinder{
 	public static void chooseClassToLevel(Character me, Component characterDisplay){
 
 		String[] classNames = CharacterClass.getClassNames();
-		for(int j = 0; j < classNames.length; j++){
-			for(int i = 0; i < me.classes.size(); i++) {
-				if (me.classes.get(i).toString().contains(classNames[j])) {
-					classNames[j] = me.classes.get(i).toString() + " Level " + me.classes.get(i).level;
-					break;
-				}
-			}
-		}
 
 		for(CharacterClass charClass : me.classes){
 			boolean containsClass = false;
-			for(String name : classNames){
-				if(charClass.name.contains(name)) containsClass = true;
-				break;
+			for(int i = 0; i < classNames.length; i++){
+				if(charClass.toString().toLowerCase().contains(classNames[i].toLowerCase())) {
+					containsClass = true;
+					classNames[i] = charClass.toString() + " Level " + charClass.level;
+					break;
+				}
 			}
 			if(!containsClass){
 				classNames = Arrays.copyOf(classNames, classNames.length + 1);
@@ -1645,7 +1640,7 @@ public class Pathfinder{
 						showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
 						ex.printStackTrace();
 					} catch (IOException ex){
-						showError("Uknown Exception","The file could not be saved.\nRun this in command for more information.");
+						showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
 						ex.printStackTrace();
 					}
 				}
@@ -2038,7 +2033,7 @@ public class Pathfinder{
 					intermediary.addAll(temp);
 					temp.clear();
 				} catch(NumberFormatException ex){
-					showError("Number Format Exception", "The value you entered for critical multuplier is not a number.\nI'll ignore that field for now.");
+					showError("Number Format Exception", "The value you entered for critical multiplier is not a number.\nI'll ignore that field for now.");
 				}
 			}
 			if(!wepType.getText().equals("")){
@@ -3023,5 +3018,20 @@ public class Pathfinder{
 		searchDialog.dispose();
 
 		return toReturn;
+	}
+
+	public static void showNoteDetails(String title, Map<String, String> dataSet){
+		JFrame noteDisplayFrame = new JFrame(title);
+		JPanel noteDisplayPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + dataSet.get(title) + "</html>");
+		JScrollPane textScroll = new JScrollPane(text);
+		noteDisplayFrame.add(noteDisplayPanel);
+		noteDisplayPanel.add(textScroll, BorderLayout.CENTER);
+		JButton saveChanges = new JButton("Save your changes?");
+		saveChanges.addActionListener(e -> dataSet.put(title, text.getText()));
+		noteDisplayPanel.add(saveChanges, BorderLayout.SOUTH);
+
+		noteDisplayFrame.setSize(400,500);
+		noteDisplayFrame.setVisible(true);
 	}
 }

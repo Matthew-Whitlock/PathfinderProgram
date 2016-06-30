@@ -14,54 +14,44 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class CharacterClass implements Serializable{
+public class CharacterClass implements Serializable{
 	public String name;
 	public String hitDiePerLevel;
 	public int level = 0;
-	public boolean isCaster = false;
-	public int[] spellsCastToday = new int[9];
-	public String bloodline;
 	public Character me;
 	public int skillRanksMod;
 
-	public int[] modifiedSpellsPerDay = new int[9];
-
-	public CharacterClass(Character me){
+	public CharacterClass(Character me, String name){
 		this.me = me;
+		this.name = name;
 	}
 
-	public CharacterClass(){
-
+	public void levelUp(){
+		level++;
 	}
-	
-	public abstract void levelUp();
-	
+
+	public int[] getBAB(){
+		return new int[]{0};
+	}
+
+	public int getBaseFortSave(){
+		return 0;
+	}
+
+	public int getBaseRefSave(){
+		return 0;
+	}
+
+	public int getBaseWillSave(){
+		return 0;
+	}
+
 	public String toString(){
 		return name;
 	}
 
-	public abstract int[] getBAB();
-	public abstract int getBaseFortSave();
-	public abstract int getBaseRefSave();
-	public abstract int getBaseWillSave();
-
-	public ArrayList<Spell> knownSpells = new ArrayList<>();
-	public HashMap<Spell, Integer> preppedSpells = new HashMap<>();
-
-	public int getSpellLevel(Spell spell){
-		return Spells.spellLevelFor(name, spell);
-	}
-
-	public int[] getSpellsPerDay(){
-		return new int[]{0,0,0,0,0,0,0,0,0};
-	}
-
-	public void modifySpellsPerDay(int level, int newValue){
-		modifiedSpellsPerDay[level - 1] += newValue - getSpellsPerDay()[level - 1];
-	}
-
 	public static String[] getClassNames(){
-		return new String[]{"Sorcerer"};
+		return new String[]{"Sorcerer", "Magus"};
 	}
 
 	public static String[] getSubclassesOf(String className){
@@ -85,6 +75,15 @@ public abstract class CharacterClass implements Serializable{
 			}
 			return new AbyssalBloodline(me);
 		}
+
+		if(className.equals("Magus")){
+			for(CharacterClass charClass : me.classes){
+				if(charClass instanceof Magus) return charClass;
+			}
+			return new Magus(me);
+		}
+
+
 
 		return null;
 	}

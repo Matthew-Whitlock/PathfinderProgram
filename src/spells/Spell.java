@@ -1,6 +1,7 @@
 package src.spells;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import src.spells.Spells;
 
@@ -165,5 +166,100 @@ public class Spell implements Serializable{
 	
 	public String toString(){
 		return name + ": " + shortDescription;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Spell spell = (Spell) o;
+
+		if (dismissible != spell.dismissible) return false;
+		if (shapeable != spell.shapeable) return false;
+		if (hasSavingThrow != spell.hasSavingThrow) return false;
+		if (hasSpellResistance != spell.hasSpellResistance) return false;
+		if (slaLevel != spell.slaLevel) return false;
+		if (hasDomain != spell.hasDomain) return false;
+		if (materialCost != spell.materialCost) return false;
+		if (hasBloodline != spell.hasBloodline) return false;
+		if (hasMythic != spell.hasMythic) return false;
+		if (hasDeity != spell.hasDeity) return false;
+		if (hasAugment != spell.hasAugment) return false;
+		if (name != null ? !name.equals(spell.name) : spell.name != null) return false;
+		if (school != null ? !school.equals(spell.school) : spell.school != null) return false;
+		if (subschool != null ? !subschool.equals(spell.subschool) : spell.subschool != null) return false;
+		if (descriptor != null ? !descriptor.equals(spell.descriptor) : spell.descriptor != null) return false;
+		if (!Arrays.equals(levelRequirements, spell.levelRequirements)) return false;
+		if (levelReqAsString != null ? !levelReqAsString.equals(spell.levelReqAsString) : spell.levelReqAsString != null)
+			return false;
+		if (castingTime != null ? !castingTime.equals(spell.castingTime) : spell.castingTime != null) return false;
+		if (!Arrays.equals(componentsRequired, spell.componentsRequired)) return false;
+		if (componentsRequiredAsString != null ? !componentsRequiredAsString.equals(spell.componentsRequiredAsString) : spell.componentsRequiredAsString != null)
+			return false;
+		if (!Arrays.equals(spellTypes, spell.spellTypes)) return false;
+		if (range != null ? !range.equals(spell.range) : spell.range != null) return false;
+		if (area != null ? !area.equals(spell.area) : spell.area != null) return false;
+		if (effect != null ? !effect.equals(spell.effect) : spell.effect != null) return false;
+		if (targets != null ? !targets.equals(spell.targets) : spell.targets != null) return false;
+		if (duration != null ? !duration.equals(spell.duration) : spell.duration != null) return false;
+		if (savingThrow != null ? !savingThrow.equals(spell.savingThrow) : spell.savingThrow != null) return false;
+		if (spellResistance != null ? !spellResistance.equals(spell.spellResistance) : spell.spellResistance != null)
+			return false;
+		if (formattedDescription != null ? !formattedDescription.equals(spell.formattedDescription) : spell.formattedDescription != null)
+			return false;
+		if (source != null ? !source.equals(spell.source) : spell.source != null) return false;
+		if (domain != null ? !domain.equals(spell.domain) : spell.domain != null) return false;
+		if (mythicText != null ? !mythicText.equals(spell.mythicText) : spell.mythicText != null) return false;
+		if (deity != null ? !deity.equals(spell.deity) : spell.deity != null) return false;
+		if (shortDescription != null ? !shortDescription.equals(spell.shortDescription) : spell.shortDescription != null)
+			return false;
+		if (augmentText != null ? !augmentText.equals(spell.augmentText) : spell.augmentText != null) return false;
+		if (bloodlineLevels != null ? !bloodlineLevels.equals(spell.bloodlineLevels) : spell.bloodlineLevels != null)
+			return false;
+		return basicDescription != null ? basicDescription.equals(spell.basicDescription) : spell.basicDescription == null;
+
+	}
+
+	@Override
+	public int hashCode() {
+		int result = name != null ? name.hashCode() : 0;
+		result = 31 * result + (school != null ? school.hashCode() : 0);
+		result = 31 * result + (subschool != null ? subschool.hashCode() : 0);
+		result = 31 * result + (descriptor != null ? descriptor.hashCode() : 0);
+		result = 31 * result + Arrays.hashCode(levelRequirements);
+		result = 31 * result + (levelReqAsString != null ? levelReqAsString.hashCode() : 0);
+		result = 31 * result + (castingTime != null ? castingTime.hashCode() : 0);
+		result = 31 * result + Arrays.hashCode(componentsRequired);
+		result = 31 * result + (componentsRequiredAsString != null ? componentsRequiredAsString.hashCode() : 0);
+		result = 31 * result + Arrays.hashCode(spellTypes);
+		result = 31 * result + (range != null ? range.hashCode() : 0);
+		result = 31 * result + (area != null ? area.hashCode() : 0);
+		result = 31 * result + (effect != null ? effect.hashCode() : 0);
+		result = 31 * result + (targets != null ? targets.hashCode() : 0);
+		result = 31 * result + (duration != null ? duration.hashCode() : 0);
+		result = 31 * result + (dismissible ? 1 : 0);
+		result = 31 * result + (shapeable ? 1 : 0);
+		result = 31 * result + (hasSavingThrow ? 1 : 0);
+		result = 31 * result + (savingThrow != null ? savingThrow.hashCode() : 0);
+		result = 31 * result + (hasSpellResistance ? 1 : 0);
+		result = 31 * result + (spellResistance != null ? spellResistance.hashCode() : 0);
+		result = 31 * result + (formattedDescription != null ? formattedDescription.hashCode() : 0);
+		result = 31 * result + (source != null ? source.hashCode() : 0);
+		result = 31 * result + slaLevel;
+		result = 31 * result + (hasDomain ? 1 : 0);
+		result = 31 * result + (domain != null ? domain.hashCode() : 0);
+		result = 31 * result + materialCost;
+		result = 31 * result + (hasBloodline ? 1 : 0);
+		result = 31 * result + (hasMythic ? 1 : 0);
+		result = 31 * result + (mythicText != null ? mythicText.hashCode() : 0);
+		result = 31 * result + (hasDeity ? 1 : 0);
+		result = 31 * result + (deity != null ? deity.hashCode() : 0);
+		result = 31 * result + (shortDescription != null ? shortDescription.hashCode() : 0);
+		result = 31 * result + (hasAugment ? 1 : 0);
+		result = 31 * result + (augmentText != null ? augmentText.hashCode() : 0);
+		result = 31 * result + (bloodlineLevels != null ? bloodlineLevels.hashCode() : 0);
+		result = 31 * result + (basicDescription != null ? basicDescription.hashCode() : 0);
+		return result;
 	}
 }

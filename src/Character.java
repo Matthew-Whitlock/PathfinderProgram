@@ -1,5 +1,6 @@
 package src;
 
+import src.classes.SpellCaster;
 import src.items.*;
 import src.classes.CharacterClass;
 import src.feats.Feat;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Character implements Serializable{
@@ -19,8 +21,10 @@ public class Character implements Serializable{
 
 	public ArrayList<CharacterClass> classes = new ArrayList<>();
 	public String[] favoredClassNames;
-	
-	public ArrayList<String> notes = new ArrayList<>();
+
+	public Map<String, String> notes = new HashMap<>();
+	public Map<String, String> miscAbilities = new HashMap<>();
+
 	public String name;
 	public String job = null;
 	public String alignment = null;
@@ -30,12 +34,10 @@ public class Character implements Serializable{
 
 	public HashMap<String, Integer> effects = new HashMap<>();
 
-	public ArrayList<String> miscAbilities = new ArrayList<>();
-	
 	public ArrayList<Feat> currentFeats = new ArrayList<>();
 
 	public ArrayList<Skill> skillsList = new ArrayList<>();
-	
+
 	public HashMap<AbilityScoreEnum, Integer> abilities;
 	public HashMap<AbilityScoreEnum, Integer> tempAbilities = new HashMap<>();
 	
@@ -60,12 +62,14 @@ public class Character implements Serializable{
 	public Character(String name, Race race, HashMap<AbilityScoreEnum, Integer> abilities, String[] favoredClassNames){
 		this.name = name;
 		this.race = race;
-		miscAbilities.addAll(race.notes.stream().collect(Collectors.toList()));
+		for(int i = 0; i < race.notes().length - 1; i += 2){
+			miscAbilities.put(race.notes()[i], race.notes()[i+1]);
+		}
 		this.abilities = abilities;
 		this.favoredClassNames = favoredClassNames;
 
-		for(AbilityScoreEnum abilityMod : race.abilityScoreChanges.keySet())
-			abilities.put(abilityMod, abilities.get(abilityMod) + race.abilityScoreChanges.get(abilityMod));
+		for(AbilityScoreEnum abilityMod : race.abilityScoreChanges().keySet())
+			abilities.put(abilityMod, abilities.get(abilityMod) + race.abilityScoreChanges().get(abilityMod));
 
 		for(AbilityScoreEnum ability : AbilityScoreEnum.values())
 			tempAbilities.put(ability, 0);
@@ -264,7 +268,7 @@ public class Character implements Serializable{
 		}
 		return null;
 	}
-	
+
 	public int getAbilityMod(AbilityScoreEnum ability){
 		return (abilities.get(ability) + tempAbilities.get(ability) - 10)/2;
 	}
@@ -303,7 +307,7 @@ public class Character implements Serializable{
 	public int highestCasterLevel(){
 		int toReturn = 0;
 
-		for(CharacterClass charClass : classes) if(charClass.isCaster && charClass.level > toReturn) toReturn = charClass.level;
+		for(CharacterClass charClass : classes) if(charClass instanceof SpellCaster && charClass.level > toReturn) toReturn = charClass.level;
 
 		return toReturn;
 	}

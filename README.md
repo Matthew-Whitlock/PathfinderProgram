@@ -13,6 +13,10 @@ Simple stuff - choosing your race, name, and ability score modifiers. I'd like t
 The guided would have stuff like info on the races, and some various ways to determine your ability scores.
 The hardest part of this will just be figuring out how to make it look pretty.
 
+Additionally, the abilities and notes functions should be reworked. Instead of being a list of strings, it should be a hashmap of string,string.
+That way double clicking on an entry can lead to more information on the entry, to cut down on the ridiculously long notes. The system for adding notes
+will have to change as well, but not significantly.
+
 
 
 #####GUI Thoughts:

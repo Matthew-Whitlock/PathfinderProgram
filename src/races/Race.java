@@ -3,20 +3,13 @@ package src.races;
 import src.feats.Feat;
 import src.stats.AbilityScoreEnum;
 
-import java.io.Serializable;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
-public abstract class Race implements Serializable{
-	public String name;
-	public ArrayList<String> notes = new ArrayList<>();
-	public HashMap<AbilityScoreEnum, Integer> abilityScoreChanges = new HashMap<>();
-	public Feat[] bonusFeats;
-	
-	public String toString(){
-		return name;
-	}
-
-	public abstract URL getDefaultRaceImageLocation();
+public interface Race{
+	String[] notes();
+	Map<AbilityScoreEnum, Integer> abilityScoreChanges();
+	Feat[] bonusFeats();
+	String getName();
+	URL getDefaultRaceImageLocation();
 }
