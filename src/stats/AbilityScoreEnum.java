@@ -1,10 +1,12 @@
 package src.stats;
 
+import java.io.Serializable;
+
 /**
  * @author VestOfHolding
  * @since 6/2/2016.
  */
-public enum AbilityScoreEnum {
+public enum AbilityScoreEnum implements Serializable{
     STR("Strength","Str"),
     DEX("Dexterity","Dex"),
     CON("Constitution","Con"),

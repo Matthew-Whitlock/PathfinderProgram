@@ -1,8 +1,8 @@
 package src.stats;
 
-import src.stats.AbilityScoreEnum;
+import java.io.Serializable;
 
-public enum SkillEnum{
+public enum SkillEnum implements Serializable{
 	
 	ACROBATICS(true,AbilityScoreEnum.DEX,"Acrobatics","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-acrobatics"),
 	APPRAISE(true,AbilityScoreEnum.INT,"Appraise","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-appraise"),
@@ -10,7 +10,7 @@ public enum SkillEnum{
 	CLIMB(true,AbilityScoreEnum.STR,"Climb","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-climb"),
 	CRAFT(true,AbilityScoreEnum.INT,"Craft","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-craft"),
 	DIPLOMACY(true,AbilityScoreEnum.CHA,"Diplomacy","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-diplomacy"),
-	DIABLE_DEVICE(false,AbilityScoreEnum.DEX,"Disable Device","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-disable-device"),
+	DISABLE_DEVICE(false,AbilityScoreEnum.DEX,"Disable Device","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-disable-device"),
 	DISGUISE(true,AbilityScoreEnum.CHA,"Disguise","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-disguise"),
 	ESCAPE_ARTIST(true,AbilityScoreEnum.DEX,"Escape Artist","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-escape-artist"),
 	FLY(true,AbilityScoreEnum.DEX,"Fly","http://www.d20pfsrd.com/extras/community-creations/richard-s-lab/alternative-rules/fast-play-skills-reference/fast-play-skill-fly"),

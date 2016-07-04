@@ -1,14 +1,21 @@
 package src.spells;
 
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.*;
 import java.io.*;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import src.Character;
 import src.Pathfinder;
 import src.classes.CharacterClass;
 import src.classes.SpellCaster;
+
+import javax.swing.*;
 
 public class Spells implements Comparator<Spell>{
 	public static String[] classTypes = new String[]{"Sorcerer","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
@@ -201,6 +208,115 @@ public class Spells implements Comparator<Spell>{
 			return -1;
 		}
 		return spell.levelRequirements[index];
+	}
+
+	public static Spell createNewSpell(JFrame parent){
+		AtomicBoolean spellMade = new AtomicBoolean(false);
+		AtomicBoolean closed = new AtomicBoolean(false);
+		JDialog spellCreator = new JDialog(parent, "Create a new spell");
+		JPanel panel = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new BorderLayout());
+		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel middle = new JPanel(new BorderLayout());
+		spellCreator.add(panel);
+		panel.add(top, BorderLayout.NORTH);
+		panel.add(bottom, BorderLayout.SOUTH);
+		panel.add(middle, BorderLayout.CENTER);
+		top.add(new JLabel("Name: "), BorderLayout.WEST);
+		middle.add(new JLabel("Spell details (supports HTML formatting): "), BorderLayout.NORTH);
+
+		JTextField name = new JTextField();
+		top.add(name, BorderLayout.CENTER);
+
+		JTextArea description = new JTextArea();
+		JScrollPane descScroll = new JScrollPane(description);
+		middle.add(descScroll, BorderLayout.CENTER);
+
+		JButton add = new JButton("Add this spell");
+		JButton addAndSave = new JButton("Add and save this spell");
+
+		bottom.add(addAndSave, BorderLayout.EAST);
+		bottom.add(add, BorderLayout.CENTER);
+
+		add.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				spellMade.set(true);
+			} else {
+				Pathfinder.showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		addAndSave.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				Spell spell = new Spell(name.getText(), description.getText());
+				JFileChooser saver = new JFileChooser();
+				int returned = saver.showSaveDialog(spellCreator);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					try{
+						FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+						ObjectOutputStream out= new ObjectOutputStream(fileOut);
+						out.writeObject(spell);
+						spellMade.set(true);
+					} catch (FileNotFoundException ex){
+						Pathfinder.showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						Pathfinder.showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
+						ex.printStackTrace();
+					}
+				}
+			} else {
+				Pathfinder.showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		spellCreator.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				closed.set(true);
+				spellMade.set(true);
+			}
+		});
+
+		spellCreator.setSize(350,400);
+		spellCreator.setVisible(true);
+
+		while(!spellMade.get()){}
+
+		spellCreator.dispose();
+
+		if(closed.get()) return null;
+		return new Spell(name.getText(), description.getText());
+	}
+
+	public static void showSpellDetails(Spell spell){
+		JFrame detailsFrame = new JFrame(spell.name);
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + spell.formattedDescription + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
+
+	public static void showSpellDetails(Spell spell, String title){
+		JFrame detailsFrame = new JFrame(title);
+		detailsFrame.setSize(450,550);
+		JPanel detailsPanel = new JPanel(new BorderLayout());
+		JEditorPane text = new JEditorPane("text/html","<html>" + spell.formattedDescription + "</html>");
+		text.setEditable(false);
+		JScrollPane scrollingText = new JScrollPane(text);
+		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		detailsFrame.add(detailsPanel);
+		detailsPanel.add(scrollingText);
+		detailsFrame.setVisible(true);
+	}
+
+	public static void spellAddedAutomatically(Spell spell){
+		Spells.showSpellDetails(spell, spell.name + " was added automatically!");
 	}
 
 }

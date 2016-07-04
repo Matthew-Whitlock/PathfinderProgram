@@ -4,13 +4,14 @@ import src.Character;
 import src.spells.Spell;
 import src.spells.Spells;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
  * Created by Matthew on 6/29/2016.
  */
-public class SpellCaster extends CharacterClass{
+public class SpellCaster extends CharacterClass implements Serializable{
 
     public ArrayList<Spell> knownSpells = new ArrayList<>();
     public HashMap<Spell, Integer> preppedSpells = new HashMap<>();

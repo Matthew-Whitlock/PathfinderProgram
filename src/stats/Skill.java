@@ -2,11 +2,13 @@ package src.stats;
 
 import src.Character;
 
+import java.io.Serializable;
+
 /**
  * @author VestOfHolding
  * @since 6/2/2016.
  */
-public class Skill{
+public class Skill implements Serializable{
 	
 	public final SkillEnum skillEnum;
 	private boolean isClassSkill = false;

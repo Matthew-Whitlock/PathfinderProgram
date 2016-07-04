@@ -1,6 +1,7 @@
 package src.classes;
 
 import src.Character;
+import src.SelectionUtils;
 import src.feats.Feat;
 import src.feats.Feats;
 import src.spells.Spell;
@@ -11,9 +12,10 @@ import src.stats.SkillEnum;
 import src.Pathfinder;
 import src.stats.SkillUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class AbyssalBloodline extends Sorcerer{
+public class AbyssalBloodline extends Sorcerer implements Serializable{
 
 	public String[] bonusSpells = new String[]{"","Cause Fear","Bull's Strength","Rage","Stoneskin","Dismissal",
 		"Transformation","Great Teleport","Unholy Aura","Summon Monster"};
@@ -39,7 +41,7 @@ public class AbyssalBloodline extends Sorcerer{
 		} else if(level%2 == 1 && level < 20) {
 			Spell toAdd = Spells.searchByName(bonusSpells[level/2]);
 			knownSpells.add(toAdd);
-			Pathfinder.spellAddedAutomatically(toAdd);
+			Spells.spellAddedAutomatically(toAdd);
 		}
 		
 		if(level == 3){
@@ -55,7 +57,7 @@ public class AbyssalBloodline extends Sorcerer{
 			if((level - (i * 7))%6 == 0){
 				ArrayList<Feat> bonusFeatsList = new ArrayList<Feat>();
 				for(String s : bonusFeats) bonusFeatsList.add(Feats.getFeatByName(s));
-				me.currentFeats.addAll(Pathfinder.chooseFeatFromList(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat.", 1));
+				me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat.", 1));
 			}
 		}
 	}

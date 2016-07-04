@@ -1,11 +1,12 @@
 package src.items;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Created by Matthew on 6/17/2016.
  */
-public class GenItem implements Item{
+public class GenItem implements Item, Serializable{
     public final int GENERIC = -1;
     public final int ARMOR = 0;
     public final int WEAPON = 1;

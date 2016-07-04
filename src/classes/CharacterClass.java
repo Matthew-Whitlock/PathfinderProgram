@@ -51,7 +51,7 @@ public class CharacterClass implements Serializable{
 	}
 
 	public static String[] getClassNames(){
-		return new String[]{"Sorcerer", "Magus"};
+		return new String[]{"Sorcerer", "Magus", "Unchained Rogue"};
 	}
 
 	public static String[] getSubclassesOf(String className){
@@ -83,7 +83,11 @@ public class CharacterClass implements Serializable{
 			return new Magus(me);
 		}
 
-
+		if(className.equals("Unchained Rogue")){
+			for(CharacterClass charClass : me.classes)
+				if(charClass instanceof UnchainedRogue) return charClass;
+			return new UnchainedRogue(me);
+		}
 
 		return null;
 	}

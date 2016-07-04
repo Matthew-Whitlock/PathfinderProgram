@@ -12,6 +12,7 @@ import src.classes.SpellCaster;
 import src.items.GenItem;
 import src.classes.CharacterClass;
 import src.feats.Feats;
+import src.items.Item;
 import src.items.ItemUtil;
 import src.spells.*;
 import src.stats.*;
@@ -337,7 +338,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 		public void chooseLevelUp(){
 			new Thread(() -> {
-				Pathfinder.chooseClassToLevel(me, parent);
+				SelectionUtils.chooseClassToLevel(me, parent);
 			}).start();
 		}
 	}
@@ -1342,7 +1343,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Pathfinder.showFeatDetails(me.currentFeats.get(index));
+						Feats.showFeatDetails(me.currentFeats.get(index));
 					}
 				}
 			});
@@ -1374,7 +1375,7 @@ public class CharacterDisplay extends JTabbedPane{
 			add(removalButton, c);
 
 			forceNewFeats.addActionListener(e -> new Thread(() -> {
-				me.currentFeats.addAll(Pathfinder.chooseFeatFromList(Feats.getFeats(), "Choose the feats(s) to add", -1));
+				me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getFeats(), "Choose the feats(s) to add", -1));
 				repaint();
 			}).start());
 		}
@@ -1428,7 +1429,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Pathfinder.showItemDetails(itemsList.get(index));
+						Item.showItemDetails(itemsList.get(index));
 					}
 				}
 			});
@@ -1553,7 +1554,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void buy(){
 			(new Thread(){
 				public void run(){
-					java.util.List<GenItem> itemsSelected = Pathfinder.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
+					java.util.List<GenItem> itemsSelected = SelectionUtils.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
 					int[] totalValue = new int[4];
 					for(GenItem item : itemsSelected){
 						int[] value = item.cost();
@@ -1640,7 +1641,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void addItem(){
 			(new Thread(){
 				public void run(){
-					java.util.List<GenItem> itemsSelected = Pathfinder.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
+					java.util.List<GenItem> itemsSelected = SelectionUtils.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
 					for(GenItem item : itemsSelected){
 						if(me.inventory.containsKey(item))
 							me.inventory.put(item, me.inventory.get(item) + item.getPurchaseAmount());
@@ -1702,7 +1703,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Pathfinder.showItemDetails(itemsList.get(index));
+						Item.showItemDetails(itemsList.get(index));
 					}
 				}
 			});
@@ -1887,7 +1888,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Pathfinder.showSpellDetails(spellcaster.knownSpells.get(index));
+						Spells.showSpellDetails(spellcaster.knownSpells.get(index));
 					}
 				}
 			});
@@ -1905,7 +1906,7 @@ public class CharacterDisplay extends JTabbedPane{
 			add(forceNewSpells, c);
 
 			forceNewSpells.addActionListener(e -> new Thread(() -> {
-                spellcaster.knownSpells.addAll(Pathfinder.chooseSpellFromList(Spells.getSpells(), "Choose the spell(s) to add", -1));
+                spellcaster.knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.getSpells(), "Choose the spell(s) to add", -1));
                 repaint();
 			}).start());
 
@@ -1937,7 +1938,7 @@ public class CharacterDisplay extends JTabbedPane{
 		
 		public void showDetails(int[] indices){
 			for(int i : indices){
-				Pathfinder.showSpellDetails(spellCaster.knownSpells.get(i));
+				Spells.showSpellDetails(spellCaster.knownSpells.get(i));
 			}
 		}
 

@@ -8,6 +8,7 @@ import src.races.Race;
 import src.stats.*;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.io.Serializable;
@@ -84,9 +85,15 @@ public class Character implements Serializable{
 
 		String hitDie = charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
+		Pathfinder.popupDialog("Skill ranks!","You may add " + (charClass.skillRanksMod + getAbilityMod(AbilityScoreEnum.INT)) + " skill ranks.\n" +
+			"You may not have more skill ranks in a single skill than your current level. So no skill may be ranked higher than " + getTotalLevel());
 
-		//Also do skill points + Ability points (When needed)
-
+		for(String s : favoredClassNames){
+			if(charClass.toString().toLowerCase().contains(s.toLowerCase())){
+				Pathfinder.popupDialog("Favored Class Bonus","Since this is a favored class, you get to choose to either add one more skill rank, or add one more health point.");
+				break;
+			}
+		}
 	}
 	
 	public int getAC(){

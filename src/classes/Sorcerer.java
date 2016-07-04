@@ -2,6 +2,7 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
+import src.SelectionUtils;
 import src.feats.Feats;
 import src.stats.Skill;
 import src.spells.Spells;
@@ -24,8 +25,13 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 
 	public void levelUp(){
 		super.levelUp();
+
+		if(level%2 == 1){
+			me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getAvailableFeats(me), "Choose a feat!", 1));
+		}
+
 		if(level == 1){
-			if(Feats.getFeatByName("Eschew Materials") != null) {
+			if(Feats.getFeatByName("Eschew Materials") != null && !Feats.characterHasFeat("Eschew Materials", me)) {
 				me.currentFeats.add(Feats.getFeatByName("Eschew Materials"));
 			}
 
@@ -34,6 +40,11 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 					new Skill(me,SkillEnum.USE_MAGIC_DEVICE)};
 
 			SkillUtils.applyClassSkills(classSkills, me);
+		}
+		if(level%4 == 0){
+			Pathfinder.popupDialog("Ability Score increases!","Choose two different ability scores and give both of them a +1!\n" +
+			"If the ability is Int, and your modifier goes up, add skill ranks to skills equal to your current level.\n" +
+			"If the ability is Con, and your modifier goes up, add your current level value to your total health.");
 		}
 		levelUpBloodline();
 		learnNewSpells();
@@ -72,7 +83,7 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 				Pathfinder.showError("Cannot learn spell level " + spellLevel,"You do not have a high enough Charisma modifier to learn spells of level " + spellLevel + " and higher.");
 				break;
 			}
-			knownSpells.addAll(Pathfinder.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
+			knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 		}
 	}
 	
@@ -83,7 +94,7 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 	}
 
 	public int[] getBAB(){
-		int[][] bab = new int[][]{{0},{1},{1},{2},{2},{3},{3},{4},{4},{5},{5},{6,1},{6,1},{7,2},{7,2},{8,3},{8,3},{9,4},{9,4},{10,5}};
+		int[][] bab = new int[][]{{0},{0},{1},{1},{2},{2},{3},{3},{4},{4},{5},{5},{6,1},{6,1},{7,2},{7,2},{8,3},{8,3},{9,4},{9,4},{10,5}};
 		return bab[level];
 	}
 

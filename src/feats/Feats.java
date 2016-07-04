@@ -2,20 +2,23 @@ package src.feats;
 
 import src.Pathfinder;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import src.Character;
 import src.stats.AbilityScoreEnum;
 import src.stats.SkillUtils;
+
+import javax.swing.*;
 
 /**
  * Created by Matthew on 6/4/2016.
@@ -30,6 +33,115 @@ public class Feats {
                 return feat;
         }
         return null;
+    }
+
+    public static Feat createNewFeat(JFrame parent){
+        AtomicBoolean featMade = new AtomicBoolean(false);
+        AtomicBoolean closed = new AtomicBoolean(false);
+        JDialog featCreator = new JDialog(parent, "Create a new Feat");
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new BorderLayout());
+        JPanel bottom = new JPanel(new BorderLayout());
+        JPanel middle = new JPanel(new BorderLayout());
+        featCreator.add(panel);
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(bottom, BorderLayout.SOUTH);
+        panel.add(middle, BorderLayout.CENTER);
+        top.add(new JLabel("Name: "), BorderLayout.WEST);
+        middle.add(new JLabel("Feat details (supports HTML formatting): "), BorderLayout.NORTH);
+
+        JTextField name = new JTextField();
+        top.add(name, BorderLayout.CENTER);
+
+        JTextArea description = new JTextArea();
+        JScrollPane descScroll = new JScrollPane(description);
+        middle.add(descScroll, BorderLayout.CENTER);
+
+        JButton add = new JButton("Add this feat");
+        JButton addAndSave = new JButton("Add and save this feat");
+
+        bottom.add(addAndSave, BorderLayout.EAST);
+        bottom.add(add, BorderLayout.CENTER);
+
+        add.addActionListener(e -> {
+            if(!(name.getText().equals("")||description.getText().equals(""))){
+                featMade.set(true);
+            } else {
+                Pathfinder.showError("Not enough details","You must write a feat name and description.");
+            }
+        });
+
+        addAndSave.addActionListener(e -> {
+            if(!(name.getText().equals("")||description.getText().equals(""))){
+                Feat feat = new Feat(name.getText(), description.getText());
+                JFileChooser saver = new JFileChooser();
+                int returned = saver.showSaveDialog(featCreator);
+                if(returned == JFileChooser.APPROVE_OPTION){
+                    try{
+                        FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+                        ObjectOutputStream out= new ObjectOutputStream(fileOut);
+                        out.writeObject(feat);
+                        featMade.set(true);
+                    } catch (FileNotFoundException ex){
+                        Pathfinder.showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+                        ex.printStackTrace();
+                    } catch (IOException ex){
+                        Pathfinder.showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
+                        ex.printStackTrace();
+                    }
+                }
+            } else {
+                Pathfinder.showError("Not enough details","You must write a feat name and description.");
+            }
+        });
+
+        featCreator.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closed.set(true);
+                featMade.set(true);
+            }
+        });
+
+        featCreator.setSize(350,400);
+        featCreator.setVisible(true);
+
+        while(!featMade.get()){}
+
+        featCreator.dispose();
+
+        if(closed.get()) return null;
+        return new Feat(name.getText(), description.getText());
+    }
+
+    public static void showFeatDetails(Feat feat){
+        JFrame detailsFrame = new JFrame(feat.name);
+        detailsFrame.setSize(450,550);
+        JPanel detailsPanel = new JPanel(new BorderLayout());
+        JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
+        text.setEditable(false);
+        JScrollPane scrollingText = new JScrollPane(text);
+        scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        detailsFrame.add(detailsPanel);
+        detailsPanel.add(scrollingText);
+        detailsFrame.setVisible(true);
+    }
+
+    public static void showFeatDetails(Feat feat, String title){
+        JFrame detailsFrame = new JFrame(title);
+        detailsFrame.setSize(450,550);
+        JPanel detailsPanel = new JPanel(new BorderLayout());
+        JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
+        text.setEditable(false);
+        JScrollPane scrollingText = new JScrollPane(text);
+        scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        detailsFrame.add(detailsPanel);
+        detailsPanel.add(scrollingText);
+        detailsFrame.setVisible(true);
+    }
+
+    public static void featAddedAutomatically(Feat feat){
+        Feats.showFeatDetails(feat, feat.name + " was added automatically");
     }
 
     public static List<Feat> getFeats(){
