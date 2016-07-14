@@ -5,24 +5,18 @@ So far I'm just working on the character sheet aspect of it, but I've also heard
 things like encounter generators.
 
 
-####Currently Working On: Organizing the classes.
-They definitely need some work before they're clear and concise.
+####Currently Working On: Sprucing up the UI.  
+I want it looking decent and workable, rather than programmatically concise, for now. I'd like some feedback on if it actually follows game mechanics well.
 
-#####Next Issues: Setting up the actual character creation process.
-Simple stuff - choosing your race, name, and ability score modifiers. I'd like to make a non-guided and a guided version.
-The guided would have stuff like info on the races, and some various ways to determine your ability scores.
-The hardest part of this will just be figuring out how to make it look pretty.
+#####Next Issues: Setting up the "Settings" tab  
+It should mostly contain things like resetting things to default. E.G. if you set an image that the program can't find, there's nothing for you to double click on currently to fix the issue. Resetting customizations to items, resetting stat customizations, etc. Basically just a settings tab for setting all of the "player modifications" fields to empty.
 
-Additionally, the abilities and notes functions should be reworked. Instead of being a list of strings, it should be a hashmap of string,string.
-That way double clicking on an entry can lead to more information on the entry, to cut down on the ridiculously long notes. The system for adding notes
-will have to change as well, but not significantly.
-
+Item Modifications  
+A system for modifying the details of items. It can be pretty simple for now, since most item details don't actually have impact on the program, so it can be just modifying a big chunk of text, with a couple things seperate like AC Penalty etc.
 
 
 #####GUI Thoughts:
-Will need some extra tabs made up for classes with things like ki, and alchemists with their discoveries.
-Find some free images to use here and there - to spruce things up. Alternatively, ask someone to draw some up?  
-
+Will need some extra tabs made up for classes with things like ki, and alchemists with their discoveries.  
 
 &nbsp;
 
@@ -32,3 +26,5 @@ Contributions so far:
 Matthew Whitlock, Creation/Programming  
 VestOfHolding, Pogramming/Optimization  
 [Mike Chopswil](chopswil@comcast.net), Database creation  
+[Merlin Cheng](https://www.behance.net/gallery/17236097/Item-Sprite), Sprites  
+[Henrique Lazarini](http://7soul1.deviantart.com/art/420-Pixel-Art-Icons-for-RPG-129892453), Sprites  
