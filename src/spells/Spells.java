@@ -319,4 +319,10 @@ public class Spells implements Comparator<Spell>{
 		Spells.showSpellDetails(spell, spell.name + " was added automatically!");
 	}
 
+	public static URL getIcon(){
+		//I need to find something better than spellbooks for this - they won't represent the schools well.
+		//The spell related icons I have focus on elements (earth, fire), not schools (divination, conjuration).
+		return Spells.class.getResource("/src/pictures/SpellIcons/W_Book04");
+	}
+
 }

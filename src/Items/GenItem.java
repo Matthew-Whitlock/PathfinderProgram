@@ -1,6 +1,7 @@
 package src.items;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.util.Arrays;
 
 /**
@@ -33,6 +34,7 @@ public class GenItem implements Item, Serializable{
     public int amount;
     public int speedFromThirty;
     public int speedFromTwenty;
+    public URL iconURL = null;
 
     //For player modifications
     public String newName;
@@ -46,8 +48,9 @@ public class GenItem implements Item, Serializable{
     public int[] newAttackMultiplier = new int[]{NOT_SET};
     public int newMinCritThreat = NOT_SET;
     public double newWeight = NOT_SET;
-    public int newSpeedFromTwenty;
-    public int newSpeedFromThirty;
+    public int newSpeedFromTwenty = NOT_SET;
+    public int newSpeedFromThirty = NOT_SET;
+    public URL newURL = null;
 
 
     public GenItem(Item item){
@@ -157,6 +160,12 @@ public class GenItem implements Item, Serializable{
         return amount;
     }
 
+    public URL getIcon(){
+        if(newURL != null) return newURL;
+        if(backingType != GENERIC) return itemBase.getIcon();
+        return iconURL;
+    }
+
     public void resetAllCustomization(){
         newName = null;
         newDescription = null;
@@ -171,71 +180,89 @@ public class GenItem implements Item, Serializable{
         newWeight = NOT_SET;
         newSpeedFromTwenty = NOT_SET;
         newSpeedFromThirty = NOT_SET;
+        newURL = null;
     }
 
-    public boolean equals(GenItem toCompare){
-        if(toCompare == null) return false;
-        if(backingType != GENERIC)
-            return backingType == toCompare.backingType && itemBase.equals(toCompare.itemBase) && newName.equals(toCompare.newName) && newDescription.equals(toCompare.newDescription) && newInventoryLine.equals(toCompare.newInventoryLine) &&
-                    newMaxDex == toCompare.newMaxDex && newACPen == toCompare.newACPen && newACBoost == toCompare.newACBoost && newCost == toCompare.newCost && newAmount == toCompare.newAmount && Arrays.equals(newAttackMultiplier, toCompare.newAttackMultiplier) &&
-                    newMinCritThreat == toCompare.newMinCritThreat && newWeight == toCompare.newWeight && newSpeedFromThirty == toCompare.newSpeedFromThirty && newSpeedFromTwenty == toCompare.newSpeedFromTwenty;
-        else
-            return backingType == toCompare.backingType && name.equals(toCompare.name) && description.equals(toCompare.description) && inventoryLine.equals(toCompare.inventoryLine) && Arrays.equals(attackMultiplier, toCompare.attackMultiplier) &&
-                    minCritThreat == toCompare.minCritThreat && acPen == toCompare.acPen && acBoost == toCompare.acBoost && maxDEX == toCompare.maxDEX && Arrays.equals(cost, toCompare.cost) && weight == toCompare.weight &&
-                    amount == toCompare.amount && speedFromThirty == toCompare.speedFromThirty && speedFromTwenty == toCompare.speedFromTwenty && newName.equals(toCompare.newName) && newDescription.equals(toCompare.newDescription) &&
-                    newInventoryLine.equals(toCompare.newInventoryLine) && newMaxDex == toCompare.newMaxDex && newACPen == toCompare.newACPen && newACBoost == toCompare.newACBoost && newCost == toCompare.newCost && newAmount == toCompare.newAmount &&
-                    Arrays.equals(newAttackMultiplier, toCompare.newAttackMultiplier) && newMinCritThreat == toCompare.newMinCritThreat && newWeight == toCompare.newWeight && newSpeedFromThirty == toCompare.newSpeedFromThirty &&
-                    newSpeedFromTwenty == toCompare.newSpeedFromTwenty;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GenItem genItem = (GenItem) o;
+
+        if (backingType != genItem.backingType) return false;
+        if (minCritThreat != genItem.minCritThreat) return false;
+        if (acPen != genItem.acPen) return false;
+        if (acBoost != genItem.acBoost) return false;
+        if (maxDEX != genItem.maxDEX) return false;
+        if (Double.compare(genItem.weight, weight) != 0) return false;
+        if (amount != genItem.amount) return false;
+        if (speedFromThirty != genItem.speedFromThirty) return false;
+        if (speedFromTwenty != genItem.speedFromTwenty) return false;
+        if (newMaxDex != genItem.newMaxDex) return false;
+        if (newACPen != genItem.newACPen) return false;
+        if (newACBoost != genItem.newACBoost) return false;
+        if (newAmount != genItem.newAmount) return false;
+        if (newMinCritThreat != genItem.newMinCritThreat) return false;
+        if (Double.compare(genItem.newWeight, newWeight) != 0) return false;
+        if (newSpeedFromTwenty != genItem.newSpeedFromTwenty) return false;
+        if (newSpeedFromThirty != genItem.newSpeedFromThirty) return false;
+        if (itemBase != null ? !itemBase.equals(genItem.itemBase) : genItem.itemBase != null) return false;
+        if (name != null ? !name.equals(genItem.name) : genItem.name != null) return false;
+        if (description != null ? !description.equals(genItem.description) : genItem.description != null) return false;
+        if (inventoryLine != null ? !inventoryLine.equals(genItem.inventoryLine) : genItem.inventoryLine != null)
+            return false;
+        if (!Arrays.equals(attackMultiplier, genItem.attackMultiplier)) return false;
+        if (!Arrays.equals(cost, genItem.cost)) return false;
+        if (iconURL != null ? !iconURL.equals(genItem.iconURL) : genItem.iconURL != null) return false;
+        if (newName != null ? !newName.equals(genItem.newName) : genItem.newName != null) return false;
+        if (newDescription != null ? !newDescription.equals(genItem.newDescription) : genItem.newDescription != null)
+            return false;
+        if (newInventoryLine != null ? !newInventoryLine.equals(genItem.newInventoryLine) : genItem.newInventoryLine != null)
+            return false;
+        if (!Arrays.equals(newCost, genItem.newCost)) return false;
+        if (!Arrays.equals(newAttackMultiplier, genItem.newAttackMultiplier)) return false;
+        return newURL != null ? newURL.equals(genItem.newURL) : genItem.newURL == null;
+
     }
 
-    public int hashCode(){
-        int hash;
-        if(backingType != GENERIC){
-            hash = 65179;
-            hash += backingType;
-            hash += itemBase != null ? itemBase.hashCode() : 0;
-            hash += newName != null ? newName.hashCode() : 0;
-            hash += newDescription != null ? newDescription.hashCode() : 0;
-            hash += newInventoryLine != null ? newInventoryLine.hashCode() : 0;
-            hash += newMaxDex;
-            hash += newACPen;
-            hash += newACBoost;
-            for(int i : newCost) hash += i;
-            hash += newAmount;
-            for(int i : newAttackMultiplier) hash += i;
-            hash += newMinCritThreat;
-            hash += newWeight;
-            hash += newSpeedFromThirty;
-            hash += newSpeedFromTwenty;
-        } else {
-            hash = 65179;
-            hash += backingType;
-            hash += itemBase != null ? itemBase.hashCode() : 0;
-            hash += newName != null ? newName.hashCode() : 0;
-            hash += name != null ? name.hashCode() : 0;
-            hash += newDescription != null ? newDescription.hashCode() : 0;
-            hash += description != null ? description.hashCode() : 0;
-            hash += newInventoryLine != null ? newInventoryLine.hashCode() : 0;
-            hash += inventoryLine != null ? inventoryLine.hashCode() : 0;
-            hash += newMaxDex == NOT_SET ? maxDEX : newMaxDex;
-            hash += newACPen == NOT_SET ? acPen : newACPen;
-            hash += newACBoost == NOT_SET ? acBoost : newACBoost;
-            if(newCost[0] == NOT_SET)
-                for(int i : cost) hash += i;
-            else
-                for(int i : newCost) hash += i;
-            hash += newAmount == NOT_SET ? amount : newAmount;
-            if(newAttackMultiplier[0] == NOT_SET)
-                for(int i : attackMultiplier) hash += i;
-            else
-                for(int i : newAttackMultiplier) hash += i;
-            hash += newMinCritThreat == NOT_SET ? minCritThreat : newMinCritThreat;
-            hash += newWeight == NOT_SET ? weight : newWeight;
-            hash += newSpeedFromThirty == NOT_SET ? speedFromThirty : newSpeedFromThirty;
-            hash += newSpeedFromTwenty == NOT_SET ? speedFromTwenty : newSpeedFromTwenty;
-        }
-
-        return hash;
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = itemBase != null ? itemBase.hashCode() : 0;
+        result = 31 * result + backingType;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (inventoryLine != null ? inventoryLine.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(attackMultiplier);
+        result = 31 * result + minCritThreat;
+        result = 31 * result + acPen;
+        result = 31 * result + acBoost;
+        result = 31 * result + maxDEX;
+        result = 31 * result + Arrays.hashCode(cost);
+        temp = Double.doubleToLongBits(weight);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + amount;
+        result = 31 * result + speedFromThirty;
+        result = 31 * result + speedFromTwenty;
+        result = 31 * result + (iconURL != null ? iconURL.hashCode() : 0);
+        result = 31 * result + (newName != null ? newName.hashCode() : 0);
+        result = 31 * result + (newDescription != null ? newDescription.hashCode() : 0);
+        result = 31 * result + (newInventoryLine != null ? newInventoryLine.hashCode() : 0);
+        result = 31 * result + newMaxDex;
+        result = 31 * result + newACPen;
+        result = 31 * result + newACBoost;
+        result = 31 * result + Arrays.hashCode(newCost);
+        result = 31 * result + newAmount;
+        result = 31 * result + Arrays.hashCode(newAttackMultiplier);
+        result = 31 * result + newMinCritThreat;
+        temp = Double.doubleToLongBits(newWeight);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + newSpeedFromTwenty;
+        result = 31 * result + newSpeedFromThirty;
+        result = 31 * result + (newURL != null ? newURL.hashCode() : 0);
+        return result;
     }
 
     public String getItemName(){

@@ -220,6 +220,27 @@ public class Feats {
         return file;
     }
 
+    public static URL getIcon(Feat feat){
+        if(feat.type.equals("Combat")){
+            return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff02.png");
+        }
+        if(feat.type.equals("Item Creation")){
+            return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff03.png");
+        }
+        if(feat.type.equals("Metamagic")){
+            return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff06.png");
+        }
+        if(feat.type.equals("Mythic")){
+            return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff14.png");
+        }
+        if(feat.type.equals("Achievement") || feat.type.equals("Story")){
+            return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff08.png");
+        }
+
+        return Feats.class.getResource("/src/pictures/FeatIcons/S_Buff01.png");
+        //Definitely needs more.
+    }
+
     //Checking for requirements.
 
     public static boolean characterMeetsAllPrereqs(Feat feat, Character me){

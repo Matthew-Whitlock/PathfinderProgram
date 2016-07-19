@@ -13,6 +13,7 @@ import src.items.GenItem;
 import src.classes.CharacterClass;
 import src.feats.Feats;
 import src.items.Item;
+import src.items.ItemCellRenderer;
 import src.items.ItemUtil;
 import src.spells.*;
 import src.stats.*;
@@ -20,6 +21,7 @@ import src.stats.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CharacterDisplay extends JTabbedPane{
@@ -143,22 +145,46 @@ public class CharacterDisplay extends JTabbedPane{
 		c.weighty = 0;
 		genPan.add(saveBackground,c);
 
-		addTab("General",null, genPan,"Your character's general information.");
+		ImageIcon icon = null;
+		addTab("General",icon, genPan,"Your character's general information.");
 
-		addTab("Stats", null, new StatsTab(this), "Your character's stats");
+		icon = null;
+		addTab("Stats", icon, new StatsTab(this), "Your character's stats");
 
-		addTab("Inventory",null,new InventoryTab(this),"Your inventory");
+		icon = null;
+		try {
+			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/ItemIcons/SwordShieldImageIcon.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+		} catch(IOException e){
+			Pathfinder.showError("Image not found", "I couldn't load the image for the Inventory tab. I don't know why.\nRun this in command for more details.");
+			e.printStackTrace();
+		}
+		addTab("Inventory",icon,new InventoryTab(this),"Your inventory");
 
-		addTab("Abilities/Feats", null, new AbilityTab(), "Your feats, notes, and misc abilities.");
+		icon = null;
+		try {
+			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/FeatIcons/S_Buff01.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+		} catch(IOException e){
+			Pathfinder.showError("Image not found", "I couldn't load the image for the Abilities/Feats tab. I don't know why.\nRun this in command for more details.");
+			e.printStackTrace();
+		}
+		addTab("Abilities/Feats", icon, new AbilityTab(), "Your feats, notes, and misc abilities.");
 
+		icon = null;
+		try {
+			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/SpellIcons/W_Book04.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+		} catch(IOException e){
+			Pathfinder.showError("Image not found", "I couldn't load the image for the spellcaster tabs. I don't know why.\nRun this in command for more details.");
+			e.printStackTrace();
+		}
 		for(CharacterClass toCheck : me.classes){
 			if(toCheck instanceof SpellCaster){
-				addTab(toCheck.toString(), null, new SpellCasterTab((SpellCaster)toCheck), "Spell information for this class");
+				addTab(toCheck.toString(), icon, new SpellCasterTab((SpellCaster)toCheck), "Spell information for this class");
 				currentCasters.add(toCheck);
 			}
 		}
 
-		addTab("Settings", null, new JPanel(), "Program Settings");
+		icon = null;
+		addTab("Settings", icon, new JPanel(), "Program Settings");
 	}
 
 	public void paintComponent(Graphics g){
@@ -180,7 +206,14 @@ public class CharacterDisplay extends JTabbedPane{
 
 		for(CharacterClass toCheck : me.classes){
 			if(toCheck instanceof SpellCaster && !currentCasters.contains(toCheck)){
-				addTab(toCheck.toString(), null, new SpellCasterTab((SpellCaster)toCheck), "Spell information for this class");
+				ImageIcon icon = null;
+				try {
+					icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/SpellIcons/W_Book04.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+				} catch(IOException e){
+					Pathfinder.showError("Image not found", "I couldn't load the image for the spellcaster tabs. I don't know why.\nRun this in command for more details.");
+					e.printStackTrace();
+				}
+				addTab(toCheck.toString(), icon, new SpellCasterTab((SpellCaster)toCheck), "Spell information for this class");
 				currentCasters.add(toCheck);
 				repaint();
 			}
@@ -1407,29 +1440,27 @@ public class CharacterDisplay extends JTabbedPane{
 
 	private class InventoryBox extends JPanel{
 
-		private JList<String> listContainer;
+		private JList<Item> listContainer;
 		private JButton removalButton = new JButton("Remove Selected Item(s)");
 		private JButton addItemButton = new JButton("Add an Item");
 		private JButton sellItemButton = new JButton("Sell Selected Item(s)");
 		private JButton buyItemButton = new JButton("Buy an Item");
 		private JButton equipItemButton = new JButton("Equip selected item(s)");
-		private ArrayList<GenItem> itemsList;
 		private JScrollPane listScroll;
 		private CharacterDisplay parent;
 
 		public InventoryBox(CharacterDisplay parent){
 			this.parent = parent;
 			setLayout(new GridBagLayout());
-			String[] model = new String[me.inventory.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.inventory.get(i).toString();
-			listContainer = new JList<>(model);
+			listContainer = new JList<>(new Vector<Item>(me.inventory.keySet()));
+			listContainer.setCellRenderer(new ItemCellRenderer(true));
 
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Item.showItemDetails(itemsList.get(index));
+						Item.showItemDetails((Item)list.getModel().getElementAt(index));
 					}
 				}
 			});
@@ -1473,7 +1504,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void sell(int[] indices){
 			int[] totalValue = new int[4];
 			for(int i = indices.length -1; i >= 0; i--){
-				int[] value = itemsList.get(i).cost();
+				int[] value = listContainer.getModel().getElementAt(indices[i]).cost();
 				for(int j = 0; j < value.length && j < totalValue.length; j++)
 					totalValue[j] += value[j];
 			}
@@ -1654,7 +1685,7 @@ public class CharacterDisplay extends JTabbedPane{
 		
 		public void remove(int[] indices){
 			for(int i : indices){
-				me.inventory.put(itemsList.get(i), me.inventory.get(itemsList.get(i)) - itemsList.get(i).getPurchaseAmount());
+				me.inventory.put((GenItem)listContainer.getModel().getElementAt(i), me.inventory.get(listContainer.getModel().getElementAt(i)) - listContainer.getModel().getElementAt(i).getPurchaseAmount());
 			}
 
 			ArrayList<GenItem> toRemove = new ArrayList<>();
@@ -1668,7 +1699,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 		public void equipItems(int[] indices){
 			for(int i : indices){
-				me.equip(itemsList.get(i));
+				me.equip((GenItem)listContainer.getModel().getElementAt(i));
 			}
 			parent.repaint();
 		}
@@ -1676,34 +1707,29 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			itemsList = new ArrayList<>(me.inventory.keySet());
-
-			String[] model = new String[itemsList.size()];
-			for(int i = 0; i < model.length; i++) model[i] = itemsList.get(i).toString() + " (x" + me.inventory.get(itemsList.get(i)) + ")";
-			listContainer.setListData(model);
+			listContainer.setListData(new Vector(me.inventory.keySet()));
 		}
 	}
 	
 	private class EquippedBox extends JPanel{
 
-		private JList<String> listContainer;
+		private JList<Item> listContainer;
 		private JButton removalButton = new JButton("Unequip selected item(s)");
 		private JScrollPane listScroll;
-		private ArrayList<GenItem> itemsList = new ArrayList<>();
 		private CharacterDisplay parent;
 
 		public EquippedBox(CharacterDisplay parent){
 			this.parent = parent;
-			itemsList = new ArrayList<>(me.equipped.keySet());
 			setLayout(new GridBagLayout());
 			listContainer = new JList<>();
+			listContainer.setCellRenderer(new ItemCellRenderer(true));
 
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
-					JList list = (JList)evt.getSource();
+					JList<Item> list = (JList<Item>)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Item.showItemDetails(itemsList.get(index));
+						Item.showItemDetails(list.getModel().getElementAt(index));
 					}
 				}
 			});
@@ -1723,15 +1749,15 @@ public class CharacterDisplay extends JTabbedPane{
 			
 			removalButton.addActionListener(e -> {
 				for(int i : listContainer.getSelectedIndices()){
-					if(me.inventory.containsKey(itemsList.get(i))){
-						me.inventory.put(itemsList.get(i), me.inventory.get(itemsList.get(i)) + (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
+					GenItem item = (GenItem)listContainer.getModel().getElementAt(i);
+					if(me.inventory.containsKey((GenItem)listContainer.getModel().getElementAt(i))){
+						me.inventory.put(item, me.inventory.get(item) + (item.getPurchaseAmount() > me.equipped.get(item) ? me.equipped.get(item) : (item).getPurchaseAmount()));
 					} else {
-						me.inventory.put(itemsList.get(i), (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
+						me.inventory.put(item, (item.getPurchaseAmount() > me.equipped.get(item) ? me.equipped.get(item) : item.getPurchaseAmount()));
 					}
-					me.equipped.put(itemsList.get(i), me.equipped.get(itemsList.get(i)) - (itemsList.get(i).getPurchaseAmount() > me.equipped.get(itemsList.get(i)) ? me.equipped.get(itemsList.get(i)) : itemsList.get(i).getPurchaseAmount()));
-					if(me.equipped.get(itemsList.get(i)) == 0) me.equipped.remove(itemsList.get(i));
+					me.equipped.put(item, me.equipped.get(item) - (item.getPurchaseAmount() > me.equipped.get(item) ? me.equipped.get(item) : item.getPurchaseAmount()));
+					if(me.equipped.get(item) == 0) me.equipped.remove(item);
 				}
-				itemsList = new ArrayList<>(me.equipped.keySet());
 				parent.repaint();
 			});
 		}
@@ -1739,10 +1765,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			itemsList = new ArrayList<>(me.equipped.keySet());
-			String[] model = new String[itemsList.size()];
-			for(int i = 0; i < model.length; i++) model[i] = itemsList.get(i).toString() + " (x" + me.equipped.get(itemsList.get(i)) + ")";
-			listContainer.setListData(model);
+			listContainer.setListData(new Vector(me.equipped.keySet()));
 		}
 	}
 

@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -27,6 +28,7 @@ public interface Item {
 
     String getFormattedDetails();
     String getInventoryLine();
+    URL getIcon();
 
     static GenItem createNewItem(JFrame parent){
         AtomicBoolean itemMade = new AtomicBoolean(false);
@@ -150,6 +152,7 @@ public interface Item {
         });
 
         itemCreator.setSize(350,400);
+        itemCreator.setLocationRelativeTo(Pathfinder.FRAME);
         itemCreator.setVisible(true);
 
         while(!itemMade.get()){}
@@ -170,6 +173,7 @@ public interface Item {
         scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         detailsFrame.add(detailsPanel);
         detailsPanel.add(scrollingText);
+        detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
         detailsFrame.setVisible(true);
     }
 }

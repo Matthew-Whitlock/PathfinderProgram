@@ -94,7 +94,8 @@ public class SelectionUtils {
         parentPanel.add(searchConstraintsParent, c);
         c.weighty = 1;
 
-        JList<String> resultsList = new JList<>();
+        JList<Item> resultsList = new JList<>();
+        resultsList.setCellRenderer(new ItemCellRenderer(false));
 
         resultsList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -108,9 +109,7 @@ public class SelectionUtils {
 
         JScrollPane resultsScroll = new JScrollPane(resultsList){
             public void paintComponent(Graphics g){
-                String[] model = new String[results.size()];
-                for(int i = 0; i < model.length; i++) model[i] = results.get(i).toString();
-                resultsList.setListData(model);
+                resultsList.setListData(results.toArray(new Item[results.size()]));
             }
         };
 
@@ -1379,12 +1378,11 @@ public class SelectionUtils {
 
     public static List<GenItem> chooseItemFromList(List<Item> itemChoices, String title){
         AtomicBoolean indexSet = new AtomicBoolean(false);
-        String[] choices = new String[itemChoices.size()];
-        for(int i = 0; i < choices.length; i++) choices[i] = itemChoices.get(i).toString();
         JFrame itemChooseFrame = new JFrame(title);
         JPanel panel = new JPanel(new BorderLayout());
         itemChooseFrame.add(panel);
-        JList<String> list = new JList<>(choices);
+        JList<Item> list = new JList<>(itemChoices.toArray(new Item[itemChoices.size()]));
+        list.setCellRenderer(new ItemCellRenderer(false));
 
         list.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -1444,13 +1442,11 @@ public class SelectionUtils {
                         Item item = Item.createNewItem(itemChooseFrame);
                         if(item != null){
                             itemChoices.add(item);
-                            String[] newChoices = new String[itemChoices.size()];
-                            for(int i = 0; i < newChoices.length; i++) newChoices[i] = itemChoices.get(i).toString();
                             int[] current = list.getSelectedIndices();
                             int[] newIndices = new int[current.length + 1];
                             for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = newChoices.length - 1;
-                            list.setListData(newChoices);
+                            newIndices[newIndices.length - 1] = itemChoices.size() - 1;
+                            list.setListData(itemChoices.toArray(new Item[itemChoices.size()]));
                             list.setSelectedIndices(newIndices);
                         }
                     }
@@ -1481,13 +1477,11 @@ public class SelectionUtils {
                     }
                     if(item != null){
                         itemChoices.add(item);
-                        String[] newChoices = new String[itemChoices.size()];
-                        for(int i = 0; i < newChoices.length; i++) newChoices[i] = itemChoices.get(i).toString();
                         int[] current = list.getSelectedIndices();
                         int[] newIndices = new int[current.length + 1];
                         for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = newChoices.length - 1;
-                        list.setListData(newChoices);
+                        newIndices[newIndices.length - 1] = itemChoices.size() - 1;
+                        list.setListData(itemChoices.toArray(new Item[itemChoices.size()]));
                         list.setSelectedIndices(newIndices);
                     }
                 }

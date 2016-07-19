@@ -3,6 +3,7 @@ package src.items;
 import src.feats.Feats;
 
 import java.io.Serializable;
+import java.net.URL;
 import java.util.Arrays;
 
 //Needs a way to parse base items and find the appropriate one, for proper max dex, etc.
@@ -201,5 +202,53 @@ public class MagicItem implements Serializable, Item{
 
 	public String getItemName(){
 		return name;
+	}
+
+	public URL getIcon(){
+		if(slot.contains("feet")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/A_Shoes06.png");
+		}
+		if(slot.contains("eye") || slot.contains("face")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/Monocle.png");
+		}
+		if(slot.contains("body")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/Robes.png");
+		}
+		if(slot.contains("neck") || slot.contains("amulet")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/Ac_Necklace01.png");
+		}
+		if(slot.contains("armor")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicArmor.png");
+		}
+		if(slot.contains("shield")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicShield.png");
+		}
+		if(slot.contains("head")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/TopHat.png");
+		}
+		if(slot.contains("ring")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicRing.png");
+		}
+		if(slot.contains("shoulder")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicShoulder.png");
+		}
+		if(slot.contains("chest") || slot.contains("cloak")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicChest.png");
+		}
+		if(slot.contains("hand") || slot.contains("wrist")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicGauntlet.png");
+		}
+		if(slot.contains("weapon")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicWeapon.png");
+		}
+		if(slot.contains("rod") || name.toLowerCase().contains("voidstick") || name.equals("Krune's Rune-Carved Rod")){
+			return MagicItem.class.getResource("/src/pictures/ItemIcons/MagicRod.png");
+		}
+
+
+		//Waiting to hear back on belt/waist sprites
+		//Need to find something for genie seals.
+
+		return MagicItem.class.getResource("/src/pictures/ItemIcons/S_Sword10.png"); //A terrible generic magic item sprite.
 	}
 }

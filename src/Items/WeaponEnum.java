@@ -1,6 +1,7 @@
 package src.items;
 
 import java.io.Serializable;
+import java.net.URL;
 
 /**
  * Created by Matthew on 6/17/2016.
@@ -931,4 +932,27 @@ public enum WeaponEnum implements Serializable, Item {
         return special;
     }
 
+    public URL getIcon(){
+        if(subtype.contains("Ammunition")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/S_Bow11.png");
+        }
+        if(subtype.contains("Ranged") && name.toLowerCase().contains("bow")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/Bow.png");
+        }
+        if(subtype.toLowerCase().contains("unarmed")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/MagicGauntlet.png");
+        }
+        if(damageType.toLowerCase().contains("bludgeoning")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/W_Mace004.png");
+        }
+        if(damageType.toLowerCase().contains("piercing")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/Spear.png");
+        }
+        if(damageType.toLowerCase().contains("slashing")){
+            return WeaponEnum.class.getResource("/src/pictures/itemIcons/SlashingSword.png");
+        }
+        return WeaponEnum.class.getResource("/src/pictures/itemIcons/SlashingSword.png");
+
+        //This needs to be broken down more - the weapon icons won't always fit well with the weapon.
+    }
 }
