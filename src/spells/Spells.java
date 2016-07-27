@@ -290,28 +290,45 @@ public class Spells implements Comparator<Spell>{
 	}
 
 	public static void showSpellDetails(Spell spell){
-		JFrame detailsFrame = new JFrame(spell.name);
-		detailsFrame.setSize(450,550);
-		JPanel detailsPanel = new JPanel(new BorderLayout());
-		JEditorPane text = new JEditorPane("text/html","<html>" + spell.formattedDescription + "</html>");
-		text.setEditable(false);
-		JScrollPane scrollingText = new JScrollPane(text);
-		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		detailsFrame.add(detailsPanel);
-		detailsPanel.add(scrollingText);
-		detailsFrame.setVisible(true);
+		showSpellDetails(spell, spell.name);
 	}
 
 	public static void showSpellDetails(Spell spell, String title){
 		JFrame detailsFrame = new JFrame(title);
 		detailsFrame.setSize(450,550);
 		JPanel detailsPanel = new JPanel(new BorderLayout());
-		JEditorPane text = new JEditorPane("text/html","<html>" + spell.formattedDescription + "</html>");
+
+		JEditorPane text = new JEditorPane();
+		text.setContentType("text/html");
+		text.setText(spell.formattedDescription);
 		text.setEditable(false);
+		text.setCaretPosition(0);
+
 		JScrollPane scrollingText = new JScrollPane(text);
 		scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+		JButton toggleEdit = new JButton("Edit");
+		toggleEdit.addActionListener(e ->{
+			text.setEditable(!text.isEditable());
+			if(text.isEditable()){
+				String current = text.getText();
+				text.setContentType("text/plain");
+				text.setText(current);
+				toggleEdit.setText("Save");
+			} else {
+				String current = text.getText();
+				text.setContentType("text/html");
+				text.setText(current);
+				spell.modified = true;
+				spell.formattedDescription = text.getText();
+				toggleEdit.setText("Edit");
+			}
+			detailsFrame.repaint();
+		});
+
 		detailsFrame.add(detailsPanel);
-		detailsPanel.add(scrollingText);
+		detailsPanel.add(scrollingText, BorderLayout.CENTER);
+		detailsPanel.add(toggleEdit, BorderLayout.SOUTH);
 		detailsFrame.setVisible(true);
 	}
 
@@ -319,10 +336,10 @@ public class Spells implements Comparator<Spell>{
 		Spells.showSpellDetails(spell, spell.name + " was added automatically!");
 	}
 
-	public static URL getIcon(){
+	public static URL getIcon(Spell spell){
 		//I need to find something better than spellbooks for this - they won't represent the schools well.
 		//The spell related icons I have focus on elements (earth, fire), not schools (divination, conjuration).
-		return Spells.class.getResource("/src/pictures/SpellIcons/W_Book04");
+		return Spells.class.getResource("/src/pictures/SpellIcons/W_Book04.png");
 	}
 
 }

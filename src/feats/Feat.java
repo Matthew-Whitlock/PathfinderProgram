@@ -33,6 +33,7 @@ public class Feat implements Serializable{
 	public boolean armorMastery;
 	public boolean shieldMastery;
 	public String subType = "";
+	public boolean modified = false;
 
 	public Feat(String detailString){
 		String[] details = detailString.split("\t");
@@ -45,7 +46,7 @@ public class Feat implements Serializable{
 		normal = details[7];
 		special = details[8];
 		source = details[9];
-		fullText = details[10];
+		fullText = "<html>\n" + details[10].replaceAll("<h5>", "<br>").replaceAll("</h5>", "<br>") + "\n</html>";
 		teamwork = details[11].equals("1");
 		critical = details[12].equals("1");
 		grit = details[13].equals("1");

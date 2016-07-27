@@ -13,9 +13,16 @@ import java.util.Map;
  */
 public class GenericRace implements Race, Serializable{
     public String name;
+    public String description;
+    public HashMap<AbilityScoreEnum, Integer> abilityScoreChanges = new HashMap<>();
 
     public GenericRace(String name){
         this.name = name;
+    }
+
+    public GenericRace(String name, HashMap<AbilityScoreEnum, Integer> abilityScoreMods){
+        this.name = name;
+        abilityScoreChanges = abilityScoreMods;
     }
 
     public String getName(){
@@ -31,10 +38,18 @@ public class GenericRace implements Race, Serializable{
     }
 
     public Map<AbilityScoreEnum, Integer> abilityScoreChanges(){
-        return new HashMap<AbilityScoreEnum, Integer>();
+        return abilityScoreChanges;
     }
 
     public URL getDefaultRaceImageLocation(){
-        return this.getClass().getResource("/src/pictures/default.png");
+        return this.getClass().getResource("/src/pictures/RaceImages/Default.png");
+    }
+
+    public String getDescription(){
+        return description;
+    }
+
+    public String toString(){
+        return name;
     }
 }

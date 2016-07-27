@@ -12,4 +12,5 @@ public interface Race{
 	Feat[] bonusFeats();
 	String getName();
 	URL getDefaultRaceImageLocation();
+	String getDescription();
 }

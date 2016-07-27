@@ -251,20 +251,6 @@ public class Character implements Serializable{
 
 	}
 	
-	public void equip(GenItem item){
-		inventory.put(item, inventory.get(item) - 1);
-		if(inventory.get(item) == 0) inventory.remove(item);
-		if(equipped.get(item) != null) equipped.put(item, equipped.get(item) + 1);
-		else equipped.put(item, 1);
-	}
-	
-	public void unequip(GenItem item){
-		equipped.put(item, equipped.get(item) - 1);
-		if(equipped.get(item) == 0) equipped.remove(item);
-		if(inventory.get(item) != null) inventory.put(item, inventory.get(item) + 1);
-		else inventory.put(item, 1);
-	}
-	
 	public URL getImageLocation(){
 		if (imageOverrideLocation == null || imageOverrideLocation.equals("")) return race.getDefaultRaceImageLocation();
 		try {

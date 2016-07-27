@@ -1,6 +1,7 @@
 package src.items;
 
 import java.io.Serializable;
+import java.net.URL;
 
 /**
  * Created by Matthew on 6/19/2016.
@@ -251,5 +252,34 @@ public enum AdventureGearEnum implements Serializable, Item{
 
     public String source(){
         return source;
+    }
+
+    public URL getIcon(){
+        if(type.equals("Food")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/I_C_Bread.png");
+        }
+        if(type.equals("Beverage")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/BeverageGlass.png");
+        }
+        if(type.equals("Alcohol")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/AlcoholicGlass.png");
+        }
+        if(type.equals("Comfort and Shelter")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/Chair.png");
+        }
+        if(type.equals("Hunting and Fishing")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/FishingPole.png");
+        }
+        if(type.equals("Misc. Outdoors Gear")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/Compass.png");
+        }
+        if(type.equals("Illumination")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/Candles.png");
+        }
+        if(type.equals("Lodgings")){
+            return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/I_Key01.png");
+        }
+
+        return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/SwordShieldImageIcon.png");
     }
 }

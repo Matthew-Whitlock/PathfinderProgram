@@ -3,12 +3,11 @@ package src;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
 import src.classes.SpellCaster;
+import src.feats.Feat;
 import src.items.GenItem;
 import src.classes.CharacterClass;
 import src.feats.Feats;
@@ -35,118 +34,14 @@ public class CharacterDisplay extends JTabbedPane{
 	public CharacterDisplay(Character me){
 		this.me = me;
 
-		GridBagLayout topLayout = new GridBagLayout();
-		JPanel genPan = new JPanel(topLayout);
-		GridBagConstraints c = new GridBagConstraints();
-		JLabel name = new JLabel(me.name);
-		c.gridwidth = 6;
-		genPan.add(name, c);
-
-		c.fill = GridBagConstraints.BOTH;
-
-		try {
-			picture = new JLabel(new ImageIcon(ImageIO.read(me.getImageLocation()).getScaledInstance(250,250,Image.SCALE_SMOOTH)));
-			currentlyDisplayedPictureLocation = me.getImageLocation();
-			picture.setToolTipText("Double click to change this picture.");
-		} catch(IOException e) {
-			picture = new JLabel();
-			Pathfinder.showError("Could not access image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
-			e.printStackTrace();
-			currentlyDisplayedPictureLocation = me.getImageLocation();
-		}
-
-		picture.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if(e.getClickCount() > 1) {
-					String newFile = Pathfinder.getImageOverrideLocation();
-					if(!newFile.equals("")) me.imageOverrideLocation = newFile;
-					repaint();
-				}
-			}
-		});
-		c.weightx = 0;
-		c.gridy = 1;
-		c.gridwidth = 2;
-		c.gridheight = 7;
-		genPan.add(picture, c);
-
-		JLabel race = new JLabel(me.race.toString());
-		c.fill = GridBagConstraints.NONE;
-		c.weightx = 1;
-		c.gridx = 2;
-		c.gridwidth = 2;
-		c.gridheight = 1;
-		genPan.add(race, c);
-
-		charClass = new JLabel(me.getCharacterClassesAsString());
-		c.gridx = 4;
-		genPan.add(charClass, c);
-
-		JTextField backgroundJob = new JTextField();
-		backgroundJob.setText(me.job != null ? me.job : "Background job");
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 2;
-		c.gridy = 2;
-		genPan.add(backgroundJob, c);
-
-		JTextField alignment = new JTextField();
-		alignment.setText(me.alignment != null ? me.alignment : "Alignment");
-		c.gridx = 4;
-		genPan.add(alignment, c);
-
-		JTextArea physicalDesc = new JTextArea();
-		physicalDesc.setLineWrap(true);
-		physicalDesc.setText(me.physDesc != null ? me.physDesc : "Physical Description");
-		c.fill = GridBagConstraints.BOTH;
-		c.gridx = 2;
-		c.weighty = 0.0000001;
-		c.gridy = 3;
-		c.gridwidth = 4;
-		c.gridheight = 1;
-		JScrollPane physDescScroll = new JScrollPane(physicalDesc);
-		genPan.add(physDescScroll, c);
-
-		JButton savePhysDesc = new JButton("Update");
-		c.gridheight = 1;
-		c.weighty = 0;
-		c.gridy = 4;
-		genPan.add(savePhysDesc,c);
-
-		JLabel classesLabel = new JLabel("Your current classes");
-		c.gridy = 5;
-		c.fill = GridBagConstraints.NONE;
-		genPan.add(classesLabel,c);
-
-
-		classesBox = new ClassesBox();
-		c.fill = GridBagConstraints.BOTH;
-		c.weightx = 1;
-		c.gridy = 6;
-		c.gridheight = 2;
-		c.weighty = 0.00000001;
-		genPan.add(classesBox, c);
-
-
-		JTextArea charBackground = new JTextArea();
-		charBackground.setLineWrap(true);
-		charBackground.setText(me.background != null ? me.background : "Character background");
-		JScrollPane charBackgroundScroll = new JScrollPane(charBackground);
-		c.gridx = 0;
-		c.gridwidth = 6;
-		c.gridy = 8;
-		c.weighty = 1;
-		c.gridheight = 4;
-		genPan.add(charBackgroundScroll, c);
-
-		JButton saveBackground = new JButton("Update");
-		c.gridheight = 1;
-		c.gridy = 13;
-		c.weighty = 0;
-		genPan.add(saveBackground,c);
-
 		ImageIcon icon = null;
-		addTab("General",icon, genPan,"Your character's general information.");
+		try {
+			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/RaceImages/Default.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+		} catch(IOException e){
+			Pathfinder.showError("Image not found", "I couldn't load the image for the General tab. I don't know why.\nRun this in command for more details.");
+			e.printStackTrace();
+		}
+		addTab("General",icon, new GenPan(),"Your character's general information.");
 
 		icon = null;
 		addTab("Stats", icon, new StatsTab(this), "Your character's stats");
@@ -184,6 +79,12 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 
 		icon = null;
+		try {
+			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/Gear_icon.svg.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
+		} catch(IOException e){
+			Pathfinder.showError("Image not found", "I couldn't load the image for the Settings tab. I don't know why.\nRun this in command for more details.");
+			e.printStackTrace();
+		}
 		addTab("Settings", icon, new JPanel(), "Program Settings");
 	}
 
@@ -219,6 +120,147 @@ public class CharacterDisplay extends JTabbedPane{
 			}
 		}
 
+	}
+
+	private class GenPan extends JPanel{
+		public GenPan(){
+			GridBagLayout topLayout = new GridBagLayout();
+			setLayout(topLayout);
+			GridBagConstraints c = new GridBagConstraints();
+			JLabel name = new JLabel(me.name);
+			c.gridwidth = 6;
+			add(name, c);
+
+			c.fill = GridBagConstraints.BOTH;
+
+			try {
+				picture = new JLabel(new ImageIcon(ImageIO.read(me.getImageLocation()).getScaledInstance(250,250,Image.SCALE_SMOOTH)));
+				currentlyDisplayedPictureLocation = me.getImageLocation();
+				picture.setToolTipText("Double click to change this picture.");
+			} catch(IOException e) {
+				picture = new JLabel();
+				Pathfinder.showError("Could not access image", "The image currently set for your character could not be found/read.\nOpen this in command for more details.");
+				e.printStackTrace();
+				currentlyDisplayedPictureLocation = me.getImageLocation();
+			}
+
+			picture.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if(e.getClickCount() > 1) {
+						String newFile = Pathfinder.getImageOverrideLocation();
+						if(!newFile.equals("")) me.imageOverrideLocation = newFile;
+						repaint();
+					}
+				}
+			});
+			c.weightx = 0;
+			c.gridy = 1;
+			c.gridwidth = 2;
+			c.gridheight = 7;
+
+
+			add(picture, c);
+
+			JLabel race = new JLabel(me.race.toString());
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 1;
+			c.gridx = 2;
+			c.gridwidth = 2;
+			c.gridheight = 1;
+
+
+			add(race, c);
+
+			charClass = new JLabel(me.getCharacterClassesAsString());
+			c.gridx = 4;
+
+
+			add(charClass, c);
+
+			JTextField backgroundJob = new JTextField();
+			backgroundJob.setText(me.job != null ? me.job : "Background job");
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.gridx = 2;
+			c.gridy = 2;
+
+
+			add(backgroundJob, c);
+
+			JTextField alignment = new JTextField();
+			alignment.setText(me.alignment != null ? me.alignment : "Alignment");
+			c.gridx = 4;
+
+
+			add(alignment, c);
+
+			JTextArea physicalDesc = new JTextArea();
+			physicalDesc.setLineWrap(true);
+			physicalDesc.setText(me.physDesc != null ? me.physDesc : "Physical Description");
+			c.fill = GridBagConstraints.BOTH;
+			c.gridx = 2;
+			c.weighty = 0.0000001;
+			c.gridy = 3;
+			c.gridwidth = 4;
+			c.gridheight = 1;
+			JScrollPane physDescScroll = new JScrollPane(physicalDesc);
+
+
+			add(physDescScroll, c);
+
+			JButton savePhysDesc = new JButton("Update");
+			c.gridheight = 1;
+			c.weighty = 0;
+			c.gridy = 4;
+
+
+			add(savePhysDesc,c);
+
+			JLabel classesLabel = new JLabel("Your current classes");
+			c.gridy = 5;
+			c.fill = GridBagConstraints.NONE;
+
+
+			add(classesLabel,c);
+
+
+			classesBox = new ClassesBox();
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.gridy = 6;
+			c.gridheight = 2;
+			c.weighty = 0.00000001;
+
+
+			add(classesBox, c);
+
+
+			JTextArea charBackground = new JTextArea();
+			charBackground.setLineWrap(true);
+			charBackground.setText(me.background != null ? me.background : "Character background");
+			JScrollPane charBackgroundScroll = new JScrollPane(charBackground);
+			c.gridx = 0;
+			c.gridwidth = 6;
+			c.gridy = 8;
+			c.weighty = 1;
+			c.gridheight = 4;
+
+
+			add(charBackgroundScroll, c);
+
+			JButton saveBackground = new JButton("Update");
+			c.gridheight = 1;
+			c.gridy = 13;
+			c.weighty = 0;
+
+
+			add(saveBackground,c);
+		}
+
+		public void paintComponent(Graphics g){
+			super.paintComponent(g);
+			classesBox.checkClasses();
+		}
 	}
 
 	private class StatsTab extends JPanel{
@@ -988,6 +1030,7 @@ public class CharacterDisplay extends JTabbedPane{
 						});
 
 						addNoteFrame.setSize(400,500);
+						addNoteFrame.setLocationRelativeTo(Pathfinder.FRAME);
 						addNoteFrame.setVisible(true);
 
 						while(!finalized.get() && !closed.get());
@@ -1295,6 +1338,7 @@ public class CharacterDisplay extends JTabbedPane{
 						});
 
 						addNoteFrame.setSize(400,500);
+						addNoteFrame.setLocationRelativeTo(Pathfinder.FRAME);
 						addNoteFrame.setVisible(true);
 
 						while(!finalized.get() && !closed.get());
@@ -1359,7 +1403,7 @@ public class CharacterDisplay extends JTabbedPane{
 	
 	private class FeatBox extends JPanel{
 		
-		private JList<String> listContainer;
+		private JList<Feat> listContainer;
 		private JButton removalButton = new JButton("Remove Selected Feat(s)");
 		private JButton forceNewFeats = new JButton("Force a new Feat");
 		private JButton getFeatDetails = new JButton("Get Feat Details");
@@ -1367,9 +1411,7 @@ public class CharacterDisplay extends JTabbedPane{
 		
 		public FeatBox(){
 			setLayout(new GridBagLayout());
-			String[] model = new String[me.currentFeats.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.currentFeats.get(i).toString();
-			listContainer = new JList<>(model);
+			listContainer = new JList<>(me.currentFeats.toArray(new Feat[me.currentFeats.size()]));
 
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
@@ -1418,9 +1460,7 @@ public class CharacterDisplay extends JTabbedPane{
 			for(int i = indices.length - 1; i >= 0; i--){
 				me.currentFeats.remove(indices[i]);
 			}
-			String[] model = new String[me.currentFeats.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.currentFeats.get(i).toString();
-			listContainer.setListData(model);
+			listContainer.setListData(me.currentFeats.toArray(new Feat[me.currentFeats.size()]));
 		}
 		
 		public void showDetails(int[] indices){
@@ -1432,9 +1472,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			String[] model = new String[me.currentFeats.size()];
-			for(int i = 0; i < model.length; i++) model[i] = me.currentFeats.get(i).toString();
-			listContainer.setListData(model);
+			listContainer.setListData(me.currentFeats.toArray(new Feat[me.currentFeats.size()]));
 		}
 	}
 
@@ -1699,7 +1737,14 @@ public class CharacterDisplay extends JTabbedPane{
 
 		public void equipItems(int[] indices){
 			for(int i : indices){
-				me.equip((GenItem)listContainer.getModel().getElementAt(i));
+				GenItem item = (GenItem)listContainer.getModel().getElementAt(i);
+
+				me.equipped.put(item, Math.min(me.inventory.get(item), item.getPurchaseAmount()) + (me.equipped.containsKey(item) ? me.equipped.get(item) : 0));
+				if(me.inventory.get(item) > item.getPurchaseAmount()){
+					me.inventory.put(item, me.inventory.get(item) - item.getPurchaseAmount());
+				} else {
+					me.inventory.remove(item);
+				}
 			}
 			parent.repaint();
 		}
@@ -1707,7 +1752,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			listContainer.setListData(new Vector(me.inventory.keySet()));
+			listContainer.setListData(new Vector<>(me.inventory.keySet()));
 		}
 	}
 	
@@ -1892,7 +1937,7 @@ public class CharacterDisplay extends JTabbedPane{
 	
 	private class KnownSpellBox extends JPanel{
 		
-		private JList<String> listContainer;
+		private JList<Spell> listContainer;
 		private JButton removalButton = new JButton("Remove Selected Spell(s)");
 		private JButton forceNewSpells = new JButton("Force a new Spell");
 		private JButton getSpellDetails = new JButton("Get Spell Details");
@@ -1902,9 +1947,8 @@ public class CharacterDisplay extends JTabbedPane{
 		public KnownSpellBox(SpellCaster spellcaster){
 			this.spellCaster = spellcaster;
 			setLayout(new GridBagLayout());
-			String[] model = new String[spellcaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = "L" + spellcaster.getSpellLevel(spellcaster.knownSpells.get(i)) + ": " + spellcaster.knownSpells.get(i).name;
-			listContainer = new JList<>(model);
+			listContainer = new JList<>(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
+			listContainer.setCellRenderer(new SpellCellRenderer(spellCaster));
 			
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
@@ -1954,9 +1998,7 @@ public class CharacterDisplay extends JTabbedPane{
 			for(int i = indices.length - 1; i >= 0; i--){
 				spellCaster.knownSpells.remove(indices[i]);
 			}
-			String[] model = new String[spellCaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = "L" + spellCaster.getSpellLevel(spellCaster.knownSpells.get(i)) + ": " + spellCaster.knownSpells.get(i).name;
-			listContainer.setListData(model);
+			repaint();
 		}
 		
 		public void showDetails(int[] indices){
@@ -1973,9 +2015,7 @@ public class CharacterDisplay extends JTabbedPane{
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
 			spellCaster.knownSpells.sort(new Spells(spellCaster.name));
-			String[] model = new String[spellCaster.knownSpells.size()];
-			for(int i = 0; i < model.length; i++) model[i] = "L" + spellCaster.getSpellLevel(spellCaster.knownSpells.get(i)) + ": " + spellCaster.knownSpells.get(i).name;
-			listContainer.setListData(model);
+			listContainer.setListData(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
 		}
 	}
 
@@ -2315,7 +2355,6 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 	}
 
-	//paintComponent never seems to be called?
 	private class ClassesBox extends JPanel{
 		private int currentClasses = 0;
 		private JPanel panel;
@@ -2324,12 +2363,10 @@ public class CharacterDisplay extends JTabbedPane{
 			panel = new JPanel(new GridBagLayout());
 			JScrollPane scroll = new JScrollPane(panel);
 			add(scroll, BorderLayout.CENTER);
-
 			setupClasses();
 		}
 
-		public void paintComponent(Graphics g){
-			super.paintComponent(g);
+		public void checkClasses(){
 			if(currentClasses != me.classes.size()){
 				panel.removeAll();
 				setupClasses();

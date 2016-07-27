@@ -2,9 +2,11 @@ package src;
 
 import src.classes.CharacterClass;
 import src.feats.Feat;
+import src.feats.FeatCellRenderer;
 import src.feats.Feats;
 import src.items.*;
 import src.spells.Spell;
+import src.spells.SpellCellRenderer;
 import src.spells.Spells;
 
 import javax.swing.*;
@@ -1628,7 +1630,8 @@ public class SelectionUtils {
         panel.add(searchButton, c);
 
 
-        JList<String> resultsList = new JList<>();
+        JList<Spell> resultsList = new JList<>();
+        resultsList.setCellRenderer(new SpellCellRenderer());
 
         resultsList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -1642,9 +1645,7 @@ public class SelectionUtils {
 
         JScrollPane resultsScroll = new JScrollPane(resultsList){
             public void paintComponent(Graphics g){
-                String[] model = new String[results.size()];
-                for(int i = 0; i < model.length; i++) model[i] = results.get(i).toString();
-                resultsList.setListData(model);
+                resultsList.setListData(results.toArray(new Spell[results.size()]));
             }
         };
         c.gridy++;
@@ -2017,7 +2018,8 @@ public class SelectionUtils {
         panel.add(searchButton, c);
 
 
-        JList<String> resultsList = new JList<>();
+        JList<Feat> resultsList = new JList<>();
+        resultsList.setCellRenderer(new FeatCellRenderer());
 
         resultsList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -2031,9 +2033,7 @@ public class SelectionUtils {
 
         JScrollPane resultsScroll = new JScrollPane(resultsList){
             public void paintComponent(Graphics g){
-                String[] model = new String[results.size()];
-                for(int i = 0; i < model.length; i++) model[i] = results.get(i).toString();
-                resultsList.setListData(model);
+                resultsList.setListData(results.toArray(new Feat[results.size()]));
             }
         };
         c.gridy++;
@@ -2227,7 +2227,8 @@ public class SelectionUtils {
         JFrame spellChooseFrame = new JFrame(title);
         JPanel panel = new JPanel(new BorderLayout());
         spellChooseFrame.add(panel);
-        JList<String> list = new JList<>(choices);
+        JList<Spell> list = new JList<>(spellChoices.toArray(new Spell[spellChoices.size()]));
+        list.setCellRenderer(new SpellCellRenderer());
 
         list.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -2289,13 +2290,11 @@ public class SelectionUtils {
                         Spell spell = Spells.createNewSpell(spellChooseFrame);
                         if(spell != null){
                             spellChoices.add(spell);
-                            String[] newChoices = new String[spellChoices.size()];
-                            for(int i = 0; i < newChoices.length; i++) newChoices[i] = spellChoices.get(i).toString();
                             int[] current = list.getSelectedIndices();
                             int[] newIndices = new int[current.length + 1];
                             for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = newChoices.length - 1;
-                            list.setListData(newChoices);
+                            newIndices[newIndices.length - 1] = spellChoices.size() - 1;
+                            list.setListData(spellChoices.toArray(new Spell[spellChoices.size()]));
                             list.setSelectedIndices(newIndices);
                         }
                     }
@@ -2326,13 +2325,11 @@ public class SelectionUtils {
                     }
                     if(spell != null){
                         spellChoices.add(spell);
-                        String[] newChoices = new String[spellChoices.size()];
-                        for(int i = 0; i < newChoices.length; i++) newChoices[i] = spellChoices.get(i).toString();
                         int[] current = list.getSelectedIndices();
                         int[] newIndices = new int[current.length + 1];
                         for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = newChoices.length - 1;
-                        list.setListData(newChoices);
+                        newIndices[newIndices.length - 1] = spellChoices.size() - 1;
+                        list.setListData(spellChoices.toArray(new Spell[spellChoices.size()]));
                         list.setSelectedIndices(newIndices);
                     }
                 }
@@ -2357,12 +2354,11 @@ public class SelectionUtils {
 
     public static List<Feat> chooseFeatFromList(List<Feat> featChoices, String title, int maxPicks){
         AtomicBoolean indexSet = new AtomicBoolean(false);
-        String[] choices = new String[featChoices.size()];
-        for(int i = 0; i < choices.length; i++) choices[i] = featChoices.get(i).toString();
         JFrame featChooseFrame = new JFrame(title);
         JPanel panel = new JPanel(new BorderLayout());
         featChooseFrame.add(panel);
-        JList<String> list = new JList<>(choices);
+        JList<Feat> list = new JList<>(featChoices.toArray(new Feat[featChoices.size()]));
+        list.setCellRenderer(new FeatCellRenderer());
 
         list.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -2425,13 +2421,11 @@ public class SelectionUtils {
                         Feat feat = Feats.createNewFeat(featChooseFrame);
                         if(feat != null){
                             featChoices.add(feat);
-                            String[] newChoices = new String[featChoices.size()];
-                            for(int i = 0; i < newChoices.length; i++) newChoices[i] = featChoices.get(i).toString();
                             int[] current = list.getSelectedIndices();
                             int[] newIndices = new int[current.length + 1];
                             for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = newChoices.length - 1;
-                            list.setListData(newChoices);
+                            newIndices[newIndices.length - 1] = featChoices.size() - 1;
+                            list.setListData(featChoices.toArray(new Feat[featChoices.size()]));
                             list.setSelectedIndices(newIndices);
                         }
                     }
@@ -2462,13 +2456,11 @@ public class SelectionUtils {
                     }
                     if(feat != null){
                         featChoices.add(feat);
-                        String[] newChoices = new String[featChoices.size()];
-                        for(int i = 0; i < newChoices.length; i++) newChoices[i] = featChoices.get(i).toString();
                         int[] current = list.getSelectedIndices();
                         int[] newIndices = new int[current.length + 1];
                         for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = newChoices.length - 1;
-                        list.setListData(newChoices);
+                        newIndices[newIndices.length - 1] = featChoices.size() - 1;
+                        list.setListData(featChoices.toArray(new Feat[featChoices.size()]));
                         list.setSelectedIndices(newIndices);
                     }
                 }

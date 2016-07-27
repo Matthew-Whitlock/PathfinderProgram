@@ -1,6 +1,7 @@
 package src.items;
 
 import java.io.Serializable;
+import java.net.URL;
 
 public enum ArmorEnum implements Serializable, Item{
 
@@ -174,5 +175,22 @@ public enum ArmorEnum implements Serializable, Item{
 
 	public int spellFail(){
 		return spellFail;
+	}
+
+	public URL getIcon(){
+		//Light, Medium, Heavy, Shield, Extra
+		if(type.equals("Light Armor")){
+			return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/A_Clothing02.png");
+		}
+		if(type.equals("Medium Armor")){
+			return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/A_Armor04.png");
+		}
+		if(type.equals("Heavy Armor")){
+			return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/A_Armour02.png");
+		}
+		if(type.equals("Shield")){
+			return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/E_Wood03.png");
+		}
+		return AdventureGearEnum.class.getResource("/src/pictures/ItemIcons/SwordShieldImageIcon.png");
 	}
 }

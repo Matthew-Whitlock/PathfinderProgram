@@ -19,6 +19,8 @@ import src.stats.AbilityScoreEnum;
 import src.stats.SkillUtils;
 
 import javax.swing.*;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.html.HTMLEditorKit;
 
 /**
  * Created by Matthew on 6/4/2016.
@@ -115,28 +117,45 @@ public class Feats {
     }
 
     public static void showFeatDetails(Feat feat){
-        JFrame detailsFrame = new JFrame(feat.name);
-        detailsFrame.setSize(450,550);
-        JPanel detailsPanel = new JPanel(new BorderLayout());
-        JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
-        text.setEditable(false);
-        JScrollPane scrollingText = new JScrollPane(text);
-        scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        detailsFrame.add(detailsPanel);
-        detailsPanel.add(scrollingText);
-        detailsFrame.setVisible(true);
+        showFeatDetails(feat, feat.name);
     }
 
     public static void showFeatDetails(Feat feat, String title){
         JFrame detailsFrame = new JFrame(title);
         detailsFrame.setSize(450,550);
         JPanel detailsPanel = new JPanel(new BorderLayout());
-        JEditorPane text = new JEditorPane("text/html","<html>" + feat.fullText + "</html>");
+
+        JEditorPane text = new JEditorPane();
+        text.setEditorKit(new HTMLEditorKit());
+        text.setText(feat.fullText);
         text.setEditable(false);
+        text.setCaretPosition(0);
+
         JScrollPane scrollingText = new JScrollPane(text);
         scrollingText.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        JButton toggleEdit = new JButton("Edit");
+        toggleEdit.addActionListener(e ->{
+            text.setEditable(!text.isEditable());
+            if(text.isEditable()){
+                String current = text.getText();
+                text.setContentType("text/plain");
+                text.setText(current);
+                toggleEdit.setText("Save");
+            } else {
+                String current = text.getText();
+                text.setContentType("text/html");
+                text.setText(current);
+                feat.modified = true;
+                feat.fullText = text.getText();
+                toggleEdit.setText("Edit");
+            }
+            detailsFrame.repaint();
+        });
+
         detailsFrame.add(detailsPanel);
-        detailsPanel.add(scrollingText);
+        detailsPanel.add(scrollingText, BorderLayout.CENTER);
+        detailsPanel.add(toggleEdit, BorderLayout.SOUTH);
         detailsFrame.setVisible(true);
     }
 
