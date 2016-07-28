@@ -78,14 +78,14 @@ public class CharacterDisplay extends JTabbedPane{
 			}
 		}
 
-		icon = null;
+		/*icon = null;
 		try {
 			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/Gear_icon.svg.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
 		} catch(IOException e){
 			Pathfinder.showError("Image not found", "I couldn't load the image for the Settings tab. I don't know why.\nRun this in command for more details.");
 			e.printStackTrace();
 		}
-		addTab("Settings", icon, new JPanel(), "Program Settings");
+		addTab("Settings", icon, new JPanel(), "Program Settings");*/
 	}
 
 	public void paintComponent(Graphics g){
@@ -902,7 +902,7 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 
 		public void addEffect(){
-			JFrame addEffectFrame = new JFrame("Add an Effect");
+			JDialog addEffectFrame = new JDialog(Pathfinder.FRAME, "Add an Effect");
 			JPanel panel = new JPanel();
 			addEffectFrame.add(panel);
 
@@ -933,6 +933,7 @@ public class CharacterDisplay extends JTabbedPane{
 			panel.add(choose);
 
 			addEffectFrame.setSize(600,80);
+			addEffectFrame.setLocationRelativeTo(Pathfinder.FRAME);
 			addEffectFrame.setVisible(true);
 		}
 	}

@@ -1544,19 +1544,121 @@ public class SelectionUtils {
         JLabel spellType = new JLabel("Spell type");
         spellType.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        JTextField nameField = new JTextField();
-        JTextField subschoolField = new JTextField();
-        JTextField descriptorField = new JTextField();
         JTextField classField = new JTextField();
+        JComboBox<String> nameField = new JComboBox<String>(){
+            private String lastEntered = "";
+            public void paintComponent(Graphics g){
+                super.paintComponent(g);
+                if(((String)getEditor().getItem()).equalsIgnoreCase(lastEntered)) return;
+
+                String currentEntry = ((String) getEditor().getItem());
+                removeAllItems();
+                addItem("");
+                addItem(currentEntry);
+                currentEntry = currentEntry.toLowerCase();
+                for(Spell spell : Spells.getSpells()){
+                    if(spell.name.toLowerCase().contains(currentEntry))
+                        addItem(spell.name);
+                }
+                lastEntered = currentEntry;
+                setSelectedIndex(1);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(164, 25);
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(164, 25);
+            }
+
+            @Override
+            public Dimension getMinimumSize() {
+                return new Dimension(164, 25);
+            }
+        };
+        nameField.addItem("");
+        nameField.setPreferredSize(new Dimension(146, 25));
+        nameField.setEditable(true);
+        JComboBox<String> subschoolField = new JComboBox<>();
+        subschoolField.addItem("");
+        subschoolField.setPreferredSize(new Dimension(146, 25));
+        subschoolField.setEditable(true);
+        JComboBox<String> descriptorField = new JComboBox<>();
+        descriptorField.addItem("");
+        descriptorField.setPreferredSize(new Dimension(146, 25));
+        descriptorField.setMinimumSize(new Dimension(146, 25));
+        descriptorField.setEditable(true);
+        JComboBox<String> bloodlineField = new JComboBox<>();
+        bloodlineField.addItem("");
+        bloodlineField.setPreferredSize(new Dimension(146, 25));
+        bloodlineField.setEditable(true);
+        JComboBox<String> domainField = new JComboBox<>();
+        domainField.addItem("");
+        domainField.setPreferredSize(new Dimension(146, 25));
+        domainField.setEditable(true);
+        JComboBox<String> deityField = new JComboBox<>();
+        deityField.addItem("");
+        deityField.setPreferredSize(new Dimension(146, 25));
+        deityField.setEditable(true);
+        JComboBox<String> typeField = new JComboBox<>();
+        typeField.addItem("");
+        typeField.setPreferredSize(new Dimension(146, 25));
+        typeField.setEditable(true);
+        for(String s : Spells.spellTypeNames) typeField.addItem(s);
+
+        ArrayList<String> subschoolDone = new ArrayList<>();
+        subschoolDone.add("");
+        ArrayList<String> descriptorDone = new ArrayList<>();
+        descriptorDone.add("");
+        ArrayList<String> bloodlineDone = new ArrayList<>();
+        bloodlineDone.add("");
+        ArrayList<String> domainDone = new ArrayList<>();
+        domainDone.add("");
+        ArrayList<String> deityDone = new ArrayList<>();
+        deityDone.add("");
+
+        for(Spell spell : Spells.getSpells()){
+            if(!subschoolDone.contains(spell.subschool.toLowerCase())){
+                subschoolField.addItem(spell.subschool);
+                subschoolDone.add(spell.subschool.toLowerCase());
+            }
+            for(String s : spell.descriptor.split(",")){
+                s = s.trim();
+                if(!descriptorDone.contains(s.toLowerCase())){
+                    descriptorField.addItem(s);
+                    descriptorDone.add(s.toLowerCase());
+                }
+            }
+            for(String s : spell.bloodlineLevels.keySet()){
+                if(!bloodlineDone.contains(s.trim().toLowerCase())){
+                    bloodlineField.addItem(s.trim());
+                    bloodlineDone.add(s.trim().toLowerCase());
+                }
+            }
+            if(spell.hasDomain){
+                for(String s : spell.domain.split(",")){
+                    if(s.contains("(")) s = s.substring(0, s.indexOf("("));
+                    s = s.trim();
+                    if(!domainDone.contains(s.toLowerCase())){
+                        domainDone.add(s.toLowerCase());
+                        domainField.addItem(s);
+                    }
+                }
+            }
+            if(spell.hasDeity && !deityDone.contains(spell.deity.toLowerCase())){
+                deityDone.add(spell.deity.toLowerCase());
+                deityField.addItem(spell.deity);
+            }
+        }
+
         JTextField levelField = new JTextField();
-        JTextField bloodlineField = new JTextField();
         JTextField bloodlineLevelField = new JTextField();
-        JTextField domainField = new JTextField();
         JCheckBox hasMythicBox = new JCheckBox();
-        JTextField deityField = new JTextField();
         JCheckBox hasAugmentBox = new JCheckBox();
         JTextField descriptionContainsField = new JTextField();
-        JTextField typeField = new JTextField();
 
         c.weighty = 0;
         c.weightx = 0;
@@ -1676,21 +1778,20 @@ public class SelectionUtils {
 
                 ArrayList<Spell> intermediary = new ArrayList<>();
 
-                if(!nameField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                    System.out.println(nameField.getText());
-                }
-                if(!subschoolField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.subschool.toLowerCase().contains(subschoolField.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!((String)nameField.getSelectedItem()).equals("")){
+                    intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(((String)nameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
                 }
-                if(!descriptorField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.descriptor.toLowerCase().contains(descriptorField.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!((String)subschoolField.getSelectedItem()).equals("")){
+                    intermediary.addAll(results.stream().filter(spell -> spell.subschool.toLowerCase().contains(((String)subschoolField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                    results.clear();
+                    results.addAll(intermediary);
+                    intermediary.clear();
+                }
+                if(!((String)descriptorField.getSelectedItem()).equals("")){
+                    intermediary.addAll(results.stream().filter(spell -> spell.descriptor.toLowerCase().contains(((String)descriptorField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
@@ -1707,10 +1808,10 @@ public class SelectionUtils {
                         intermediary.clear();
                     }
                 }
-                if(!bloodlineField.getText().equals("")){
+                if(!((String)bloodlineField.getSelectedItem()).equals("")){
                     intermediary.addAll(results.stream().filter(spell -> {
                         for(String key : spell.bloodlineLevels.keySet()){
-                            if(bloodlineField.getText().equalsIgnoreCase(key))
+                            if(((String)bloodlineField.getSelectedItem()).equalsIgnoreCase(key))
                                 return true;
                         }
                         return false;
@@ -1719,14 +1820,14 @@ public class SelectionUtils {
                     results.addAll(intermediary);
                     intermediary.clear();
                     if(!bloodlineLevelField.getText().trim().equals("")) {
-                        intermediary.addAll(results.stream().filter(spell -> spell.bloodlineLevels.get(bloodlineField.getText()) == Integer.parseInt(bloodlineLevelField.getText())).collect(Collectors.toList()));
+                        intermediary.addAll(results.stream().filter(spell -> spell.bloodlineLevels.get(((String)bloodlineField.getSelectedItem())) == Integer.parseInt(bloodlineLevelField.getText())).collect(Collectors.toList()));
                         results.clear();
                         results.addAll(intermediary);
                         intermediary.clear();
                     }
                 }
-                if(!domainField.getText().equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.domain.toLowerCase().contains(domainField.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!((String)domainField.getSelectedItem()).equals("")) {
+                    intermediary.addAll(results.stream().filter(spell -> spell.hasDomain && spell.domain.toLowerCase().contains(((String)domainField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
@@ -1743,14 +1844,14 @@ public class SelectionUtils {
                     results.addAll(intermediary);
                     intermediary.clear();
                 }
-                if(!deityField.getText().equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.hasDeity && spell.deity.toLowerCase().contains(deityField.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!((String)deityField.getSelectedItem()).equals("")) {
+                    intermediary.addAll(results.stream().filter(spell -> spell.hasDeity && spell.deity.toLowerCase().contains(((String)deityField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
                 }
-                if(!typeField.getText().equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> Spells.spellHasType(typeField.getText(), spell)).collect(Collectors.toList()));
+                if(!((String)typeField.getSelectedItem()).equals("")) {
+                    intermediary.addAll(results.stream().filter(spell -> Spells.spellHasType(((String)typeField.getSelectedItem()), spell)).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
@@ -1859,11 +1960,66 @@ public class SelectionUtils {
         JLabel shieldMastery = new JLabel("Shield mastery: ");
         shieldMastery.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        JTextField nameField = new JTextField();
-        JTextField subtypeField = new JTextField();
-        JTextField typeField = new JTextField();
         JTextField fullTextField = new JTextField();
-        JTextField raceNameField = new JTextField();
+
+        JComboBox nameField = new JComboBox(){
+            private String lastEntered = "";
+            public void paintComponent(Graphics g){
+                super.paintComponent(g);
+                if(((String)getEditor().getItem()).equalsIgnoreCase(lastEntered)) return;
+
+                String currentEntry = ((String) getEditor().getItem());
+                removeAllItems();
+                addItem("");
+                addItem(currentEntry);
+                currentEntry = currentEntry.toLowerCase();
+                for(Feat feat : Feats.getFeats()){
+                    if(feat.name.toLowerCase().contains(currentEntry))
+                        addItem(feat.name);
+                }
+                lastEntered = currentEntry;
+                setSelectedIndex(1);
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(164, 25);
+            }
+        };
+        nameField.setEditable(true);
+        nameField.addItem("");
+
+        JComboBox<String> raceNameField = new JComboBox<>();
+        JComboBox<String> subtypeField = new JComboBox<>();
+        JComboBox<String> typeField = new JComboBox<>();
+        raceNameField.setEditable(true);
+        subtypeField.setEditable(true);
+        typeField.setEditable(true);
+        typeField.addItem("");
+        ArrayList<String> alreadyAddedRace = new ArrayList<>();
+        ArrayList<String> alreadyAddedType = new ArrayList<>();
+        ArrayList<String> alreadyAddedSubtype = new ArrayList<>();
+        for(Feat feat : Feats.getFeats()){
+            String[] names;
+            if(feat.raceName.contains(",")) names = feat.raceName.split(",");
+            else names = feat.raceName.split("\\|");
+            for(String race : names){
+                String toCheck = race.trim();
+                if(!alreadyAddedRace.contains(toCheck.toLowerCase())){
+                    raceNameField.addItem(toCheck);
+                    alreadyAddedRace.add(toCheck.toLowerCase());
+                }
+            }
+            if(!alreadyAddedType.contains(feat.type.toLowerCase())){
+                alreadyAddedType.add(feat.type.toLowerCase());
+                typeField.addItem(feat.type);
+            }
+            if(!alreadyAddedSubtype.contains(feat.subType.toLowerCase())){
+                alreadyAddedSubtype.add(feat.subType.toLowerCase());
+                subtypeField.addItem(feat.subType);
+            }
+        }
+
 
         JCheckBox racialBox = new JCheckBox();
         JCheckBox teamworkBox = new JCheckBox();
@@ -2049,151 +2205,146 @@ public class SelectionUtils {
         select.addActionListener(e -> selected.set(true));
 
 
-        searchButton.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
+        searchButton.addActionListener(e -> {
+            results.clear();
+            results.addAll(feats);
+
+            ArrayList<Feat> intermediary = new ArrayList<>();
+
+            if(!((String)nameField.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.name.toLowerCase().contains(((String)nameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 results.clear();
-                results.addAll(feats);
-
-                ArrayList<Feat> intermediary = new ArrayList<>();
-
-                if(!nameField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(feat -> feat.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                    System.out.println(nameField.getText());
-                }
-                if(!typeField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.type.toLowerCase().contains(typeField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!subtypeField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.subType.toLowerCase().contains(subtypeField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!fullTextField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.fullText.toLowerCase().contains(fullTextField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsRacial.get()){
-                    intermediary.addAll(results.stream().filter(spell -> spell.racial).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                    if(!raceName.getText().trim().equals("")) {
-                        intermediary.addAll(results.stream().filter(spell -> spell.raceName.toLowerCase().contains(raceNameField.getText().toLowerCase())).collect(Collectors.toList()));
-                        results.clear();
-                        results.addAll(intermediary);
-                        intermediary.clear();
-                    }
-                }
-
-                if(needsTeamwork.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.teamwork).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsCritical.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.critical).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsGrit.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.grit).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsStyle.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.style).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsPerformance.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.performance).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsCompanionFamiliar.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.companionOrFamiliar).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsCanDoMultiple.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.canDoMultiple).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsPanache.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.panache).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsBetrayal.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.betrayal).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsTargeting.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.targeting).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsEsoteric.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.esoteric).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsStare.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.stare).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsWeaponMastery.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.weaponMastery).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsItemMastery.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.itemMastery).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsArmorMastery.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.armorMastery).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsShieldMastery.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.shieldMastery).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-
-
-                resultsScroll.repaint();
+                results.addAll(intermediary);
+                intermediary.clear();
             }
+            if(!((String)typeField.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains(((String)typeField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)subtypeField.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.subType.toLowerCase().contains(((String)subtypeField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!fullTextField.getText().equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.fullText.toLowerCase().contains(fullTextField.getText().toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsRacial.get()){
+                intermediary.addAll(results.stream().filter(feat -> feat.racial).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+                if(!((String)raceNameField.getSelectedItem()).trim().equals("")) {
+                    intermediary.addAll(results.stream().filter(feat -> feat.raceName.toLowerCase().contains(((String)raceNameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                    results.clear();
+                    results.addAll(intermediary);
+                    intermediary.clear();
+                }
+            }
+            if(needsTeamwork.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.teamwork).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsCritical.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.critical).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsGrit.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.grit).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsStyle.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.style).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsPerformance.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.performance).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsCompanionFamiliar.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.companionOrFamiliar).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsCanDoMultiple.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.canDoMultiple).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsPanache.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.panache).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsBetrayal.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.betrayal).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsTargeting.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.targeting).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsEsoteric.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.esoteric).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsStare.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.stare).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsWeaponMastery.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.weaponMastery).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsItemMastery.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.itemMastery).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsArmorMastery.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.armorMastery).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(needsShieldMastery.get()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.shieldMastery).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+
+            resultsScroll.repaint();
         });
 
         searchDialog.add(panel);

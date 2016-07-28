@@ -183,7 +183,7 @@ public class Spells implements Comparator<Spell>{
 		int index = -1;
 
 		for(int i = 0; i < spellTypeNames.length; i++){
-			if(spellTypeNames[i].equalsIgnoreCase(type)){
+			if(spellTypeNames[i].trim().equalsIgnoreCase(type.trim())){
 				index = i;
 				break;
 			}

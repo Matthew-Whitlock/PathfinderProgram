@@ -106,6 +106,11 @@ public class Spell implements Serializable{
 		hasDomain = !details[43].equals("");
 		if(hasDomain) domain = details[43];
 		shortDescription = details[44].trim().equals("") ? details[17].substring(0,40) + "..." : details[44];
+
+		for(int i = 45; i < details.length - 17; i++){
+			spellTypes[i - 45] = details[i].equals("1");
+		}
+
 		hasMythic = details[77].equals("1");
 		if(hasMythic) mythicText = details[77];
 		hasAugment = !details[76].equals("");
