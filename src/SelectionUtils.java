@@ -11,10 +11,15 @@ import src.spells.Spells;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -48,6 +53,19 @@ public class SelectionUtils {
                 return super.preferredLayoutSize(parent);
             }
 
+            @Override
+            public Dimension minimumLayoutSize(Container parent){
+                Component current = findCurrentComponent(parent);
+                if (current != null) {
+                    Insets insets = parent.getInsets();
+                    Dimension min = current.getMinimumSize();
+                    min.width += insets.left + insets.right;
+                    min.height += insets.top + insets.bottom;
+                    return min;
+                }
+                return super.preferredLayoutSize(parent);
+            }
+
             public Component findCurrentComponent(Container parent) {
                 for (Component comp : parent.getComponents()) {
                     if (comp.isVisible()) {
@@ -64,6 +82,10 @@ public class SelectionUtils {
         JPanel armorSearch = new JPanel(new GridBagLayout());
         JPanel adventureItemSearch = new JPanel(new GridBagLayout());
         JPanel magicItemSearch = new JPanel(new GridBagLayout());
+        JScrollPane magicItemScroll = new JScrollPane(magicItemSearch);
+        magicItemScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        magicItemScroll.setPreferredSize(new Dimension(0, 250));
+        magicItemScroll.setMinimumSize(magicItemScroll.getPreferredSize());
         final String MAGIC_PANEL = "Magic Items";
         final String GEN_PANEL = "All Items";
         final String WEAPON_PANEL = "Base Weapons";
@@ -74,7 +96,7 @@ public class SelectionUtils {
         searchConstraintsParent.add(weaponSearch, WEAPON_PANEL);
         searchConstraintsParent.add(armorSearch, ARMOR_PANEL);
         searchConstraintsParent.add(adventureItemSearch, ADVENTURE_PANEL);
-        searchConstraintsParent.add(magicItemSearch, MAGIC_PANEL);
+        searchConstraintsParent.add(magicItemScroll, MAGIC_PANEL);
 
         //Set up parent panel
         JComboBox<String> searchType = new JComboBox<>(PANEL_NAMES);
@@ -126,6 +148,106 @@ public class SelectionUtils {
 
         //Start making individual search panels
 
+
+        //Iterate through all items only once.
+        HashSet<String> itemNames = new HashSet<>();
+
+        HashSet<String> weaponNames = new HashSet<>();
+        HashSet<String> weaponSources = new HashSet<>();
+        weaponSources.add("");
+        HashSet<String> weaponTypes = new HashSet<>();
+        weaponTypes.add("");
+        HashSet<String> weaponSubtypes = new HashSet<>();
+        weaponSubtypes.add("");
+        HashSet<String> damageTypes = new HashSet<>();
+        damageTypes.add("");
+        HashSet<String> weaponSpecials = new HashSet<>();
+        weaponSpecials.add("");
+
+        HashSet<String> armorNames = new HashSet<>();
+        HashSet<String> armorTypes = new HashSet<>();
+        armorTypes.add("");
+
+        HashSet<String> magicNames = new HashSet<>();
+        HashSet<String> magicAuraStrengthSet = new HashSet<>();
+        magicAuraStrengthSet.add("");
+        HashSet<String> magicAlignmentSet = new HashSet<>();
+        magicAlignmentSet.add("");
+        HashSet<String> magicCommunicationSet = new HashSet<>();
+        magicCommunicationSet.add("");
+        HashSet<String> magicScalingSet = new HashSet<>();
+        magicScalingSet.add("");
+        HashSet<String> magicGroupSet = new HashSet<>();
+        magicGroupSet.add("");
+        HashSet<String> magicSlotSet = new HashSet<>();
+        magicSlotSet.add("");
+        HashSet<String> magicSourceSet = new HashSet<>();
+        magicSourceSet.add("");
+        HashSet<String> magicPowerSet = new HashSet<>();
+        magicPowerSet.add("");
+        HashSet<String> magicSensesSet = new HashSet<>();
+        magicSensesSet.add("");
+
+        HashSet<String> gearNames = new HashSet<>();
+        HashSet<String> gearTypes = new HashSet<>();
+        gearTypes.add("");
+        HashSet<String> gearSources = new HashSet<>();
+        gearSources.add("");
+
+        for(Item item : ItemUtil.getItems()){
+            itemNames.add(item.getItemName());
+
+            if(item instanceof WeaponEnum){
+                WeaponEnum weapon = (WeaponEnum)item;
+                weaponNames.add(weapon.getItemName());
+                weaponSources.add(weapon.source());
+                weaponTypes.add(weapon.type());
+                weaponSubtypes.add(weapon.subtype());
+                String[] damageType = weapon.damageType().split(",");
+                for(String s : damageType) {
+                    String[] splitAgain = s.split(" or ");
+                    for(String type : splitAgain){
+                        String[] finalSplit = type.split(" and ");
+                        for(String finalValue : finalSplit)
+                            damageTypes.add(finalValue.trim());
+                    }
+                }
+                String[] specials = weapon.special().split(",");
+                for(String s : specials) weaponSpecials.add(s.trim().toLowerCase());
+            } else if(item instanceof ArmorEnum){
+                ArmorEnum armor = (ArmorEnum)item;
+                armorNames.add(armor.getItemName());
+                armorTypes.add(armor.type());
+            } else if(item instanceof MagicItem){
+                MagicItem magic = (MagicItem)item;
+                magicNames.add(magic.getItemName());
+                magicAuraStrengthSet.add(magic.auraStrength);
+                magicAlignmentSet.add(magic.alignment);
+                String[] communication = magic.senses.split(",|;|and");
+                for(String s : communication)
+                    magicCommunicationSet.add(s.trim());
+                magicScalingSet.add(magic.scaling);
+                String[] powers = magic.powers.split(",");
+                for(String s : powers){
+                    if(s.contains("(")) s = s.substring(0, s.indexOf("("));
+                    magicPowerSet.add(s.replaceAll("[0-9]/day.", "").replace("[0-9]/day", "").trim());
+                }
+                String[] senses = magic.senses.split(",|;|and");
+                for(String s : senses)
+                    magicSensesSet.add(s.trim());
+                magicGroupSet.add(magic.group);
+                magicSlotSet.add(magic.slot);
+                magicSourceSet.add(magic.source);
+            } else if(item instanceof AdventureGearEnum){
+                AdventureGearEnum gear = (AdventureGearEnum)item;
+                gearNames.add(gear.getItemName());
+                gearTypes.add(gear.type());
+                gearSources.add(gear.source());
+            }
+        }
+
+
+
         c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
 
@@ -144,15 +266,15 @@ public class SelectionUtils {
         c.gridx = 1;
         c.gridy = 0;
         c.weightx = 1;
-        JTextField genName = new JTextField();
+        AutofillTextArea genName = new AutofillTextArea(itemNames, 5);
         genItemSearch.add(genName, c);
-        JTextField genCost = new JTextField();
+        NumberInequalityField genCost = new NumberInequalityField();
         c.gridy = 1;
         genItemSearch.add(genCost, c);
-        JTextField genAmount = new JTextField();
+        NumberInequalityField genAmount = new NumberInequalityField();
         c.gridy = 2;
         genItemSearch.add(genAmount, c);
-        JTextField genWeight = new JTextField();
+        NumberInequalityField genWeight = new NumberInequalityField();
         c.gridy = 3;
         genItemSearch.add(genWeight, c);
         JTextField genDesc = new JTextField();
@@ -177,38 +299,23 @@ public class SelectionUtils {
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(!genCost.getText().equals("")){
-                try {
-                    intermediary.addAll(results.stream().filter(item -> item.cost()[1] == Integer.parseInt(genCost.getText())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Error","The value you entered for the cost in gold is not a number.\nI'll ignore that field this time.");
-                    intermediary.clear();
-                }
+            if(!genCost.isEmpty()){
+                intermediary.addAll(results.stream().filter(item -> genCost.numberSatisfies(item.cost()[1])).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
             }
-            if(!genAmount.getText().equals("")){
-                try {
-                    intermediary.addAll(results.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(genWeight.getText())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Error","The value you entered for the amount per purchase is not a number.\nI'll ignore that field this time.");
-                    intermediary.clear();
-                }
+            if(!genAmount.isEmpty()){
+                intermediary.addAll(results.stream().filter(item -> genAmount.numberSatisfies(item.getPurchaseAmount())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
             }
-            if(!genWeight.getText().equals("")){
-                try {
-                    intermediary.addAll(results.stream().filter(item -> item.weight() == Double.parseDouble(genCost.getText())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Error","The value you entered for the weight is not a number.\nI'll ignore that field this time.");
-                    intermediary.clear();
-                }
+            if(!genWeight.isEmpty()){
+                intermediary.addAll(results.stream().filter(item -> genWeight.numberSatisfies(item.weight())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
             }
             if(!genDesc.getText().equals("")){
                 intermediary.addAll(results.stream().filter(item -> item.getItemName().toLowerCase().contains(genDesc.getText().toLowerCase())).collect(Collectors.toList()));
@@ -254,20 +361,20 @@ public class SelectionUtils {
         c.gridy = 6;
         weaponSearch.add(new JLabel("Special: "), c);
 
-        JTextField wepName = new JTextField();
-        JTextField wepSource = new JTextField();
-        JTextField wepCost = new JTextField();
-        JTextField wepAmount = new JTextField();
-        JTextField wepWeight = new JTextField();
-        JTextField wepRange = new JTextField();
-        JTextField wepType = new JTextField();
-        JTextField wepSubtype = new JTextField();
+        AutofillTextArea wepName = new AutofillTextArea(weaponNames, 5);
+        JComboBox<String> wepSource = new JComboBox<>(new Vector<>(weaponSources));
+        NumberInequalityField wepCost = new NumberInequalityField();
+        NumberInequalityField wepAmount = new NumberInequalityField();
+        NumberInequalityField wepWeight = new NumberInequalityField();
+        NumberInequalityField wepRange = new NumberInequalityField();
+        JComboBox<String> wepType = new JComboBox<>(new Vector<>(weaponTypes));
+        JComboBox<String> wepSubtype = new JComboBox<>(new Vector<>(weaponSubtypes));
         JTextField wepSDMG = new JTextField();
         JTextField wepMDMG = new JTextField();
         JTextField wepMinThreat = new JTextField();
-        JTextField wepCritMult = new JTextField();
-        JTextField wepDMGType = new JTextField();
-        JTextField wepSpecial = new JTextField();
+        NumberInequalityField wepCritMult = new NumberInequalityField();
+        JComboBox<String> wepDMGType = new JComboBox<>(new Vector<>(damageTypes));
+        JComboBox<String> wepSpecial = new JComboBox<>(new Vector<>(weaponSpecials));
         JTextField wepDesc = new JTextField();
 
         c.weightx = 1;
@@ -327,80 +434,56 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!wepSource.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(wepSource.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)wepSource.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(((String)wepSource.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!wepCost.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(wepCost.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for cost in gold is not a number.\nI'll ignore that field for now.");
-                }
+            if(!wepCost.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> wepCost.numberSatisfies(item.cost()[1])).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!wepAmount.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(wepAmount.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for amount per purchase is not a number.\nI'll ignore that field for now.");
-                }
+            if(!wepAmount.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> wepAmount.numberSatisfies(item.getPurchaseAmount())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!wepWeight.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(wepWeight.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
-                }
+            if(!wepWeight.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> wepWeight.numberSatisfies(item.weight())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!wepRange.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.range() == Integer.parseInt(wepRange.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for range is not a number.\nI'll ignore that field for now.");
-                }
+            if(!wepRange.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> wepRange.numberSatisfies(item.range())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
             if(!wepMinThreat.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.minThreatRoll() == Integer.parseInt(wepMinThreat.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for the minimum threat roll is not a number.\nI'll ignore that field for now.");
-                }
-            }
-            if(!wepCritMult.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.critMultiplier()[0] == Integer.parseInt(wepCritMult.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for critical multiplier is not a number.\nI'll ignore that field for now.");
-                }
-            }
-            if(!wepType.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(wepType.getText().toLowerCase())).collect(Collectors.toList()));
+                temp.addAll(intermediary.stream().filter(item -> item.minThreatRoll() == Integer.parseInt(wepMinThreat.getText())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!wepSubtype.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.subtype().toLowerCase().contains(wepSubtype.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!wepCritMult.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> wepCritMult.numberSatisfies(item.critMultiplier()[0])).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
+            }
+            if(!((String)wepType.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(((String)wepType.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
+            }
+            if(!((String)wepSubtype.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.subtype().toLowerCase().contains(((String)wepSubtype.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
@@ -417,14 +500,14 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!wepDMGType.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.damageType().toLowerCase().contains(wepDMGType.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)wepDMGType.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.damageType().toLowerCase().contains(((String)wepDMGType.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!wepSpecial.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.special().toLowerCase().contains(wepSpecial.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)wepSpecial.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.special().toLowerCase().contains(((String)wepSpecial.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
@@ -465,16 +548,17 @@ public class SelectionUtils {
         c.gridy = 4;
         armorSearch.add(new JLabel("Speed change from 20: "), c);
 
-        JTextField armorName = new JTextField();
-        JTextField armorType = new JTextField();
-        JTextField armorCost = new JTextField();
-        JTextField armorWeight = new JTextField();
-        JTextField armorBonus = new JTextField();
-        JTextField armorPenalty = new JTextField();
-        JTextField armorMaxDex = new JTextField();
-        JTextField armorSpellFail = new JTextField();
-        JTextField armorSpeed30 = new JTextField();
-        JTextField armorSpeed20 = new JTextField();
+        AutofillTextArea armorName = new AutofillTextArea(armorNames, 5);
+        JComboBox<String> armorType = new JComboBox<>(new Vector<>(armorTypes));
+        armorType.setPreferredSize(new Dimension(0,armorType.getPreferredSize().height));
+        NumberInequalityField armorCost = new NumberInequalityField();
+        NumberInequalityField armorWeight = new NumberInequalityField();
+        NumberInequalityField armorBonus = new NumberInequalityField();
+        NumberInequalityField armorPenalty = new NumberInequalityField();
+        NumberInequalityField armorMaxDex = new NumberInequalityField();
+        NumberInequalityField armorSpellFail = new NumberInequalityField();
+        NumberInequalityField armorSpeed30 = new NumberInequalityField();
+        NumberInequalityField armorSpeed20 = new NumberInequalityField();
         JTextField armorDesc = new JTextField();
 
         c.ipadx = 0;
@@ -527,81 +611,53 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!armorType.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(armorType.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!armorType.getSelectedItem().equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(((String)armorType.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!armorCost.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(armorCost.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for cost in gold is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorCost.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorCost.numberSatisfies(item.cost()[1])).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorWeight.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(armorWeight.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorWeight.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorWeight.numberSatisfies(item.weight())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorBonus.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.getACBoost() == Integer.parseInt(armorBonus.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for the armor bonus is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorBonus.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorBonus.numberSatisfies(item.getACBoost())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorPenalty.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.getACPen() == Integer.parseInt(armorPenalty.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for AC Penalty is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorPenalty.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorPenalty.numberSatisfies(item.getACPen())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorMaxDex.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.getMaxDex() == Integer.parseInt(armorMaxDex.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for maximum Dex modifier is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorMaxDex.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorMaxDex.numberSatisfies(item.getMaxDex())).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorSpeed30.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.speedChange(30) == Integer.parseInt(armorSpeed30.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for speed from 30 is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorSpeed30.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorSpeed30.numberSatisfies(item.speedChange(30))).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!armorSpeed20.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.speedChange(20) == Integer.parseInt(armorSpeed20.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(NumberFormatException ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for speed from 20 is not a number.\nI'll ignore that field for now.");
-                }
+            if(!armorSpeed20.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> armorSpeed20.numberSatisfies(item.speedChange(20))).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
 
             if(!armorDesc.getText().equals("")){
@@ -673,39 +729,35 @@ public class SelectionUtils {
         c.gridy++;
         magicItemSearch.add(new JLabel("Description Contains: "), c);
 
-        JTextField magicName = new JTextField();
+        AutofillTextArea magicName = new AutofillTextArea(magicNames, 5);
         JTextField magicAura = new JTextField();
-        JTextField magicAuraStrength = new JTextField();
-        JTextField magicCost = new JTextField();
-        JTextField magicCraftingCost = new JTextField();
+        JComboBox<String> magicAuraStrength = new JComboBox<>(new Vector<>(magicAuraStrengthSet));
+        NumberInequalityField magicCost = new NumberInequalityField();
+        NumberInequalityField magicCraftingCost = new NumberInequalityField();
         JTextField magicCraftingPrereqs = new JTextField();
         JTextField magicCraftingItemReqs = new JTextField();
-        JTextField magicWeight = new JTextField();
+        NumberInequalityField magicWeight = new NumberInequalityField();
         JTextField magicBaseItem = new JTextField();
-        JTextField magicCasterLevel = new JTextField();
-        JTextField magicCha = new JTextField();
+        NumberInequalityField magicCasterLevel = new NumberInequalityField();
+        NumberInequalityField magicCha = new NumberInequalityField();
         magicCha.setEditable(false);
-        JTextField magicInt = new JTextField();
+        NumberInequalityField magicInt = new NumberInequalityField();
         magicInt.setEditable(false);
-        JTextField magicEgo = new JTextField();
+        NumberInequalityField magicEgo = new NumberInequalityField();
         magicEgo.setEditable(false);
-        JTextField magicWis = new JTextField();
+        NumberInequalityField magicWis = new NumberInequalityField();
         magicWis.setEditable(false);
-        JTextField magicAlignment = new JTextField();
-        magicAlignment.setEditable(false);
-        JTextField magicCommunication = new JTextField();
-        magicCommunication.setEditable(false);
-        JTextField magicPowers = new JTextField();
-        magicPowers.setEditable(false);
-        JTextField magicSenses = new JTextField();
-        magicSenses.setEditable(false);
+        JComboBox<String> magicAlignment = new JComboBox<>(new Vector<>(magicAlignmentSet));
+        JComboBox<String> magicCommunication = new JComboBox<>(new Vector<>(magicCommunicationSet));
+        JComboBox<String> magicPowers = new JComboBox<>(new Vector<>(magicPowerSet));
+        JComboBox<String> magicSenses = new JComboBox<>(new Vector<>(magicSensesSet));
         JTextField magicLanguage = new JTextField();
         magicLanguage.setEditable(false);
-        JTextField magicScaling = new JTextField();
-        magicScaling.setEditable(false);
-        JTextField magicGroup = new JTextField();
-        JTextField magicSlot = new JTextField();
-        JTextField magicSource = new JTextField();
+        JComboBox<String> magicScaling = new JComboBox<>(new Vector<>(magicScalingSet));
+        JComboBox<String> magicGroup = new JComboBox<>(new Vector<>(magicGroupSet));
+        JComboBox<String> magicSlot = new JComboBox<>(new Vector<>(magicSlotSet));
+        JComboBox<String> magicSource = new JComboBox<>(new Vector<>(magicSourceSet));
+        magicSource.setEditable(true);
         JTextField magicDesc = new JTextField();
 
         AtomicBoolean isAlive = new AtomicBoolean(false);
@@ -901,6 +953,8 @@ public class SelectionUtils {
         JButton magicSearch = new JButton("Search with these values");
         magicItemSearch.add(magicSearch, c);
 
+        magicItemSearch.setPreferredSize(new Dimension(0, magicItemSearch.getPreferredSize().height));
+
         magicSearch.addActionListener(e -> {
             results.clear();
 
@@ -922,31 +976,23 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicAuraStrength.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.auraStrength.toLowerCase().contains(magicAuraStrength.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)magicAuraStrength.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.auraStrength.toLowerCase().contains(((String)magicAuraStrength.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicCost.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.price == Integer.parseInt(magicCost.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(Exception ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for cost is not a number.\nI'll ignore that field for now.");
-                }
+            if(!magicCost.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> magicCost.numberSatisfies(item.price)).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
-            if(!magicCraftingCost.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.craftingCost == Integer.parseInt(magicCraftingCost.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(Exception ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for crafting cost is not a number.\nI'll ignore that field for now.");
-                }
+            if(!magicCraftingCost.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> magicCraftingCost.numberSatisfies(item.craftingCost)).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
             if(!magicCraftingPrereqs.getText().equals("")){
                 temp.addAll(intermediary.stream().filter(item -> item.craftingRequirements.toLowerCase().contains(magicCraftingPrereqs.getText().toLowerCase())).collect(Collectors.toList()));
@@ -960,16 +1006,11 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicWeight.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.weight == Double.parseDouble(magicCraftingCost.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(Exception ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for weight is not a number.\nI'll ignore that field for now.");
-                    System.out.println("|" + magicWeight.getText() + "|");
-                }
+            if(!magicWeight.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> magicWeight.numberSatisfies(item.weight)).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
             if(!magicBaseItem.getText().equals("")){
                 for(MagicItem item : intermediary){
@@ -982,81 +1023,61 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicCasterLevel.getText().equals("")){
-                try {
-                    temp.addAll(intermediary.stream().filter(item -> item.casterLevel == Integer.parseInt(magicCasterLevel.getText())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                } catch(Exception ex){
-                    Pathfinder.showError("Number Format Exception", "The value you entered for caster level is not a number.\nI'll ignore that field for now.");
-                }
+            if(!magicCasterLevel.isEmpty()){
+                temp.addAll(intermediary.stream().filter(item -> magicCasterLevel.numberSatisfies(item.casterLevel)).collect(Collectors.toList()));
+                intermediary.clear();
+                intermediary.addAll(temp);
+                temp.clear();
             }
             if(isAlive.get()){
                 temp.addAll(intermediary.stream().filter(item -> item.isLiving).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
-                if(!magicCha.getText().equals("")){
-                    try {
-                        temp.addAll(intermediary.stream().filter(item -> item.cha == Integer.parseInt(magicCha.getText())).collect(Collectors.toList()));
-                        intermediary.clear();
-                        intermediary.addAll(temp);
-                        temp.clear();
-                    } catch(Exception ex){
-                        Pathfinder.showError("Number Format Exception", "The value you entered for charisma is not a number.\nI'll ignore that field for now.");
-                    }
-                }
-                if(!magicCasterLevel.getText().equals("")){
-                    try {
-                        temp.addAll(intermediary.stream().filter(item -> item.intel == Integer.parseInt(magicInt.getText())).collect(Collectors.toList()));
-                        intermediary.clear();
-                        intermediary.addAll(temp);
-                        temp.clear();
-                    } catch(Exception ex){
-                        Pathfinder.showError("Number Format Exception", "The value you entered for intelligence is not a number.\nI'll ignore that field for now.");
-                    }
-                }
-                if(!magicEgo.getText().equals("")){
-                    try {
-                        temp.addAll(intermediary.stream().filter(item -> item.ego == Integer.parseInt(magicEgo.getText())).collect(Collectors.toList()));
-                        intermediary.clear();
-                        intermediary.addAll(temp);
-                        temp.clear();
-                    } catch(Exception ex){
-                        Pathfinder.showError("Number Format Exception", "The value you entered for ego is not a number.\nI'll ignore that field for now.");
-                    }
-                }
-                if(!magicWis.getText().equals("")){
-                    try {
-                        temp.addAll(intermediary.stream().filter(item -> item.wis == Integer.parseInt(magicWis.getText())).collect(Collectors.toList()));
-                        intermediary.clear();
-                        intermediary.addAll(temp);
-                        temp.clear();
-                    } catch(Exception ex){
-                        Pathfinder.showError("Number Format Exception", "The value you entered for wisdom is not a number.\nI'll ignore that field for now.");
-                    }
-                }
-                if(!magicAlignment.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.alignment.toLowerCase().contains(magicAlignment.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!magicCha.isEmpty()){
+                    temp.addAll(intermediary.stream().filter(item -> magicCha.numberSatisfies(item.cha)).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
-                if(!magicCommunication.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.communication.toLowerCase().contains(magicCommunication.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!magicCasterLevel.isEmpty()){
+                    temp.addAll(intermediary.stream().filter(item -> magicInt.numberSatisfies(item.intel)).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
-                if(!magicPowers.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.powers.toLowerCase().contains(magicPowers.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!magicEgo.isEmpty()){
+                    temp.addAll(intermediary.stream().filter(item -> magicEgo.numberSatisfies(item.ego)).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
-                if(!magicSenses.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.senses.toLowerCase().contains(magicSenses.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!magicWis.isEmpty()){
+                    temp.addAll(intermediary.stream().filter(item -> magicWis.numberSatisfies(item.wis)).collect(Collectors.toList()));
+                    intermediary.clear();
+                    intermediary.addAll(temp);
+                    temp.clear();
+                }
+                if(!magicAlignment.getSelectedItem().equals("")){
+                    temp.addAll(intermediary.stream().filter(item -> item.alignment.toLowerCase().contains(((String)magicAlignment.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                    intermediary.clear();
+                    intermediary.addAll(temp);
+                    temp.clear();
+                }
+                if(!magicCommunication.getSelectedItem().equals("")){
+                    temp.addAll(intermediary.stream().filter(item -> item.communication.toLowerCase().contains(((String)magicCommunication.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                    intermediary.clear();
+                    intermediary.addAll(temp);
+                    temp.clear();
+                }
+                if(!magicPowers.getSelectedItem().equals("")){
+                    temp.addAll(intermediary.stream().filter(item -> item.powers.toLowerCase().contains(((String)magicPowers.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                    intermediary.clear();
+                    intermediary.addAll(temp);
+                    temp.clear();
+                }
+                if(!magicSenses.getSelectedItem().equals("")){
+                    temp.addAll(intermediary.stream().filter(item -> item.senses.toLowerCase().contains(((String)magicSenses.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1073,27 +1094,27 @@ public class SelectionUtils {
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
-                if(!magicScaling.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.scaling.toLowerCase().contains(magicScaling.getText().toLowerCase())).collect(Collectors.toList()));
+                if(!magicScaling.getSelectedItem().equals("")){
+                    temp.addAll(intermediary.stream().filter(item -> item.scaling.toLowerCase().contains(((String)magicScaling.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
             }
-            if(!magicGroup.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.group.toLowerCase().contains(magicGroup.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!magicGroup.getSelectedItem().equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.group.toLowerCase().contains(((String)magicGroup.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicSlot.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.slot.toLowerCase().contains(magicSlot.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)magicSlot.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.slot.toLowerCase().contains(((String)magicSlot.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicSource.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.source.toLowerCase().contains(magicSource.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)magicSource.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.source.toLowerCase().contains(((String)magicSource.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
@@ -1211,15 +1232,17 @@ public class SelectionUtils {
         c.gridy++;
         adventureItemSearch.add(new JLabel("Description: "), c);
 
-        JTextField adventureName = new JTextField();
-        JTextField adventureType = new JTextField();
-        JTextField adventurePlatinum = new JTextField();
-        JTextField adventureGold = new JTextField();
-        JTextField adventureSilver = new JTextField();
-        JTextField adventureCopper = new JTextField();
-        JTextField adventureWeight = new JTextField();
-        JTextField adventureAmount = new JTextField();
-        JTextField adventureSource = new JTextField();
+        AutofillTextArea adventureName = new AutofillTextArea(gearNames, 5);
+        JComboBox<String> adventureType = new JComboBox<>(new Vector<>(gearTypes));
+        adventureType.setPreferredSize(new Dimension(0, adventureType.getPreferredSize().height));
+        NumberInequalityField adventurePlatinum = new NumberInequalityField();
+        NumberInequalityField adventureGold = new NumberInequalityField();
+        NumberInequalityField adventureSilver = new NumberInequalityField();
+        NumberInequalityField adventureCopper = new NumberInequalityField();
+        NumberInequalityField adventureWeight = new NumberInequalityField();
+        NumberInequalityField adventureAmount = new NumberInequalityField();
+        JComboBox<String> adventureSource = new JComboBox<>(new Vector<>(gearSources));
+        adventureSource.setPreferredSize(new Dimension(0, adventureSource.getPreferredSize().height));
         JTextField adventureDescription = new JTextField();
 
         c.weightx = 1;
@@ -1268,14 +1291,14 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!adventureType.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(adventureType.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)adventureType.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.type().toLowerCase().contains(((String)adventureType.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!adventureSource.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(adventureSource.getText().toLowerCase())).collect(Collectors.toList()));
+            if(!((String)adventureSource.getSelectedItem()).equals("")){
+                temp.addAll(intermediary.stream().filter(item -> item.source().toLowerCase().contains(((String)adventureSource.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
@@ -1286,9 +1309,9 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!adventurePlatinum.getText().equals("")){
+            if(!adventurePlatinum.isEmpty()){
                 try {
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[0] == Integer.parseInt(adventurePlatinum.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventurePlatinum.numberSatisfies(item.cost()[0])).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1296,9 +1319,9 @@ public class SelectionUtils {
                     Pathfinder.showError("Number Format Exception", "The value you entered for platinum is not a number.\nI'll ignore that field for now.");
                 }
             }
-            if(!adventureGold.getText().equals("")){
+            if(!adventureGold.isEmpty()){
                 try{
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[1] == Integer.parseInt(adventureGold.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventureGold.numberSatisfies(item.cost()[1])).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1306,9 +1329,9 @@ public class SelectionUtils {
                     Pathfinder.showError("Number Format Exception", "The value you entered for gold is not a number.\nI'll ignore that field for now.");
                 }
             }
-            if(!adventureSilver.getText().equals("")){
+            if(!adventureSilver.isEmpty()){
                 try{
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[2] == Integer.parseInt(adventureSilver.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventureSilver.numberSatisfies(item.cost()[2])).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1316,9 +1339,9 @@ public class SelectionUtils {
                     Pathfinder.showError("Number Format Exception", "The value you entered for silver is not a number.\nI'll ignore that field for now.");
                 }
             }
-            if(!adventureCopper.getText().equals("")){
+            if(!adventureCopper.isEmpty()){
                 try{
-                    temp.addAll(intermediary.stream().filter(item -> item.cost()[3] == Integer.parseInt(adventureCopper.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventureCopper.numberSatisfies(item.cost()[3])).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1326,9 +1349,9 @@ public class SelectionUtils {
                     Pathfinder.showError("Number Format Exception", "The value you entered for copper is not a number.\nI'll ignore that field for now.");
                 }
             }
-            if(!adventureAmount.getText().equals("")){
+            if(!adventureAmount.isEmpty()){
                 try{
-                    temp.addAll(intermediary.stream().filter(item -> item.getPurchaseAmount() == Integer.parseInt(adventureAmount.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventureAmount.numberSatisfies(item.getPurchaseAmount())).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1336,9 +1359,9 @@ public class SelectionUtils {
                     Pathfinder.showError("Number Format Exception", "The value you entered for amount per purchase is not a number.\nI'll ignore that field for now.");
                 }
             }
-            if(!adventureWeight.getText().equals("")){
+            if(!adventureWeight.isEmpty()){
                 try{
-                    temp.addAll(intermediary.stream().filter(item -> item.weight() == Double.parseDouble(adventureWeight.getText())).collect(Collectors.toList()));
+                    temp.addAll(intermediary.stream().filter(item -> adventureWeight.numberSatisfies(item.weight())).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
@@ -1545,43 +1568,7 @@ public class SelectionUtils {
         spellType.setBorder(BorderFactory.createLineBorder(Color.black));
 
         JTextField classField = new JTextField();
-        JComboBox<String> nameField = new JComboBox<String>(){
-            private String lastEntered = "";
-            public void paintComponent(Graphics g){
-                super.paintComponent(g);
-                if(((String)getEditor().getItem()).equalsIgnoreCase(lastEntered)) return;
 
-                String currentEntry = ((String) getEditor().getItem());
-                removeAllItems();
-                addItem("");
-                addItem(currentEntry);
-                currentEntry = currentEntry.toLowerCase();
-                for(Spell spell : Spells.getSpells()){
-                    if(spell.name.toLowerCase().contains(currentEntry))
-                        addItem(spell.name);
-                }
-                lastEntered = currentEntry;
-                setSelectedIndex(1);
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(164, 25);
-            }
-
-            @Override
-            public Dimension getMaximumSize() {
-                return new Dimension(164, 25);
-            }
-
-            @Override
-            public Dimension getMinimumSize() {
-                return new Dimension(164, 25);
-            }
-        };
-        nameField.addItem("");
-        nameField.setPreferredSize(new Dimension(146, 25));
-        nameField.setEditable(true);
         JComboBox<String> subschoolField = new JComboBox<>();
         subschoolField.addItem("");
         subschoolField.setPreferredSize(new Dimension(146, 25));
@@ -1609,6 +1596,7 @@ public class SelectionUtils {
         typeField.setEditable(true);
         for(String s : Spells.spellTypeNames) typeField.addItem(s);
 
+        ArrayList<String> spellNames = new ArrayList<>();
         ArrayList<String> subschoolDone = new ArrayList<>();
         subschoolDone.add("");
         ArrayList<String> descriptorDone = new ArrayList<>();
@@ -1621,6 +1609,7 @@ public class SelectionUtils {
         deityDone.add("");
 
         for(Spell spell : Spells.getSpells()){
+            spellNames.add(spell.name);
             if(!subschoolDone.contains(spell.subschool.toLowerCase())){
                 subschoolField.addItem(spell.subschool);
                 subschoolDone.add(spell.subschool.toLowerCase());
@@ -1653,6 +1642,8 @@ public class SelectionUtils {
                 deityField.addItem(spell.deity);
             }
         }
+
+        AutofillTextArea nameField = new AutofillTextArea(spellNames, 5);
 
         JTextField levelField = new JTextField();
         JTextField bloodlineLevelField = new JTextField();
@@ -1778,8 +1769,8 @@ public class SelectionUtils {
 
                 ArrayList<Spell> intermediary = new ArrayList<>();
 
-                if(!((String)nameField.getSelectedItem()).equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(((String)nameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                if(!nameField.getText().equals("")){
+                    intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
@@ -1962,33 +1953,6 @@ public class SelectionUtils {
 
         JTextField fullTextField = new JTextField();
 
-        JComboBox nameField = new JComboBox(){
-            private String lastEntered = "";
-            public void paintComponent(Graphics g){
-                super.paintComponent(g);
-                if(((String)getEditor().getItem()).equalsIgnoreCase(lastEntered)) return;
-
-                String currentEntry = ((String) getEditor().getItem());
-                removeAllItems();
-                addItem("");
-                addItem(currentEntry);
-                currentEntry = currentEntry.toLowerCase();
-                for(Feat feat : Feats.getFeats()){
-                    if(feat.name.toLowerCase().contains(currentEntry))
-                        addItem(feat.name);
-                }
-                lastEntered = currentEntry;
-                setSelectedIndex(1);
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(164, 25);
-            }
-        };
-        nameField.setEditable(true);
-        nameField.addItem("");
-
         JComboBox<String> raceNameField = new JComboBox<>();
         JComboBox<String> subtypeField = new JComboBox<>();
         JComboBox<String> typeField = new JComboBox<>();
@@ -1999,7 +1963,9 @@ public class SelectionUtils {
         ArrayList<String> alreadyAddedRace = new ArrayList<>();
         ArrayList<String> alreadyAddedType = new ArrayList<>();
         ArrayList<String> alreadyAddedSubtype = new ArrayList<>();
+        ArrayList<String> featNames = new ArrayList<>();
         for(Feat feat : Feats.getFeats()){
+            featNames.add(feat.name);
             String[] names;
             if(feat.raceName.contains(",")) names = feat.raceName.split(",");
             else names = feat.raceName.split("\\|");
@@ -2019,6 +1985,8 @@ public class SelectionUtils {
                 subtypeField.addItem(feat.subType);
             }
         }
+
+        AutofillTextArea nameField = new AutofillTextArea(featNames, 5);
 
 
         JCheckBox racialBox = new JCheckBox();
@@ -2211,8 +2179,8 @@ public class SelectionUtils {
 
             ArrayList<Feat> intermediary = new ArrayList<>();
 
-            if(!((String)nameField.getSelectedItem()).equals("")){
-                intermediary.addAll(results.stream().filter(feat -> feat.name.toLowerCase().contains(((String)nameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+            if(!nameField.getText().equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
@@ -2659,6 +2627,7 @@ public class SelectionUtils {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         JComboBox<String> options = new JComboBox<>(classNames);
+        options.setEditable(true);
         JButton confirm = new JButton("Confirm");
         classChooserFrame.add(panel);
 

@@ -94,8 +94,8 @@ public class MagicItem implements Serializable, Item{
 		legendaryWeapon = details[40].equals("1");
 		illusion = details[41].equals("1");
 		universal = details[42].equals("1");
-		hasScaling = details.length > 42;
-		scaling = hasScaling ? "" : details[43];
+		hasScaling = details.length > 43;
+		scaling = hasScaling ? details[43] : "";
 
 	}
 

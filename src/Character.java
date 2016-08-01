@@ -89,7 +89,7 @@ public class Character implements Serializable{
 			"You may not have more skill ranks in a single skill than your current level. So no skill may be ranked higher than " + getTotalLevel());
 
 		for(String s : favoredClassNames){
-			if(charClass.toString().toLowerCase().contains(s.toLowerCase())){
+			if(!s.equals("") && charClass.toString().toLowerCase().contains(s.toLowerCase())){
 				Pathfinder.popupDialog("Favored Class Bonus","Since this is a favored class, you get to choose to either add one more skill rank, or add one more health point.");
 				break;
 			}

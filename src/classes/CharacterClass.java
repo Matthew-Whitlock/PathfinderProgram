@@ -89,7 +89,11 @@ public class CharacterClass implements Serializable{
 			return new UnchainedRogue(me);
 		}
 
-		return null;
+		for(CharacterClass charClass : me.classes)
+			if(charClass.toString().equalsIgnoreCase(className))
+				return charClass;
+
+		return new CharacterClass(me, className);
 	}
 
 }
