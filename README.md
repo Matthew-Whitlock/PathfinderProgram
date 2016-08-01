@@ -23,7 +23,7 @@ Will need some extra tabs made up for classes with things like ki, and alchemist
 
 ***
 Contributions so far:  
-Matthew Whitlock, Creation/Programming  
+[Matthew Whitlock](Matthew.Whitlock@okstate.edu), Creation/Programming  
 VestOfHolding, Programming/Optimization  
 [Mike Chopswil](chopswil@comcast.net), Database creation  
 
