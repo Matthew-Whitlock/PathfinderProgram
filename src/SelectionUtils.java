@@ -2663,4 +2663,8 @@ public class SelectionUtils {
         classChooserFrame.setLocationRelativeTo(null);
         classChooserFrame.setVisible(true);
     }
+
+    public static void chooseSkillRanks(Character me){
+
+    }
 }

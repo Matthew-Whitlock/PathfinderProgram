@@ -164,24 +164,7 @@ public class Feats {
     }
 
     public static List<Feat> getFeats(){
-        FileReader fileIn;
-        BufferedReader input = null;
-
-        try{
-            File file = getFilePath();
-
-            if (file != null) {
-                fileIn = new FileReader(file);
-                input = new BufferedReader(fileIn);
-            }
-        }catch(IOException e){
-            Pathfinder.showError("Error: Cannot access feats","The feat file is either not in the location expected, or I don't have permissions to access it.");
-            return Collections.emptyList();
-        }catch(Exception e){
-            Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
-            e.printStackTrace();
-            return Collections.emptyList();
-        }
+        BufferedReader input = new BufferedReader(new InputStreamReader(Feats.class.getResourceAsStream("/src/databases/Feats.txt")));
 
         List<Feat> feats = new ArrayList<>();
 
@@ -216,27 +199,6 @@ public class Feats {
         ArrayList<Feat> feats = new ArrayList<>();
         feats.addAll(getFeats().stream().filter(feat -> characterMeetsAllPrereqs(feat, me)).filter(feat -> !characterHasFeat(feat.toString(), me) || feat.canDoMultiple).collect(Collectors.toList()));
         return feats;
-    }
-
-    private static File getFilePath(){
-        URL url = Feats.class.getResource("Feats.class");
-        File file;
-        try{
-            if(url.getProtocol().equals("jar")){
-                url = new URL(url.getPath());
-            }
-
-            file = new File(url.getPath().split("!")[0].replace("%20", " "));
-        }catch(Exception e){
-            Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nCannot get correct path to Feats.txt");
-            return null;
-        }
-
-        if(file.toString().contains("src\\feats\\Feats.class"))
-            file = new File(file.toString().substring(0, file.toString().indexOf("src\\feats\\Feats.class")) + "Resources\\Feats.txt");
-        else
-            file = new File(file.toString().substring(0, file.toString().lastIndexOf("\\")) + "\\Resources\\Feats.txt");
-        return file;
     }
 
     public static URL getIcon(Feat feat){

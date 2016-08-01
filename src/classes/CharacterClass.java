@@ -16,7 +16,7 @@ import java.util.List;
 
 public class CharacterClass implements Serializable{
 	public String name;
-	public String hitDiePerLevel;
+	public String hitDiePerLevel = "Hit Die";
 	public int level = 0;
 	public Character me;
 	public int skillRanksMod;

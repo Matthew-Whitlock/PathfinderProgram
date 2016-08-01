@@ -93,24 +93,7 @@ public class Spells implements Comparator<Spell>{
 	}
 	
 	public static List<Spell> getSpells(){
-		FileReader fileIn;
-		BufferedReader input = null;
-		
-		try{
-			File file = getFilePath();
-
-			if (file != null) {
-				fileIn = new FileReader(getFilePath());
-				input = new BufferedReader(fileIn);
-			}
-		}catch(IOException e){
-			Pathfinder.showError("Error: Cannot access spells","The spell file is either not in the location expected, or I don't have permissions to access it.");
-			return Collections.emptyList();
-		}catch(Exception e){
-			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.");
-			e.printStackTrace();
-			return Collections.emptyList();
-		}
+		BufferedReader input = new BufferedReader(new InputStreamReader(Spells.class.getResourceAsStream("/src/databases/Spells.txt")));
 		
 		List<Spell> spells = new ArrayList<>();
 
@@ -139,29 +122,6 @@ public class Spells implements Comparator<Spell>{
 			return Collections.emptyList();
 		}
 		return spells;
-	}
-	
-	public static File getFilePath(){
-		URL url = Spells.class.getResource("Spells.class");
-		File file;
-		try{
-			if(url.getProtocol().equals("jar")){
-				url = new URL(url.getPath());
-			}
-
-			file = new File(url.getPath().split("!")[0].replace("%20", " "));
-		}catch(Exception e){
-			Pathfinder.showError("Error","Unspecified error. For more details run this from command line.\nCannot get correct path to Spells.");
-			e.printStackTrace();
-			return null;
-		}
-		
-		if(file.toString().contains("src\\spells\\Spells.class")){
-			file = new File(file.toString().substring(0,file.toString().indexOf("src\\spells\\Spells.class")) + "Resources\\Spells.txt");
-		}else{
-			file = new File(file.toString().substring(0, file.toString().lastIndexOf("\\")) + "\\Resources\\Spells.txt");
-		}
-		return file;
 	}
 	
 	public int compare(Spell spell1, Spell spell2){

@@ -29,4 +29,4 @@ public enum AbilityScoreEnum implements Serializable{
     public String getShortName(){
         return shortName;
     }
-} 
+}

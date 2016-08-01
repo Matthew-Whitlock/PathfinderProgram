@@ -270,5 +270,4 @@ public class GenItem implements Item, Serializable{
         if(backingType == GENERIC) return name;
         return itemBase.getItemName();
     }
-
 }
