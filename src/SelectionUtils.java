@@ -8,8 +8,14 @@ import src.items.*;
 import src.spells.Spell;
 import src.spells.SpellCellRenderer;
 import src.spells.Spells;
+import src.stats.Skill;
+import src.stats.SkillEnum;
+import src.stats.SkillUtils;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -2664,7 +2670,224 @@ public class SelectionUtils {
         classChooserFrame.setVisible(true);
     }
 
-    public static void chooseSkillRanks(Character me){
+    public static void chooseSkillRanks(Character me, int ranksToApply){
+        JDialog skillChooser = new JDialog(Pathfinder.FRAME, "Apply skill ranks");
+        skillChooser.setSize(400, 500);
+        skillChooser.setLocationRelativeTo(Pathfinder.FRAME);
+        skillChooser.setLayout(new BorderLayout());
 
+        JPanel panel = new JPanel(new GridBagLayout());
+        JScrollPane scroll = new JScrollPane(panel);
+        skillChooser.add(scroll, BorderLayout.CENTER);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.weightx = 1;
+        c.gridwidth = 3;
+        c.gridy = 0;
+        panel.add(new JLabel("Points Available: " + ranksToApply), c);
+
+        c.gridwidth = 3;
+        c.gridx = 3;
+        panel.add(new JLabel("Points used: "), c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.gridwidth = 1;
+        c.gridx = 6;
+        JTextField pointsUsed = new JTextField("0");
+        pointsUsed.setEditable(false);
+        panel.add(pointsUsed, c);
+
+        c.fill = GridBagConstraints.NONE;
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 2;
+        c.fill = GridBagConstraints.BOTH;
+        JLabel name = new JLabel("Name");
+        Border border = BorderFactory.createLineBorder(Color.black);
+        name.setBorder(border);
+        panel.add(name,c);
+        c.gridx = 2;
+        c.gridwidth = 1;
+        JLabel total = new JLabel("Current Total");
+        total.setBorder(border);
+        panel.add(total, c);
+        c.gridx = 3;
+        JLabel misc = new JLabel("Misc");
+        misc.setBorder(border);
+        panel.add(misc, c);
+        c.gridx = 4;
+        JLabel ranks = new JLabel("Current Ranks");
+        ranks.setBorder(border);
+        panel.add(ranks, c);
+        c.gridx = 5;
+        JLabel classSkill = new JLabel("Class");
+        classSkill.setBorder(border);
+        panel.add(classSkill, c);
+        c.gridx = 6;
+        JLabel newRanks = new JLabel("New Ranks");
+        newRanks.setBorder(border);
+        panel.add(newRanks, c);
+
+        HashMap<Skill, SpinnerNumberModel> models = new HashMap<>();
+
+        for(Skill skill : me.skillsList){
+            c.gridy++;
+            c.gridwidth = 2;
+            c.gridx = 0;
+            name = new JLabel(skill.canBeUntrained() ? skill.toString() : skill.toString() + "*");
+            name.setBorder(border);
+
+            name.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent evt) {
+                    if (evt.getClickCount() > 1) {
+                        Pathfinder.showWebPage(skill.getURL(), skill.toString());
+                    }
+                }
+            });
+            name.setToolTipText("Double click this for more information.");
+
+            panel.add(name,c);
+
+            c.gridx = 2;
+            c.gridwidth = 1;
+            JTextField totalField = new JTextField(Integer.toString(skill.calculateTotalSkillMod()));
+            totalField.setEditable(false);
+            panel.add(totalField, c);
+
+            c.gridx = 3;
+            JTextField miscField = new JTextField(Integer.toString(skill.getMiscMod()));
+            miscField.setEditable(false);
+            panel.add(miscField, c);
+
+            c.gridx = 4;
+            JTextField ranksField = new JTextField(Integer.toString(skill.getnRanks()));
+            ranksField.setEditable(false);
+            panel.add(ranksField, c);
+
+            c.gridx = 5;
+            JTextField classField = new JTextField(skill.isClassSkill() ? "Y" : "N");
+            classField.setEditable(false);
+            panel.add(classField, c);
+
+            c.gridx = 6;
+            SpinnerNumberModel model = new SpinnerNumberModel(0, 0, Math.min(ranksToApply, me.getTotalLevel() - skill.getnRanks()), 1);
+            models.put(skill, model);
+            JSpinner spinner = new JSpinner(model);
+            model.addChangeListener(new ChangeListener() {
+                private int previousValue = 0;
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    pointsUsed.setText(Integer.toString(Integer.parseInt(pointsUsed.getText()) + (int)model.getNumber() - previousValue));
+                    previousValue = (int)model.getNumber();
+                }
+            });
+            panel.add(spinner, c);
+        }
+
+        JButton confirm = new JButton("Confirm these values");
+
+        JButton addSkill = new JButton("Add a skill subtype");
+        addSkill.addActionListener(e -> {
+            new Thread(){
+                public void run(){
+                    Skill skill = SkillUtils.addSkillSubtype(me);
+
+                    c.gridy--;
+                    c.gridwidth = 2;
+                    c.gridx = 0;
+                    JLabel skillName = new JLabel(skill.canBeUntrained() ? skill.toString() : skill.toString() + "*");
+                    skillName.setBorder(border);
+
+                    skillName.addMouseListener(new MouseAdapter() {
+                        public void mouseClicked(MouseEvent evt) {
+                            if (evt.getClickCount() > 1) {
+                                Pathfinder.showWebPage(skill.getURL(), skill.toString());
+                            }
+                        }
+                    });
+                    skillName.setToolTipText("Double click this for more information.");
+
+                    panel.add(skillName,c);
+
+                    c.gridx = 2;
+                    c.gridwidth = 1;
+                    JTextField totalField = new JTextField(){
+                        public void setText(String s){
+                            super.setText(Integer.toString(skill.calculateTotalSkillMod()));
+                        }
+                    };
+                    totalField.setEditable(false);
+                    panel.add(totalField, c);
+
+                    c.gridx = 3;
+                    JTextField miscField = new JTextField(){
+                        public void setText(String s){
+                            super.setText(Integer.toString(skill.getMiscMod()));
+                        }
+                    };
+                    miscField.setEditable(false);
+                    panel.add(miscField, c);
+
+                    c.gridx = 4;
+                    JTextField ranksField = new JTextField(){
+                        public void setText(String s){
+                            super.setText(Integer.toString(skill.getnRanks()));
+                        }
+                    };
+                    ranksField.setEditable(false);
+                    panel.add(ranksField, c);
+
+                    c.gridx = 5;
+                    JTextField classField = new JTextField(){
+                        public void setText(String s){
+                            super.setText(skill.isClassSkill() ? "Y" : "N");
+                        }
+                    };
+                    classField.setEditable(false);
+                    panel.add(classField, c);
+
+                    c.gridx = 6;
+                    SpinnerNumberModel model = new SpinnerNumberModel(0, 0, Math.min(ranksToApply, me.getTotalLevel() - skill.getnRanks()), 1);
+                    models.put(skill, model);
+                    JSpinner spinner = new JSpinner(model);
+                    model.addChangeListener(new ChangeListener() {
+                        private int previousValue = 0;
+                        @Override
+                        public void stateChanged(ChangeEvent e) {
+                            pointsUsed.setText(Integer.toString(Integer.parseInt(pointsUsed.getText()) + (int)model.getNumber() - previousValue));
+                            previousValue = (int)model.getNumber();
+                        }
+                    });
+                    panel.add(spinner, c);
+
+                    c.gridy++;
+                    c.gridx = 0;
+                    c.gridwidth = 7;
+                    panel.add(addSkill, c);
+
+                    c.gridy++;
+                    panel.add(confirm, c);
+                    skillChooser.revalidate();
+                    skillChooser.repaint();
+                }
+            }.start();
+        });
+        c.gridy++;
+        c.gridx = 0;
+        c.gridwidth = 7;
+        panel.add(addSkill, c);
+
+        c.gridy++;
+        confirm.addActionListener(e -> {
+            for(Skill skill : models.keySet()){
+                if((int)models.get(skill).getNumber() == 0) continue;
+                skill.setnRanks(skill.getnRanks() + (int)models.get(skill).getNumber());
+            }
+            skillChooser.dispose();
+        });
+        panel.add(confirm, c);
+
+        skillChooser.setVisible(true);
     }
+
 }

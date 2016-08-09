@@ -166,6 +166,7 @@ public interface Item {
     static void showItemDetails(Item item){
         JFrame detailsFrame = new JFrame(item.toString());
         detailsFrame.setSize(450,550);
+        detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
         JPanel detailsPanel = new JPanel(new BorderLayout());
         JEditorPane text = new JEditorPane("text/html","<html>" + item.getFormattedDetails() + "</html>");
         text.setEditable(false);

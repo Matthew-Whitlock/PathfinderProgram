@@ -7,6 +7,7 @@ import src.feats.Feat;
 import src.races.Race;
 import src.stats.*;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -27,7 +28,7 @@ public class Character implements Serializable{
 	public Map<String, String> miscAbilities = new HashMap<>();
 
 	public String name;
-	public String job = null;
+	public String profession = null;
 	public String alignment = null;
 	public String physDesc = null;
 	public String background = null;
@@ -59,6 +60,9 @@ public class Character implements Serializable{
 	public int gold = 0;
 	public int platinum = 0;
 	public double sellMod = 0.7;
+
+	public boolean showIconsInDisplay = true; //Used for saving settings for GUI.
+	public File lastSavedLocation = null;
 	
 	public Character(String name, Race race, HashMap<AbilityScoreEnum, Integer> abilities, String[] favoredClassNames){
 		this.name = name;
@@ -85,8 +89,7 @@ public class Character implements Serializable{
 
 		String hitDie = charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
-		Pathfinder.popupDialog("Skill ranks!","You may add " + (charClass.skillRanksMod + getAbilityMod(AbilityScoreEnum.INT)) + " skill ranks.\n" +
-			"You may not have more skill ranks in a single skill than your current level. So no skill may be ranked higher than " + getTotalLevel());
+		SelectionUtils.chooseSkillRanks(this, charClass.skillRanksMod + getAbilityMod(AbilityScoreEnum.INT));
 		for(String s : favoredClassNames){
 			if(!s.equals("") && charClass.toString().toLowerCase().contains(s.toLowerCase())){
 				Pathfinder.popupDialog("Favored Class Bonus","Since this is a favored class, you get to choose to either add one more skill rank, or add one more health point.");

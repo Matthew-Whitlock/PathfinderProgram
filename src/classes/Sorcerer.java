@@ -82,8 +82,9 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 			if(spellLevel > me.getAbilityMod(AbilityScoreEnum.CHA)) {
 				Pathfinder.showError("Cannot learn spell level " + spellLevel,"You do not have a high enough Charisma modifier to learn spells of level " + spellLevel + " and higher.");
 				break;
+			}else if(newSpellsByLevel[level][spellLevel] > 0){
+				knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 			}
-			knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 		}
 	}
 	

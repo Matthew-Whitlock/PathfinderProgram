@@ -78,14 +78,14 @@ public class CharacterDisplay extends JTabbedPane{
 			}
 		}
 
-		/*icon = null;
+		icon = null;
 		try {
 			icon = new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/Gear_icon.svg.png")).getScaledInstance(23, 23, Image.SCALE_SMOOTH));
 		} catch(IOException e){
 			Pathfinder.showError("Image not found", "I couldn't load the image for the Settings tab. I don't know why.\nRun this in command for more details.");
 			e.printStackTrace();
 		}
-		addTab("Settings", icon, new JPanel(), "Program Settings");*/
+		addTab("Settings", icon, new SettingsTab(), "Program Settings");
 	}
 
 	public void paintComponent(Graphics g){
@@ -122,12 +122,93 @@ public class CharacterDisplay extends JTabbedPane{
 
 	}
 
+	private class SettingsTab extends JPanel{
+
+		private JComboBox<CharacterClass> removeClassOptions = new JComboBox<>(me.classes.toArray(new CharacterClass[me.classes.size()]));
+		private JButton removeClassConfirm = new JButton("Yes, remove this class");
+		private JCheckBox showIcons = new JCheckBox("Show icons for items, spells, and feats? (Requires a save and reopen)", me.showIconsInDisplay);
+		private JButton changeCharImage = new JButton("Choose a new character image. (Tip: try double clicking the image)");
+		private JButton saveChar = new JButton("Save your character to a file");
+		private JButton showSpellTab = new JButton("Show a generic spellcaster tab");
+
+		public SettingsTab(){
+			setLayout(new GridBagLayout());
+			GridBagConstraints c = new GridBagConstraints();
+
+			c.weightx = 1;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.gridy = 0;
+
+			add(new JLabel("Remove a class?"), c);
+			c.gridx = 1;
+			add(removeClassOptions, c);
+			c.gridx = 2;
+			add(removeClassConfirm, c);
+
+			c.gridy++;
+			c.gridx = 0;
+			c.gridwidth = 3;
+			add(changeCharImage, c);
+
+			c.gridy++;
+			add(showIcons, c);
+
+			c.gridy++;
+			add(saveChar, c);
+
+			c.gridy++;
+			add(showSpellTab, c);
+
+			removeClassConfirm.addActionListener(e ->{
+				if(Pathfinder.askYesNo("Remove your " + ((CharacterClass)removeClassOptions.getSelectedItem()) + " class?")){
+					me.classes.remove(removeClassOptions.getSelectedItem());
+				}
+			});
+
+			showIcons.addActionListener(e -> me.showIconsInDisplay = showIcons.isSelected());
+
+			changeCharImage.addActionListener(e -> {
+				String newFile = Pathfinder.getImageOverrideLocation();
+				if(!newFile.equals("")) me.imageOverrideLocation = newFile;
+			});
+
+			showSpellTab.addActionListener(e -> {
+				for(CharacterClass charClass : me.classes){
+					if(charClass instanceof SpellCaster && charClass.name.equals("Spells")) return;
+				}
+				me.classes.add(new SpellCaster(me, "Spells"));
+			});
+
+			saveChar.addActionListener(e -> Pathfinder.saveCharacter(me));
+
+		}
+
+		public void paintComponent(Graphics g){
+			super.paintComponent(g);
+
+			removeClassOptions.removeAllItems();
+			for(CharacterClass charClass : me.classes){
+				removeClassOptions.addItem(charClass);
+			}
+		}
+	}
+
 	private class GenPan extends JPanel{
 		public GenPan(){
 			GridBagLayout topLayout = new GridBagLayout();
 			setLayout(topLayout);
 			GridBagConstraints c = new GridBagConstraints();
-			JLabel name = new JLabel(me.name);
+			JTextField name = new JTextField(me.name){
+				@Override
+				public void setBorder(Border border){
+					super.setBorder(BorderFactory.createEmptyBorder());
+					//I say no to your L&F
+				}
+			};
+			name.setMinimumSize(new Dimension(20, name.getMinimumSize().height));
+			name.setBorder(null);
+			name.setOpaque(false);
+			name.addActionListener(e -> me.name = name.getText());
 			c.gridwidth = 6;
 			add(name, c);
 
@@ -168,9 +249,9 @@ public class CharacterDisplay extends JTabbedPane{
 			c.gridx = 2;
 			c.gridwidth = 2;
 			c.gridheight = 1;
-
-
 			add(race, c);
+
+			name.setFont(race.getFont());
 
 			charClass = new JLabel(me.getCharacterClassesAsString());
 			c.gridx = 4;
@@ -179,7 +260,7 @@ public class CharacterDisplay extends JTabbedPane{
 			add(charClass, c);
 
 			JTextField backgroundJob = new JTextField();
-			backgroundJob.setText(me.job != null ? me.job : "Background job");
+			backgroundJob.setText(me.profession != null ? me.profession : "Profession");
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 2;
 			c.gridy = 2;
@@ -600,7 +681,6 @@ public class CharacterDisplay extends JTabbedPane{
 			c.gridy = 0;
 			c.weighty = 1;
 			c.gridwidth = 1;
-			//c.ipadx = 10;
 			add(new JLabel("Abilities"), c);
 
 			c.gridx = 1;
@@ -1218,74 +1298,17 @@ public class CharacterDisplay extends JTabbedPane{
 			}
 			JButton addSkill = new JButton("Add a skill subtype");
 			addSkill.addActionListener(e -> {
-				addSkill();
-				updateTextFields();
+				new Thread(){
+					public void run(){
+						SkillUtils.addSkillSubtype(me);
+						updateTextFields();
+					}
+				}.start();
 			});
 			c.gridy++;
 			c.gridx = 0;
 			c.gridwidth = 6;
 			add(addSkill, c);
-		}
-		public void addSkill(){
-			(new Thread(){
-				public void run(){
-					JFrame addSkillFrame = new JFrame("Choose a skill to add");
-					addSkillFrame.setSize(300,200);
-
-					ArrayList<SkillEnum> skillsWithSubtypes = new ArrayList<>();
-					for(SkillEnum skill : SkillEnum.values())
-						if(skill.hasSubTypes())
-							skillsWithSubtypes.add(skill);
-
-					String[] model = new String[skillsWithSubtypes.size()];
-					for(int i = 0; i < model.length; i++) model[i] = skillsWithSubtypes.get(i).toString();
-
-					JList<String> list = new JList<>(model);
-
-					list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-					JPanel panel = new JPanel(new BorderLayout());
-
-					panel.add(list, BorderLayout.CENTER);
-
-					JTextField field = new JTextField();
-					field.setPreferredSize(new Dimension(80,25));
-
-					JPanel upperPanel = new JPanel(new FlowLayout());
-
-					JLabel skillSelected = new JLabel();
-
-					list.addListSelectionListener(e -> {
-						skillSelected.setText(skillsWithSubtypes.get(list.getSelectedIndex()).toString() + " (");
-					});
-					list.setSelectedIndex(0);
-
-					upperPanel.add(skillSelected);
-
-					upperPanel.add(field);
-
-					upperPanel.add(new JLabel(")"));
-
-					panel.add(upperPanel, BorderLayout.NORTH);
-
-					JButton chooser = new JButton("Make this sub-skill");
-
-					panel.add(chooser,BorderLayout.SOUTH);
-
-					chooser.addActionListener(e -> {
-						if(field.getText().equals("")) Pathfinder.showError("Invalid option","You must write a subtype");
-						else{
-							SkillUtils.getSkill(skillsWithSubtypes.get(list.getSelectedIndex()),me,field.getText());
-							addSkillFrame.dispose();
-							updateTextFields();
-							repaint();
-						}
-					});
-
-					addSkillFrame.add(panel);
-					addSkillFrame.setVisible(true);
-				}
-			}).start();
 		}
 	}
 	
@@ -1550,7 +1573,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 			AtomicBoolean confirmed = new AtomicBoolean(false);
 			AtomicBoolean closedWindow = new AtomicBoolean(false);
-			JFrame sellFrame = new JFrame("Selling Items");
+			JDialog sellFrame = new JDialog(Pathfinder.FRAME,"Selling Items");
 			JPanel panel = new JPanel(new GridBagLayout());
 			sellFrame.addWindowListener(new WindowAdapter() {
 				@Override
@@ -1603,6 +1626,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 			sellFrame.add(panel);
 			sellFrame.setSize(320,140);
+			sellFrame.setLocationRelativeTo(Pathfinder.FRAME);
 			sellFrame.setVisible(true);
 
 			(new Thread(){
@@ -1634,7 +1658,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 					AtomicBoolean confirmed = new AtomicBoolean(false);
 					AtomicBoolean closedWindow = new AtomicBoolean(false);
-					JFrame sellFrame = new JFrame("Buying Items");
+					JDialog sellFrame = new JDialog(Pathfinder.FRAME,"Buying Items");
 					JPanel panel = new JPanel(new GridBagLayout());
 					sellFrame.addWindowListener(new WindowAdapter() {
 						@Override
@@ -1687,6 +1711,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 					sellFrame.add(panel);
 					sellFrame.setSize(320,140);
+					sellFrame.setLocationRelativeTo(Pathfinder.FRAME);
 					sellFrame.setVisible(true);
 
 					while(!closedWindow.get()){
@@ -2389,6 +2414,11 @@ public class CharacterDisplay extends JTabbedPane{
 				c.gridy++;
 				currentClasses++;
 			}
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			return new Dimension(0, 50);
 		}
 	}
 }

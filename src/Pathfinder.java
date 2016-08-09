@@ -44,6 +44,15 @@ public class Pathfinder{
 	public static void main(String[] args){
 		FRAME.setSize(523,200);
 		FRAME.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		
+		/*JLabel background = new JLabel();
+		try {
+			background.setIcon(new ImageIcon(ImageIO.read(Pathfinder.class.getResource("/src/pictures/Gear_icon.svg.png"))));
+		} catch(IOException e){
+			showError("ImageIO Error", "Unable to load background image.\nRun this in cmd for more details.");
+			e.printStackTrace();
+		}
+		FRAME.setContentPane(background);*/
 		FRAME.add(PANEL);
 
 		JPanel startPanel = new JPanel(new GridBagLayout());
@@ -1800,8 +1809,9 @@ public class Pathfinder{
 	}
 
 	public static void showNoteDetails(String title, Map<String, String> dataSet){
-		JFrame detailsFrame = new JFrame(title);
+		JDialog detailsFrame = new JDialog(FRAME, title);
 		detailsFrame.setSize(450,550);
+		detailsFrame.setLocationRelativeTo(FRAME);
 		JPanel detailsPanel = new JPanel(new BorderLayout());
 
 		JEditorPane text = new JEditorPane("text/html", "<html>" + dataSet.get(title) + "</html>");
@@ -1833,5 +1843,24 @@ public class Pathfinder{
 		detailsPanel.add(scrollingText, BorderLayout.CENTER);
 		detailsPanel.add(toggleEdit, BorderLayout.SOUTH);
 		detailsFrame.setVisible(true);
+	}
+
+	public static void saveCharacter(Character me){
+		JFileChooser chooser = new JFileChooser(me.lastSavedLocation);
+		if(JFileChooser.APPROVE_OPTION != chooser.showSaveDialog(FRAME)) return;
+
+		try{
+			FileOutputStream fileOut = new FileOutputStream(chooser.getSelectedFile());
+			ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
+			objOut.writeObject(me);
+			objOut.close();
+			fileOut.close();
+			me.lastSavedLocation = chooser.getSelectedFile();
+		} catch(FileNotFoundException e) {
+			showError("Unable to save", "I couldn't save to the specified location. You may not have permission to save here.");
+		} catch (IOException e){
+			showError("Error saving", "I couldn't finish saving. I'm unsure why.\nRun this in cmd for more details.");
+			e.printStackTrace();
+		}
 	}
 }
