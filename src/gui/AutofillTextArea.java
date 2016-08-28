@@ -1,4 +1,4 @@
-package src;
+package src.gui;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

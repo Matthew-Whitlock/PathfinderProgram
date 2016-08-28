@@ -1,11 +1,15 @@
-package src;
+package src.gui;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 
+import src.Character;
+import src.Pathfinder;
 import src.classes.SpellCaster;
 import src.feats.Feat;
 import src.items.GenItem;
@@ -131,6 +135,8 @@ public class CharacterDisplay extends JTabbedPane{
 		private JButton saveChar = new JButton("Save your character to a file");
 		private JButton showSpellTab = new JButton("Show a generic spellcaster tab");
 
+		ArrayList<CharacterClass> currentlyDisplayed = new ArrayList<>(me.classes);
+
 		public SettingsTab(){
 			setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
@@ -186,9 +192,12 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
 
-			removeClassOptions.removeAllItems();
-			for(CharacterClass charClass : me.classes){
-				removeClassOptions.addItem(charClass);
+			if(!me.classes.equals(currentlyDisplayed)){
+				removeClassOptions.removeAllItems();
+				for(CharacterClass charClass : me.classes){
+					removeClassOptions.addItem(charClass);
+				}
+				currentlyDisplayed = new ArrayList(me.classes);
 			}
 		}
 	}
@@ -208,7 +217,20 @@ public class CharacterDisplay extends JTabbedPane{
 			name.setMinimumSize(new Dimension(20, name.getMinimumSize().height));
 			name.setBorder(null);
 			name.setOpaque(false);
-			name.addActionListener(e -> me.name = name.getText());
+			name.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					me.name = name.getText();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					me.name = name.getText();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			c.gridwidth = 6;
 			add(name, c);
 
@@ -255,50 +277,85 @@ public class CharacterDisplay extends JTabbedPane{
 
 			charClass = new JLabel(me.getCharacterClassesAsString());
 			c.gridx = 4;
-
-
 			add(charClass, c);
 
 			JTextField backgroundJob = new JTextField();
+			backgroundJob.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					me.profession = backgroundJob.getText();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					me.profession = backgroundJob.getText();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			backgroundJob.setText(me.profession != null ? me.profession : "Profession");
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 2;
 			c.gridy = 2;
-
-
 			add(backgroundJob, c);
 
 			JTextField alignment = new JTextField();
+			alignment.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					me.alignment = alignment.getText();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					me.alignment = alignment.getText();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			alignment.setText(me.alignment != null ? me.alignment : "Alignment");
 			c.gridx = 4;
-
-
 			add(alignment, c);
+
+			c.gridx = 2;
+			c.gridy = 3;
+			c.gridwidth = 4;
+			c.fill = GridBagConstraints.NONE;
+			add(new JLabel("Physical Description."), c);
+			c.fill = GridBagConstraints.BOTH;
 
 			JTextArea physicalDesc = new JTextArea();
 			physicalDesc.setLineWrap(true);
 			physicalDesc.setText(me.physDesc != null ? me.physDesc : "Physical Description");
+			physicalDesc.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					me.physDesc = physicalDesc.getText();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					me.physDesc = physicalDesc.getText();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			c.fill = GridBagConstraints.BOTH;
-			c.gridx = 2;
 			c.weighty = 0.0000001;
-			c.gridy = 3;
 			c.gridwidth = 4;
+			c.gridy = 4;
 			c.gridheight = 1;
 			JScrollPane physDescScroll = new JScrollPane(physicalDesc);
-
-
 			add(physDescScroll, c);
 
-			JButton savePhysDesc = new JButton("Update");
-			c.gridheight = 1;
-			c.weighty = 0;
-			c.gridy = 4;
-
-
-			add(savePhysDesc,c);
 
 			JLabel classesLabel = new JLabel("Your current classes");
 			c.gridy = 5;
+			c.gridheight = 1;
+			c.weighty = 0;
 			c.fill = GridBagConstraints.NONE;
 
 
@@ -319,23 +376,27 @@ public class CharacterDisplay extends JTabbedPane{
 			JTextArea charBackground = new JTextArea();
 			charBackground.setLineWrap(true);
 			charBackground.setText(me.background != null ? me.background : "Character background");
+			charBackground.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					me.background = charBackground.getText();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					me.background = charBackground.getText();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			JScrollPane charBackgroundScroll = new JScrollPane(charBackground);
 			c.gridx = 0;
 			c.gridwidth = 6;
 			c.gridy = 8;
 			c.weighty = 1;
-			c.gridheight = 4;
-
-
+			c.gridheight = 5;
 			add(charBackgroundScroll, c);
-
-			JButton saveBackground = new JButton("Update");
-			c.gridheight = 1;
-			c.gridy = 13;
-			c.weighty = 0;
-
-
-			add(saveBackground,c);
 		}
 
 		public void paintComponent(Graphics g){
@@ -378,7 +439,26 @@ public class CharacterDisplay extends JTabbedPane{
 
 			totalHPField = new JTextField();
 			totalHPField.setText(Integer.toString(me.totalHP));
-			totalHPField.addActionListener(e -> me.totalHP = Integer.parseInt(totalHPField.getText()));
+			totalHPField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try {
+						me.totalHP = Integer.parseInt(totalHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.totalHP = Integer.parseInt(totalHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){}
+			});
 			c.fill = GridBagConstraints.BOTH;
 			c.gridx = 1;
 			c.weightx = 1;
@@ -391,7 +471,26 @@ public class CharacterDisplay extends JTabbedPane{
 
 			c.ipadx = 0;
 			currentHPField = new JTextField(Integer.toString(me.currentHP));
-			currentHPField.addActionListener(e -> me.currentHP = Integer.parseInt(currentHPField.getText()));
+			currentHPField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try {
+						me.currentHP = Integer.parseInt(currentHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.currentHP = Integer.parseInt(currentHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){}
+			});
 			c.weightx = 1;
 			c.gridx = 1;
 			topPanel.add(currentHPField, c);
@@ -408,7 +507,26 @@ public class CharacterDisplay extends JTabbedPane{
 			topPanel.add(nonlethal, c);
 
 			tempHPField = new JTextField(Integer.toString(me.tempHP));
-			tempHPField.addActionListener(e -> me.tempHP = Integer.parseInt(tempHPField.getText()));
+			tempHPField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try {
+						me.tempHP = Integer.parseInt(tempHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempHP = Integer.parseInt(tempHPField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){}
+			});
 			c.weightx = 1;
 			c.ipadx = 0;
 			c.gridx = 3;
@@ -416,7 +534,26 @@ public class CharacterDisplay extends JTabbedPane{
 			topPanel.add(tempHPField, c);
 
 			nonlethalField = new JTextField(Integer.toString(me.nonlethalDamage));
-			nonlethalField.addActionListener(e -> me.nonlethalDamage = Integer.parseInt(nonlethalField.getText()));
+			nonlethalField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try {
+						me.nonlethalDamage = Integer.parseInt(nonlethalField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.nonlethalDamage = Integer.parseInt(nonlethalField.getText());
+					} catch(NumberFormatException ex){
+
+					}
+				}
+				@Override
+				public void changedUpdate(DocumentEvent e){}
+			});
 			c.gridy = 1;
 			topPanel.add(nonlethalField, c);
 
@@ -447,7 +584,7 @@ public class CharacterDisplay extends JTabbedPane{
 			c.gridx = 0;
 			c.gridy = 2;
 			c.gridwidth = 4;
-			c.gridheight = 7;
+			c.gridheight = 5;
 			c.weighty = 0;
 			c.weightx = 1;
 			c.fill = GridBagConstraints.BOTH;
@@ -456,12 +593,14 @@ public class CharacterDisplay extends JTabbedPane{
 			skillBox = new SkillBox();
 			JScrollPane skillBoxScroll = new JScrollPane(skillBox);
 			c.gridx = 0;
-			c.gridy = 9;
-			c.gridheight = 10;
+			c.gridy = 7;
+			c.gridheight = 12;
 			c.gridwidth = 4;
 			c.weightx = 1;
 			c.weighty = 1;
+			c.insets = new Insets(5,0,0,0);
 			add(skillBoxScroll, c);
+			c.insets = new Insets(0,0,0,0);
 
 			combatStatBox = new CombatStatBox();
 			c.gridx = 4;
@@ -579,53 +718,243 @@ public class CharacterDisplay extends JTabbedPane{
 			c.gridx = 1;
 			c.gridy = 1;
 			acField = new JTextField(Integer.toString(me.getAC()));
-			acField.addActionListener(e -> me.setAC(Integer.parseInt(acField.getText())));
+			acField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setAC(Integer.parseInt(acField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setAC(Integer.parseInt(acField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(acField,c);
 
 			c.gridy = 2;
 			touchACField = new JTextField(Integer.toString(me.getTouchAC()));
-			touchACField.addActionListener(e -> me.setTouchAC(Integer.parseInt(touchACField.getText())));
+			touchACField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setTouchAC(Integer.parseInt(touchACField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setTouchAC(Integer.parseInt(touchACField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(touchACField,c);
 
 			c.gridy = 3;
 			fortSaveField = new JTextField(Integer.toString(me.getFortSave()));
-			fortSaveField.addActionListener(e -> me.setFortSave(Integer.parseInt(fortSaveField.getText())));
+			fortSaveField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setFortSave(Integer.parseInt(fortSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setFortSave(Integer.parseInt(fortSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(fortSaveField,c);
 
 			c.gridy = 4;
 			willSaveField = new JTextField(Integer.toString(me.getWillSave()));
-			willSaveField.addActionListener(e -> me.setWillSave(Integer.parseInt(willSaveField.getText())));
+			willSaveField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setWillSave(Integer.parseInt(willSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setWillSave(Integer.parseInt(willSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(willSaveField,c);
 
 			c.gridy = 5;
 			refSaveField = new JTextField(Integer.toString(me.getRefSave()));
-			refSaveField.addActionListener(e -> me.setRefSave(Integer.parseInt(refSaveField.getText())));
+			refSaveField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setRefSave(Integer.parseInt(refSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setRefSave(Integer.parseInt(refSaveField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(refSaveField,c);
 
 			c.gridy = 6;
 			meleeModifierField = new JTextField(Integer.toString(me.getMeleeModifier()));
-			meleeModifierField.addActionListener(e -> me.setMeleeModifier(Integer.parseInt(meleeModifierField.getText())));
+			meleeModifierField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setMeleeModifier(Integer.parseInt(meleeModifierField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setMeleeModifier(Integer.parseInt(meleeModifierField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(meleeModifierField,c);
 
 			c.gridy = 7;
 			rangedModifierField = new JTextField(Integer.toString(me.getRangedModifier()));
-			rangedModifierField.addActionListener(e -> me.setRangedModifier(Integer.parseInt(rangedModifierField.getText())));
+			rangedModifierField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setRangedModifier(Integer.parseInt(rangedModifierField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setRangedModifier(Integer.parseInt(rangedModifierField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(rangedModifierField,c);
 
 			c.gridy = 8;
 			cmbField = new JTextField(Integer.toString(me.getCMB()));
-			cmbField.addActionListener(e -> me.setCMB(Integer.parseInt(cmbField.getText())));
+			cmbField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setCMB(Integer.parseInt(cmbField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setCMB(Integer.parseInt(cmbField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(cmbField, c);
 
 			c.gridy = 9;
 			cmdField = new JTextField(Integer.toString(me.getCMD()));
-			cmdField.addActionListener(e -> me.setCMD(Integer.parseInt(cmdField.getText())));
+			cmdField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.setCMD(Integer.parseInt(cmdField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.setCMD(Integer.parseInt(cmdField.getText()));
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 			add(cmdField, c);
 
 			babField = new JTextField(me.getBABAsString());
 			babField.addActionListener(e -> {
 				me.setBAB(babField.getText());
-				repaint();
+				CharacterDisplay.this.revalidate();
+				CharacterDisplay.this.repaint();
 			});
 			c.gridy = 10;
 			add(babField,c);
@@ -642,6 +971,7 @@ public class CharacterDisplay extends JTabbedPane{
 			rangedModifierField.setText(Integer.toString(me.getRangedModifier()));
 			cmbField.setText(Integer.toString(me.getCMB()));
 			cmdField.setText(Integer.toString(me.getCMD()));
+			super.paintComponent(g);
 		}
 
 	}
@@ -729,111 +1059,363 @@ public class CharacterDisplay extends JTabbedPane{
 
 
 			strField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
-			strField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.STR, new Integer(strField.getText()));
-				parent.repaint();
-				repaint();
+			strField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.STR, new Integer(strField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.STR, new Integer(strField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 1;
 			c.gridx = 1;
 			add(strField,c);
 
 			dexField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
-			dexField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.DEX, new Integer(dexField.getText()));
-				repaint();
-				parent.repaint();
+			dexField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.DEX, new Integer(dexField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.DEX, new Integer(dexField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 2;
 			add(dexField,c);
 
 			conField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
-			conField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.CON, new Integer(conField.getText()));
-				repaint();
-				parent.repaint();
+			conField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.CON, new Integer(conField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.CON, new Integer(conField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 3;
 			add(conField,c);
 
 			intField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
-			intField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.INT, new Integer(intField.getText()));
-				repaint();
-				parent.repaint();
+			intField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.INT, new Integer(intField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.INT, new Integer(intField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 4;
 			add(intField,c);
 
 			wisField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
-			wisField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.WIS, new Integer(wisField.getText()));
-				repaint();
-				parent.repaint();
+			wisField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.WIS, new Integer(wisField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.WIS, new Integer(wisField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 5;
 			add(wisField,c);
 
 			chaField = new JTextField(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
-			chaField.addActionListener(e -> {
-				me.abilities.put(AbilityScoreEnum.CHA, new Integer(chaField.getText()));
-				repaint();
-				parent.repaint();
+			chaField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.CHA, new Integer(chaField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.abilities.put(AbilityScoreEnum.CHA, new Integer(chaField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 6;
 			add(chaField,c);
 
 			tempSTRField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.STR)));
-			tempSTRField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.STR, new Integer(tempSTRField.getText()));
-				repaint();
-				parent.repaint();
+			tempSTRField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.STR, new Integer(tempSTRField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.STR, new Integer(tempSTRField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 1;
 			c.gridx = 2;
 			add(tempSTRField,c);
 
 			tempDEXField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.DEX)));
-			tempDEXField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.DEX, new Integer(tempDEXField.getText()));
-				repaint();
-				parent.repaint();
+			tempDEXField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.DEX, new Integer(tempDEXField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.DEX, new Integer(tempDEXField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 2;
 			add(tempDEXField,c);
 
 			tempCONField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CON)));
-			tempCONField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.CON, new Integer(tempCONField.getText()));
-				repaint();
-				parent.repaint();
+			tempCONField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.CON, new Integer(tempCONField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.CON, new Integer(tempCONField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 3;
 			add(tempCONField,c);
 
 			tempINTField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.INT)));
-			tempINTField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.INT, new Integer(tempINTField.getText()));
-				repaint();
-				parent.repaint();
+			tempINTField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.INT, new Integer(tempINTField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.INT, new Integer(tempINTField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 4;
 			add(tempINTField,c);
 
 			tempWISField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.WIS)));
-			tempWISField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.WIS, new Integer(tempWISField.getText()));
-				repaint();
-				parent.repaint();
+			tempWISField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.WIS, new Integer(tempWISField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.WIS, new Integer(tempWISField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 5;
 			add(tempWISField,c);
 
 			tempCHAField = new JTextField(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CHA)));
-			tempCHAField.addActionListener(e -> {
-				me.tempAbilities.put(AbilityScoreEnum.CHA, new Integer(tempCHAField.getText()));
-				repaint();
-				parent.repaint();
+			tempCHAField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.CHA, new Integer(tempCHAField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.tempAbilities.put(AbilityScoreEnum.CHA, new Integer(tempCHAField.getText()));
+						parent.revalidate();
+						parent.repaint();
+					} catch(NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e){}
 			});
 			c.gridy = 6;
 			add(tempCHAField,c);
@@ -878,24 +1460,49 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 
 		public void paintComponent(Graphics g){
-			strField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
-			dexField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
-			conField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
-			intField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
-			wisField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
-			chaField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
-			tempSTRField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.STR)));
-			tempDEXField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.DEX)));
-			tempCONField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CON)));
-			tempINTField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.INT)));
-			tempWISField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.WIS)));
-			tempCHAField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CHA)));
+			if(Integer.parseInt(strField.getText()) != me.abilities.get(AbilityScoreEnum.STR)){
+				strField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
+			}
+			if(Integer.parseInt(dexField.getText()) != me.abilities.get(AbilityScoreEnum.DEX)){
+				dexField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
+			}
+			if(Integer.parseInt(conField.getText()) != me.abilities.get(AbilityScoreEnum.CON)){
+				conField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
+			}
+			if(Integer.parseInt(intField.getText()) != me.abilities.get(AbilityScoreEnum.INT)){
+				intField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
+			}
+			if(Integer.parseInt(wisField.getText()) != me.abilities.get(AbilityScoreEnum.WIS)){
+				wisField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
+			}
+			if(Integer.parseInt(chaField.getText()) != me.abilities.get(AbilityScoreEnum.CHA)){
+				chaField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
+			}
+			if(Integer.parseInt(tempSTRField.getText()) != me.tempAbilities.get(AbilityScoreEnum.STR)){
+				tempSTRField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.STR)));
+			}
+			if(Integer.parseInt(tempDEXField.getText()) != me.tempAbilities.get(AbilityScoreEnum.DEX)){
+				tempDEXField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.DEX)));
+			}
+			if(Integer.parseInt(tempCONField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CON)){
+				tempCONField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CON)));
+			}
+			if(Integer.parseInt(tempINTField.getText()) != me.tempAbilities.get(AbilityScoreEnum.INT)){
+				tempINTField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.INT)));
+			}
+			if(Integer.parseInt(tempWISField.getText()) != me.tempAbilities.get(AbilityScoreEnum.WIS)){
+				tempWISField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.WIS)));
+			}
+			if(Integer.parseInt(tempCHAField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CHA)){
+				tempCHAField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CHA)));
+			}
 			strMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.STR)));
 			dexMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.DEX)));
 			conMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.CON)));
 			intMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.INT)));
 			wisMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.WIS)));
 			chaMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.CHA)));
+			super.paintComponent(g);
 		}
 	}
 
@@ -1101,6 +1708,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 						JButton select = new JButton("Add this note.");
 						select.addActionListener(e -> finalized.set(true));
+						addNotePanel.add(select, BorderLayout.SOUTH);
 
 						addNoteFrame.addWindowListener(new WindowAdapter() {
 							@Override
@@ -1118,6 +1726,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 						if(closed.get()) return;
 
+						addNoteFrame.dispose();
 						me.miscAbilities.put(noteTitleField.getText(), noteBodyArea.getText());
 						repaint();
 					}
@@ -1255,12 +1864,32 @@ public class CharacterDisplay extends JTabbedPane{
 				c.gridx = 3;
 				JTextField miscField = new JTextField(){
 					public void setText(String s){
-						super.setText(Integer.toString(skill.getMiscMod()));
+						if(!super.getText().equals(Integer.toString(skill.getMiscMod()))) super.setText(Integer.toString(skill.getMiscMod()));
 					}
 				};
-				miscField.addActionListener(e -> {
-					skill.setMiscMod(Integer.parseInt(miscField.getText()));
-					updateTextFields();
+				miscField.getDocument().addDocumentListener(new DocumentListener() {
+					@Override
+					public void insertUpdate(DocumentEvent e) {
+						try{
+							skill.setMiscMod(Integer.parseInt(miscField.getText()));
+							SwingUtilities.invokeLater( () -> updateTextFields() );
+						} catch (NumberFormatException ex){
+
+						}
+					}
+
+					@Override
+					public void removeUpdate(DocumentEvent e) {
+						try{
+							skill.setMiscMod(Integer.parseInt(miscField.getText()));
+							SwingUtilities.invokeLater( () -> updateTextFields() );
+						} catch (NumberFormatException ex){
+
+						}
+					}
+
+					@Override
+					public void changedUpdate(DocumentEvent e) {}
 				});
 				add(miscField, c);
 				fields.add(miscField);
@@ -1268,12 +1897,32 @@ public class CharacterDisplay extends JTabbedPane{
 				c.gridx = 4;
 				JTextField ranksField = new JTextField(){
 					public void setText(String s){
-						super.setText(Integer.toString(skill.getnRanks()));
+						if(!super.getText().equals(Integer.toString(skill.getnRanks()))) super.setText(Integer.toString(skill.getnRanks()));
 					}
 				};
-				ranksField.addActionListener(e -> {
-					skill.setnRanks(Integer.parseInt(ranksField.getText()));
-					updateTextFields();
+				ranksField.getDocument().addDocumentListener(new DocumentListener() {
+					@Override
+					public void insertUpdate(DocumentEvent e) {
+						try{
+							skill.setnRanks(Integer.parseInt(ranksField.getText()));
+							SwingUtilities.invokeLater( () -> updateTextFields() );
+						} catch (NumberFormatException ex){
+
+						}
+					}
+
+					@Override
+					public void removeUpdate(DocumentEvent e) {
+						try{
+							skill.setnRanks(Integer.parseInt(ranksField.getText()));
+							SwingUtilities.invokeLater( () -> updateTextFields() );
+						} catch (NumberFormatException ex){
+
+						}
+					}
+
+					@Override
+					public void changedUpdate(DocumentEvent e) {}
 				});
 				add(ranksField, c);
 				fields.add(ranksField);
@@ -1281,17 +1930,30 @@ public class CharacterDisplay extends JTabbedPane{
 				c.gridx = 5;
 				JTextField classField = new JTextField(){
 					public void setText(String s){
-						super.setText(skill.isClassSkill() ? "Y" : "N");
+						if(super.getText().length() < 1 || super.getText().substring(0,1).equalsIgnoreCase("y") != skill.isClassSkill()) super.setText(skill.isClassSkill() ? "Y" : "N");
 					}
 				};
-				classField.addActionListener(e -> {
-					String value = classField.getText();
-					if(value.equalsIgnoreCase("Y") || value.equalsIgnoreCase("Yes")){
-						skill.setClassSkill(true);
-					} else if(value.equalsIgnoreCase("N") || value.equalsIgnoreCase("No")){
-						skill.setClassSkill(false);
+				classField.getDocument().addDocumentListener(new DocumentListener() {
+					@Override
+					public void insertUpdate(DocumentEvent e) {
+						try{
+							String value = classField.getText();
+							if(value.substring(0,1).equalsIgnoreCase("y")){
+								skill.setClassSkill(true);
+							} else if(value.substring(0,1).equalsIgnoreCase("n")){
+								skill.setClassSkill(false);
+							}
+							SwingUtilities.invokeLater( () -> updateTextFields() );
+						} catch (NumberFormatException ex){
+
+						}
 					}
-					updateTextFields();
+
+					@Override
+					public void removeUpdate(DocumentEvent e) {}
+
+					@Override
+					public void changedUpdate(DocumentEvent e) {}
 				});
 				add(classField, c);
 				fields.add(classField);
@@ -1352,6 +2014,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 						JButton select = new JButton("Add this note.");
 						select.addActionListener(e -> finalized.set(true));
+						addNotePanel.add(select, BorderLayout.SOUTH);
 
 						addNoteFrame.addWindowListener(new WindowAdapter() {
 							@Override
@@ -1369,6 +2032,7 @@ public class CharacterDisplay extends JTabbedPane{
 
 						if(closed.get()) return;
 
+						addNoteFrame.dispose();
 						me.notes.put(noteTitleField.getText(), noteBodyArea.getText());
 						repaint();
 					}
@@ -1880,19 +2544,103 @@ public class CharacterDisplay extends JTabbedPane{
 			add(coppField, c);
 			c.gridy = 1;
 			add(silvField, c);
-			
-			platField.addActionListener(e -> me.platinum = Integer.parseInt(platField.getText()));
-			goldField.addActionListener(e -> me.gold = Integer.parseInt(goldField.getText()));
-			silvField.addActionListener(e -> me.silver = Integer.parseInt(silvField.getText()));
-			coppField.addActionListener(e -> me.copper = Integer.parseInt(coppField.getText()));
+
+			platField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.platinum = Integer.parseInt(platField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.platinum = Integer.parseInt(platField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
+			goldField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.gold = Integer.parseInt(goldField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.gold = Integer.parseInt(goldField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
+			silvField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.silver = Integer.parseInt(silvField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.silver = Integer.parseInt(silvField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
+			coppField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					try{
+						me.copper = Integer.parseInt(coppField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					try{
+						me.copper = Integer.parseInt(coppField.getText());
+					} catch (NumberFormatException ex){
+
+					}
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {}
+			});
 		}
 		
 		public void paintComponent(Graphics g){
-			super.paintComponent(g);
 			platField.setText(Integer.toString(me.platinum));
 			goldField.setText(Integer.toString(me.gold));
 			silvField.setText(Integer.toString(me.silver));
 			coppField.setText(Integer.toString(me.copper));
+			super.paintComponent(g);
 		}
 	}
 
@@ -1912,12 +2660,42 @@ public class CharacterDisplay extends JTabbedPane{
 			knownBox = new KnownSpellBox(spellCaster);
 			c.weightx = 1;
 			c.weighty = 1;
-			c.gridheight = 10;
+			c.gridheight = 9;
 			add(knownBox, c);
+
+			JButton setOverrideClassName = new JButton("Override class name for spell levels");
+			setOverrideClassName.addActionListener(e ->{
+				JDialog entryBox = new JDialog(Pathfinder.FRAME, "Set override name.");
+				entryBox.setLayout(new GridBagLayout());
+
+				GridBagConstraints gbc = new GridBagConstraints();
+				gbc.fill = GridBagConstraints.BOTH;
+				gbc.weightx = 1;
+				JTextField name = new JTextField("");
+				entryBox.add(name, c);
+
+				gbc.weightx = 0;
+				gbc.gridx = 1;
+				JButton confirmOverride = new JButton("Confirm");
+				confirmOverride.addActionListener(event -> {
+					entryBox.dispose();
+					spellCaster.overrideLevelClass = name.getText();
+				});
+				entryBox.add(confirmOverride, gbc);
+
+				entryBox.setSize(400, 100);
+				entryBox.setLocationRelativeTo(Pathfinder.FRAME);
+				entryBox.setVisible(true);
+			});
+			c.gridheight = 1;
+			c.gridy = 9;
+			c.weighty = 0;
+			add(setOverrideClassName, c);
 
 			JButton prepSpells = new JButton("Prepare selected spells");
 			prepSpells.addActionListener(e -> prepareSpells(knownBox.getSelected()));
 			c.gridheight = 1;
+			c.gridy = 0;
 			c.weighty = 0;
 			c.gridx = 1;
 			add(prepSpells, c);
@@ -2040,7 +2818,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			spellCaster.knownSpells.sort(new Spells(spellCaster.name));
+			spellCaster.knownSpells.sort(new Spells(spellCaster.overrideLevelClass == null ? spellCaster.name : spellCaster.overrideLevelClass));
 			listContainer.setListData(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
 		}
 	}

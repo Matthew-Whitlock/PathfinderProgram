@@ -1,7 +1,6 @@
 package src.feats;
 
 import src.Pathfinder;
-import src.items.Item;
 
 import javax.swing.*;
 import java.awt.*;

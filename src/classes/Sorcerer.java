@@ -2,7 +2,7 @@ package src.classes;
 
 import src.Character;
 import src.Pathfinder;
-import src.SelectionUtils;
+import src.gui.SelectionUtils;
 import src.feats.Feats;
 import src.stats.Skill;
 import src.spells.Spells;

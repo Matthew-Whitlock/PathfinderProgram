@@ -1,6 +1,7 @@
 package src;
 
 import src.classes.SpellCaster;
+import src.gui.SelectionUtils;
 import src.items.*;
 import src.classes.CharacterClass;
 import src.feats.Feat;
@@ -9,13 +10,11 @@ import src.stats.*;
 
 import java.io.File;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Character implements Serializable{
 
@@ -87,7 +86,7 @@ public class Character implements Serializable{
 		if(!classes.contains(charClass)) classes.add(charClass);
 		charClass.levelUp();
 
-		String hitDie = charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
+		String hitDie = "1" + charClass.hitDiePerLevel + " + " + getAbilityMod(AbilityScoreEnum.CON);
 		Pathfinder.popupDialog("Roll for your HP", hitDie);
 		SelectionUtils.chooseSkillRanks(this, charClass.skillRanksMod + getAbilityMod(AbilityScoreEnum.INT));
 		for(String s : favoredClassNames){
@@ -218,7 +217,7 @@ public class Character implements Serializable{
 			}
 		}
 
-		toReturn = toReturn.substring(0,toReturn.length() - 1);
+		toReturn = toReturn.substring(0, toReturn.length() > 0 ? toReturn.length() - 1 : 0);
 
 		return toReturn;
 	}
@@ -247,8 +246,15 @@ public class Character implements Serializable{
 		String[] values = newValue.split("/");
 
 		for(int i = 0; i < values.length; i++){
-			if(values[i].contains("+")) values[i] = values[i].substring(1);
-			babMod[i] += getBAB()[i] - Integer.parseInt(values[i]);
+			if(values[i].contains("+")){
+				values[i] = values[i].substring(1);
+			}
+
+			babMod[i] += Integer.parseInt(values[i]) - getBAB()[i];
+		}
+
+		for(int i = values.length; i < babMod.length; i++){
+			babMod[i] += 0 - getBAB()[i];
 		}
 
 	}

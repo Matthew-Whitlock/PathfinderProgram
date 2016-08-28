@@ -19,6 +19,7 @@ public class SpellCaster extends CharacterClass implements Serializable{
     public int[] modifiedSpellsPerDay = new int[10];
     public int arcaneUsed = 0;
     public int arcanePoolMod = 0;
+    public String overrideLevelClass;
 
     public SpellCaster(Character me, String name){
         super(me, name);
@@ -29,11 +30,11 @@ public class SpellCaster extends CharacterClass implements Serializable{
     }
 
     public int[] getSpellsPerDay(){
-        return new int[]{0,0,0,0,0,0,0,0,0};
+        return modifiedSpellsPerDay;
     }
 
     public int getSpellLevel(Spell spell){
-        return Spells.spellLevelFor(name, spell);
+        return Spells.spellLevelFor(overrideLevelClass == null ? name : overrideLevelClass, spell);
     }
 
     public int getArcanePool(){

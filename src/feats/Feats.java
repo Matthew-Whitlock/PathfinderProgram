@@ -19,7 +19,6 @@ import src.stats.AbilityScoreEnum;
 import src.stats.SkillUtils;
 
 import javax.swing.*;
-import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 
 /**
@@ -123,6 +122,7 @@ public class Feats {
     public static void showFeatDetails(Feat feat, String title){
         JFrame detailsFrame = new JFrame(title);
         detailsFrame.setSize(450,550);
+        detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
         JPanel detailsPanel = new JPanel(new BorderLayout());
 
         JEditorPane text = new JEditorPane();

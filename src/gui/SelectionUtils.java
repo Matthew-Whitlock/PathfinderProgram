@@ -1,5 +1,7 @@
-package src;
+package src.gui;
 
+import src.Character;
+import src.Pathfinder;
 import src.classes.CharacterClass;
 import src.feats.Feat;
 import src.feats.FeatCellRenderer;
@@ -9,7 +11,6 @@ import src.spells.Spell;
 import src.spells.SpellCellRenderer;
 import src.spells.Spells;
 import src.stats.Skill;
-import src.stats.SkillEnum;
 import src.stats.SkillUtils;
 
 import javax.swing.*;
@@ -2672,7 +2673,7 @@ public class SelectionUtils {
 
     public static void chooseSkillRanks(Character me, int ranksToApply){
         JDialog skillChooser = new JDialog(Pathfinder.FRAME, "Apply skill ranks");
-        skillChooser.setSize(400, 500);
+        skillChooser.setSize(500, 500);
         skillChooser.setLocationRelativeTo(Pathfinder.FRAME);
         skillChooser.setLayout(new BorderLayout());
 
@@ -2729,6 +2730,7 @@ public class SelectionUtils {
         panel.add(newRanks, c);
 
         HashMap<Skill, SpinnerNumberModel> models = new HashMap<>();
+        c.ipady = 7;
 
         for(Skill skill : me.skillsList){
             c.gridy++;
@@ -2783,6 +2785,8 @@ public class SelectionUtils {
             });
             panel.add(spinner, c);
         }
+
+        c.ipady = 0;
 
         JButton confirm = new JButton("Confirm these values");
 

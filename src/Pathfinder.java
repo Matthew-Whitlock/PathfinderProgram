@@ -3,7 +3,6 @@ package src;
 import java.awt.*;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
@@ -14,6 +13,8 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import src.feats.Feat;
 import src.feats.Feats;
+import src.gui.CharacterDisplay;
+import src.gui.SelectionUtils;
 import src.items.ItemUtil;
 import src.races.GenericRace;
 import src.races.Race;
@@ -24,7 +25,6 @@ import src.stats.AbilityScoreEnum;
 import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -422,8 +422,9 @@ public class Pathfinder{
 		JFileChooser chooser = new JFileChooser();
 		int returnVal = chooser.showOpenDialog(FRAME);
 		File characterFile = null;
-		if (returnVal == JFileChooser.APPROVE_OPTION)
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
 			characterFile = chooser.getSelectedFile();
+		}
 		else return;
 
 		try {
@@ -1758,7 +1759,26 @@ public class Pathfinder{
 	}
 	
 	public static void popupDialog(String title, String message){
-		JOptionPane.showMessageDialog(null, message, title, JOptionPane.QUESTION_MESSAGE);
+		JDialog messageDialog = new JDialog(FRAME, title);
+		JPanel panel = new JPanel(new BorderLayout());
+		messageDialog.add(panel);
+
+		JTextPane text = new JTextPane();
+		text.setText(message);
+		text.setEditable(false);
+		text.setAlignmentY(JTextArea.CENTER_ALIGNMENT);
+		JButton done = new JButton("OK");
+		done.addActionListener(e -> messageDialog.dispose());
+
+		panel.add(text, BorderLayout.CENTER);
+		panel.add(done, BorderLayout.SOUTH);
+
+
+		messageDialog.pack();
+		int minimumTitleSize = 100 + messageDialog.getGraphics().getFontMetrics(messageDialog.getGraphics().getFont()).charsWidth(title.toCharArray(), 0, title.length());
+		if(messageDialog.getSize().getWidth() < minimumTitleSize) messageDialog.setSize(new Dimension(minimumTitleSize, messageDialog.getSize().height));
+		messageDialog.setLocationRelativeTo(FRAME);
+		messageDialog.setVisible(true);
 	}
 	
 	public static void showError(String title, String message){

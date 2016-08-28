@@ -2,10 +2,8 @@ package src.items;
 
 import src.Pathfinder;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 /**
  * Created by Matthew on 7/19/2016.

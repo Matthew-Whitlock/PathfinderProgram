@@ -2,8 +2,6 @@ package src.spells;
 
 import src.Pathfinder;
 import src.classes.SpellCaster;
-import src.feats.Feat;
-import src.feats.Feats;
 
 import javax.swing.*;
 import java.awt.*;

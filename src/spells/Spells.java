@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import src.Character;
 import src.Pathfinder;
-import src.classes.CharacterClass;
 import src.classes.SpellCaster;
 
 import javax.swing.*;
@@ -40,7 +38,7 @@ public class Spells implements Comparator<Spell>{
 	public static List<Spell> search(SpellCaster charClass, int spellLevelToGet){
 		ArrayList<Spell> spells = new ArrayList<>();
 		for(Spell spell : getSpells()){
-			if(spell.levelRequirements[Spells.getClassIndex(charClass.name)] == spellLevelToGet){
+			if(spell.levelRequirements[Spells.getClassIndex(charClass.overrideLevelClass == null ? charClass.name : charClass.overrideLevelClass)] == spellLevelToGet){
 				boolean alreadyKnown = false;
 				for(Spell knownSpell : charClass.knownSpells){
 					if(spell.toString().equals(knownSpell.toString()))
@@ -256,6 +254,7 @@ public class Spells implements Comparator<Spell>{
 	public static void showSpellDetails(Spell spell, String title){
 		JFrame detailsFrame = new JFrame(title);
 		detailsFrame.setSize(450,550);
+		detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
 		JPanel detailsPanel = new JPanel(new BorderLayout());
 
 		JEditorPane text = new JEditorPane();

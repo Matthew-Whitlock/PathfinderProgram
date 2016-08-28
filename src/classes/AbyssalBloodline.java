@@ -1,7 +1,7 @@
 package src.classes;
 
 import src.Character;
-import src.SelectionUtils;
+import src.gui.SelectionUtils;
 import src.feats.Feat;
 import src.feats.Feats;
 import src.spells.Spell;
@@ -9,7 +9,6 @@ import src.spells.Spells;
 import src.stats.AbilityScoreEnum;
 import src.stats.Skill;
 import src.stats.SkillEnum;
-import src.Pathfinder;
 import src.stats.SkillUtils;
 
 import java.io.Serializable;

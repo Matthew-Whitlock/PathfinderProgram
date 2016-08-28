@@ -1,18 +1,8 @@
 package src.classes;
 
 import src.Character;
-import src.Pathfinder;
-import src.spells.Spell;
-import src.spells.Spells;
-import src.stats.AbilityScoreEnum;
-import src.stats.SkillEnum;
 
-import java.io.File;
 import java.io.Serializable;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class CharacterClass implements Serializable{
 	public String name;
