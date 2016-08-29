@@ -23,8 +23,7 @@ import src.stats.*;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CharacterDisplay extends JTabbedPane{
@@ -1837,17 +1836,20 @@ public class CharacterDisplay extends JTabbedPane{
 			for(int i = indices.length - 1; i >= 0; i--){
 				me.miscAbilities.remove(indices[i]);
 			}
-			model = new String[me.miscAbilities.size()];
-			model = me.miscAbilities.keySet().toArray(model);
-			listContainer.setListData(model);
+			repaint();
+		}
+
+		public void update(){
+			if(!Arrays.equals(model, me.miscAbilities.keySet().toArray(new String[me.miscAbilities.size()]))) {
+				model = me.miscAbilities.keySet().toArray(new String[me.miscAbilities.size()]);
+				listContainer.setListData(model);
+			}
 		}
 
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			model = new String[me.miscAbilities.size()];
-			model = me.miscAbilities.keySet().toArray(model);
-			listContainer.setListData(model);
+			update();
 		}
 	}
 	
@@ -2143,17 +2145,20 @@ public class CharacterDisplay extends JTabbedPane{
 			for(int i = indices.length - 1; i >= 0; i--){
 				me.notes.remove(indices[i]);
 			}
-			model = new String[me.notes.size()];
-			model = me.notes.keySet().toArray(model);
-			listContainer.setListData(model);
+			repaint();
 		}
-		
+
+		public void update(){
+			if(!Arrays.equals(model, me.notes.keySet().toArray(new String[me.notes.size()]))) {
+				model = me.notes.keySet().toArray(new String[me.notes.size()]);
+				listContainer.setListData(model);
+			}
+		}
+
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			model = new String[me.notes.size()];
-			model = me.notes.keySet().toArray(model);
-			listContainer.setListData(model);
+			update();
 		}
 	}
 	
@@ -2163,6 +2168,7 @@ public class CharacterDisplay extends JTabbedPane{
 		private JButton removalButton = new JButton("Remove Selected Feat(s)");
 		private JButton forceNewFeats = new JButton("Force a new Feat");
 		private JButton getFeatDetails = new JButton("Get Feat Details");
+		private ArrayList<Feat> currentlyDisplayed = new ArrayList<>(me.currentFeats);
 		private JScrollPane listScroll;
 		
 		public FeatBox(){
@@ -2224,11 +2230,16 @@ public class CharacterDisplay extends JTabbedPane{
 				Pathfinder.popupDialog(me.currentFeats.get(i).name, me.currentFeats.get(i).fullText);
 			}
 		}
-		
+
+		public void update(){
+			if(!currentlyDisplayed.equals(me.currentFeats))
+				listContainer.setListData(me.currentFeats.toArray(new Feat[me.currentFeats.size()]));
+			currentlyDisplayed = new ArrayList<>(me.currentFeats);
+		}
+
 		public void paintComponent(Graphics g){
-			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			listContainer.setListData(me.currentFeats.toArray(new Feat[me.currentFeats.size()]));
+			update();
 		}
 	}
 
@@ -2240,6 +2251,7 @@ public class CharacterDisplay extends JTabbedPane{
 		private JButton sellItemButton = new JButton("Sell Selected Item(s)");
 		private JButton buyItemButton = new JButton("Buy an Item");
 		private JButton equipItemButton = new JButton("Equip selected item(s)");
+		private Set currentlyDisplayed = new HashSet<Item>();
 		private JScrollPane listScroll;
 		private CharacterDisplay parent;
 
@@ -2247,6 +2259,7 @@ public class CharacterDisplay extends JTabbedPane{
 			this.parent = parent;
 			setLayout(new GridBagLayout());
 			listContainer = new JList<>(new Vector<Item>(me.inventory.keySet()));
+			currentlyDisplayed.addAll(me.inventory.keySet());
 			listContainer.setCellRenderer(new ItemCellRenderer(true));
 
 			listContainer.addMouseListener(new MouseAdapter() {
@@ -2263,7 +2276,6 @@ public class CharacterDisplay extends JTabbedPane{
 			sellItemButton.addActionListener(e -> sell(listContainer.getSelectedIndices()));
 			equipItemButton.addActionListener(e -> {
 				equipItems(listContainer.getSelectedIndices());
-				parent.repaint();
 			});
 			addItemButton.addActionListener(e -> addItem());
 			buyItemButton.addActionListener(e -> buy());
@@ -2506,11 +2518,18 @@ public class CharacterDisplay extends JTabbedPane{
 			}
 			parent.repaint();
 		}
+
+		public void update(){
+			System.out.println(currentlyDisplayed.equals(me.inventory.keySet()));
+			if(!currentlyDisplayed.equals(me.inventory.keySet()))
+				listContainer.setListData(new Vector<>(me.inventory.keySet()));
+			currentlyDisplayed.clear();
+			currentlyDisplayed.addAll(me.inventory.keySet());
+		}
 		
 		public void paintComponent(Graphics g){
-			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			listContainer.setListData(new Vector<>(me.inventory.keySet()));
+			update();
 		}
 	}
 	
@@ -2519,6 +2538,7 @@ public class CharacterDisplay extends JTabbedPane{
 		private JList<Item> listContainer;
 		private JButton removalButton = new JButton("Unequip selected item(s)");
 		private JScrollPane listScroll;
+		private Set currentlyDisplayed = new HashSet<Item>();
 		private CharacterDisplay parent;
 
 		public EquippedBox(CharacterDisplay parent){
@@ -2564,11 +2584,17 @@ public class CharacterDisplay extends JTabbedPane{
 				parent.repaint();
 			});
 		}
+
+		public void update(){
+			if(!currentlyDisplayed.equals(me.equipped.keySet()))
+				listContainer.setListData(new Vector<>(me.equipped.keySet()));
+			currentlyDisplayed.clear();
+			currentlyDisplayed.addAll(me.equipped.keySet());
+		}
 		
 		public void paintComponent(Graphics g){
-			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			listContainer.setListData(new Vector(me.equipped.keySet()));
+			update();
 		}
 	}
 
@@ -2813,6 +2839,7 @@ public class CharacterDisplay extends JTabbedPane{
 		private JButton removalButton = new JButton("Remove Selected Spell(s)");
 		private JButton forceNewSpells = new JButton("Force a new Spell");
 		private JButton getSpellDetails = new JButton("Get Spell Details");
+		private ArrayList<Spell> currentlyDisplayed;
 		private JScrollPane listScroll;
 		private SpellCaster spellCaster;
 		
@@ -2820,6 +2847,7 @@ public class CharacterDisplay extends JTabbedPane{
 			this.spellCaster = spellcaster;
 			setLayout(new GridBagLayout());
 			listContainer = new JList<>(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
+			currentlyDisplayed = new ArrayList<>(spellCaster.knownSpells);
 			listContainer.setCellRenderer(new SpellCellRenderer(spellCaster));
 			
 			listContainer.addMouseListener(new MouseAdapter() {
@@ -2882,12 +2910,19 @@ public class CharacterDisplay extends JTabbedPane{
 		public int[] getSelected(){
 			return listContainer.getSelectedIndices();
 		}
+
+		public void update(){
+			spellCaster.knownSpells.sort(new Spells(spellCaster.overrideLevelClass == null ? spellCaster.name : spellCaster.overrideLevelClass));
+			if(currentlyDisplayed != spellCaster.knownSpells) {
+				listContainer.setListData(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
+			}
+			currentlyDisplayed = new ArrayList<>(spellCaster.knownSpells);
+		}
 		
 		public void paintComponent(Graphics g){
 			//If you experience weird GUI problems remove this.
 			super.paintComponent(g);
-			spellCaster.knownSpells.sort(new Spells(spellCaster.overrideLevelClass == null ? spellCaster.name : spellCaster.overrideLevelClass));
-			listContainer.setListData(spellCaster.knownSpells.toArray(new Spell[spellCaster.knownSpells.size()]));
+			update();
 		}
 	}
 
