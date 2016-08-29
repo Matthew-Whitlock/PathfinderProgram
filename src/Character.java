@@ -41,7 +41,7 @@ public class Character implements Serializable{
 
 	public HashMap<AbilityScoreEnum, Integer> abilities;
 	public HashMap<AbilityScoreEnum, Integer> tempAbilities = new HashMap<>();
-	
+
 	public HashMap<GenItem, Integer> inventory = new HashMap<>();
 	public HashMap<GenItem, Integer> equipped = new HashMap<>();
 	
@@ -183,7 +183,7 @@ public class Character implements Serializable{
 	}
 
 	public void setCMB(int newValue){
-		playerAddedCombatSkillBoosts[0] += newValue - getCMB();
+		playerAddedCombatSkillBoosts[7] += newValue - getCMB();
 	}
 
 	public int getCMD(){

@@ -960,17 +960,61 @@ public class CharacterDisplay extends JTabbedPane{
 			add(babField,c);
 		}
 
+		private boolean isInt(String str){
+			if (str == null) {
+				return false;
+			}
+			int length = str.length();
+			if (length == 0) {
+				return false;
+			}
+			int i = 0;
+			if (str.charAt(0) == '-') {
+				if (length == 1) {
+					return false;
+				}
+				i = 1;
+			}
+			for (; i < length; i++) {
+				char c = str.charAt(i);
+				if (c < '0' || c > '9') {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		public void paintComponent(Graphics g){
-			babField.setText(me.getBABAsString());
-			acField.setText(Integer.toString(me.getAC()));
-			touchACField.setText(Integer.toString(me.getTouchAC()));
-			fortSaveField.setText(Integer.toString(me.getFortSave()));
-			willSaveField.setText(Integer.toString(me.getWillSave()));
-			refSaveField.setText(Integer.toString(me.getRefSave()));
-			meleeModifierField.setText(Integer.toString(me.getMeleeModifier()));
-			rangedModifierField.setText(Integer.toString(me.getRangedModifier()));
-			cmbField.setText(Integer.toString(me.getCMB()));
-			cmdField.setText(Integer.toString(me.getCMD()));
+			if(babField.getText().length() != 0)
+				babField.setText(me.getBABAsString());
+
+			if(acField.getText().length() != 0 && !(isInt(acField.getText()) && Integer.parseInt(acField.getText()) == me.getAC()))
+				acField.setText(Integer.toString(me.getAC()));
+
+			if(touchACField.getText().length() != 0 && !(isInt(touchACField.getText()) && Integer.parseInt(touchACField.getText()) == me.getTouchAC()))
+				touchACField.setText(Integer.toString(me.getTouchAC()));
+
+			if(fortSaveField.getText().length() != 0 && !(isInt(fortSaveField.getText()) && Integer.parseInt(fortSaveField.getText()) == me.getFortSave()))
+				fortSaveField.setText(Integer.toString(me.getFortSave()));
+
+			if(willSaveField.getText().length() != 0 && !(isInt(willSaveField.getText()) && Integer.parseInt(willSaveField.getText()) == me.getWillSave()))
+				willSaveField.setText(Integer.toString(me.getWillSave()));
+
+			if(refSaveField.getText().length() != 0 && !(isInt(refSaveField.getText()) && Integer.parseInt(refSaveField.getText()) == me.getRefSave()))
+				refSaveField.setText(Integer.toString(me.getRefSave()));
+
+			if(meleeModifierField.getText().length() != 0 && !(isInt(meleeModifierField.getText()) && Integer.parseInt(meleeModifierField.getText()) == me.getMeleeModifier()))
+				meleeModifierField.setText(Integer.toString(me.getMeleeModifier()));
+
+			if(rangedModifierField.getText().length() != 0 && !(isInt(rangedModifierField.getText()) && Integer.parseInt(rangedModifierField.getText()) == me.getRangedModifier()))
+				rangedModifierField.setText(Integer.toString(me.getRangedModifier()));
+
+			if(cmbField.getText().length() != 0 && !(isInt(cmbField.getText()) && Integer.parseInt(cmbField.getText()) == me.getCMB()))
+				cmbField.setText(Integer.toString(me.getCMB()));
+
+			if(cmdField.getText().length() != 0 && !(isInt(cmdField.getText()) && Integer.parseInt(cmdField.getText()) == me.getCMD()))
+				cmdField.setText(Integer.toString(me.getCMD()));
+
 			super.paintComponent(g);
 		}
 
@@ -1459,41 +1503,65 @@ public class CharacterDisplay extends JTabbedPane{
 
 		}
 
+		private boolean isInt(String str){
+			if (str == null) {
+				return false;
+			}
+			int length = str.length();
+			if (length == 0) {
+				return false;
+			}
+			int i = 0;
+			if (str.charAt(0) == '-') {
+				if (length == 1) {
+					return false;
+				}
+				i = 1;
+			}
+			for (; i < length; i++) {
+				char c = str.charAt(i);
+				if (c < '0' || c > '9') {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		public void paintComponent(Graphics g){
-			if(Integer.parseInt(strField.getText()) != me.abilities.get(AbilityScoreEnum.STR)){
+			if( strField.getText().length() != 0 && (!isInt(strField.getText()) || Integer.parseInt(strField.getText()) != me.abilities.get(AbilityScoreEnum.STR))){
 				strField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.STR)));
 			}
-			if(Integer.parseInt(dexField.getText()) != me.abilities.get(AbilityScoreEnum.DEX)){
+			if( dexField.getText().length() != 0 && (!isInt(dexField.getText()) || Integer.parseInt(dexField.getText()) != me.abilities.get(AbilityScoreEnum.DEX))){
 				dexField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.DEX)));
 			}
-			if(Integer.parseInt(conField.getText()) != me.abilities.get(AbilityScoreEnum.CON)){
+			if( conField.getText().length() != 0 && (!isInt(conField.getText()) || Integer.parseInt(conField.getText()) != me.abilities.get(AbilityScoreEnum.CON))){
 				conField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CON)));
 			}
-			if(Integer.parseInt(intField.getText()) != me.abilities.get(AbilityScoreEnum.INT)){
+			if( intField.getText().length() != 0 && (!isInt(intField.getText()) || Integer.parseInt(intField.getText()) != me.abilities.get(AbilityScoreEnum.INT))){
 				intField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.INT)));
 			}
-			if(Integer.parseInt(wisField.getText()) != me.abilities.get(AbilityScoreEnum.WIS)){
+			if( wisField.getText().length() != 0 && (!isInt(wisField.getText()) || Integer.parseInt(wisField.getText()) != me.abilities.get(AbilityScoreEnum.WIS))){
 				wisField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.WIS)));
 			}
-			if(Integer.parseInt(chaField.getText()) != me.abilities.get(AbilityScoreEnum.CHA)){
+			if( chaField.getText().length() != 0 && (!isInt(chaField.getText()) || Integer.parseInt(chaField.getText()) != me.abilities.get(AbilityScoreEnum.CHA))){
 				chaField.setText(Integer.toString(me.abilities.get(AbilityScoreEnum.CHA)));
 			}
-			if(Integer.parseInt(tempSTRField.getText()) != me.tempAbilities.get(AbilityScoreEnum.STR)){
+			if( tempSTRField.getText().length() != 0 && (!isInt(tempSTRField.getText()) || Integer.parseInt(tempSTRField.getText()) != me.tempAbilities.get(AbilityScoreEnum.STR))){
 				tempSTRField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.STR)));
 			}
-			if(Integer.parseInt(tempDEXField.getText()) != me.tempAbilities.get(AbilityScoreEnum.DEX)){
+			if( tempDEXField.getText().length() != 0 && (!isInt(tempDEXField.getText()) || Integer.parseInt(tempDEXField.getText()) != me.tempAbilities.get(AbilityScoreEnum.DEX))){
 				tempDEXField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.DEX)));
 			}
-			if(Integer.parseInt(tempCONField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CON)){
+			if( tempCONField.getText().length() != 0 && (!isInt(tempCONField.getText()) || Integer.parseInt(tempCONField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CON))){
 				tempCONField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CON)));
 			}
-			if(Integer.parseInt(tempINTField.getText()) != me.tempAbilities.get(AbilityScoreEnum.INT)){
+			if( tempINTField.getText().length() != 0 && (!isInt(tempINTField.getText()) || Integer.parseInt(tempINTField.getText()) != me.tempAbilities.get(AbilityScoreEnum.INT))){
 				tempINTField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.INT)));
 			}
-			if(Integer.parseInt(tempWISField.getText()) != me.tempAbilities.get(AbilityScoreEnum.WIS)){
+			if( tempWISField.getText().length() != 0 && (!isInt(tempWISField.getText()) || Integer.parseInt(tempWISField.getText()) != me.tempAbilities.get(AbilityScoreEnum.WIS))){
 				tempWISField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.WIS)));
 			}
-			if(Integer.parseInt(tempCHAField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CHA)){
+			if( tempCHAField.getText().length() != 0 && (!isInt(tempCHAField.getText()) || Integer.parseInt(tempCHAField.getText()) != me.tempAbilities.get(AbilityScoreEnum.CHA))){
 				tempCHAField.setText(Integer.toString(me.tempAbilities.get(AbilityScoreEnum.CHA)));
 			}
 			strMod.setText(Integer.toString(me.getAbilityMod(AbilityScoreEnum.STR)));
