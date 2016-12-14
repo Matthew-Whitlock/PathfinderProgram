@@ -57,7 +57,7 @@ public class Magus extends SpellCaster implements Serializable{
         super.levelUp();
 
         if(level%2 == 1){
-            me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getAvailableFeats(me), "Choose a feat!", 1));
+            me.currentFeats.addAll(SelectionUtils.searchFeats(Feats.getAvailableFeats(me), "Choose a feat!", 1, Pathfinder.FRAME));
         }
 
         if(level == 1){
@@ -102,7 +102,7 @@ public class Magus extends SpellCaster implements Serializable{
                 return (feat.type.equalsIgnoreCase("Combat") || feat.type.equalsIgnoreCase("Item Creation") || feat.type.equalsIgnoreCase("metamagic"))
                 && Feats.characterMeetsAllPrereqs(feat, me);
             }).collect(Collectors.toList());
-            me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(bonusFeats, "Choose a bonus feat!", 1));
+            me.currentFeats.addAll(SelectionUtils.searchFeats(bonusFeats, "Choose a bonus feat!", 1, Pathfinder.FRAME));
         }
 
         if(level == 7){
@@ -124,11 +124,11 @@ public class Magus extends SpellCaster implements Serializable{
                     "<br>" +
                     "He can ignore the somatic component of these spells, casting them without the normal chance of spell failure.");
             List<Spell> bonusSpells = Spells.getSpells().stream().filter(spell -> Spells.spellLevelFor("Wizard", spell) > -1 && Spells.spellLevelFor("Magus", spell) > -1 && !knownSpells.contains(spell)).collect(Collectors.toList());
-            knownSpells.addAll(SelectionUtils.chooseSpellFromList(bonusSpells,"Choose 14 Wizard/Magus spells to learn.", 14));
+            knownSpells.addAll(SelectionUtils.searchSpells(bonusSpells, Pathfinder.FRAME, "Choose 14 Wizard/Magus spells to learn.", 14));
             for(int i = 0; i < 7; i++){
                 Integer current = new Integer(i);
                 bonusSpells = Spells.getSpells().stream().filter(spell -> Spells.spellLevelFor("Wizard", spell) == current && Spells.spellLevelFor("Magus", spell) == -1 && !knownSpells.contains(spell)).collect(Collectors.toList());
-                knownSpells.addAll(SelectionUtils.chooseSpellFromList(bonusSpells,"Choose 2 level " + i + " spells from the wizard only list.", 2));
+                knownSpells.addAll(SelectionUtils.searchSpells(bonusSpells, Pathfinder.FRAME, "Choose 2 level " + i + " spells from the wizard only list.", 2));
             }
         }
 
@@ -163,7 +163,7 @@ public class Magus extends SpellCaster implements Serializable{
     }
 
     public void learnNewSpells(int amount){
-        knownSpells.addAll(SelectionUtils.chooseSpellFromList(getAvailableSpells(), "Choose " + amount + " spells.", amount));
+        knownSpells.addAll(SelectionUtils.searchSpells(getAvailableSpells(), Pathfinder.FRAME, "Choose " + amount + " spells.", amount));
     }
 
     public List<Spell> getAvailableSpells(){

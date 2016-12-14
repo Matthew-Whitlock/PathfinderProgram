@@ -36,7 +36,7 @@ public class Feats {
         return null;
     }
 
-    public static Feat createNewFeat(JFrame parent){
+    public static Feat createNewFeat(Window parent){
         AtomicBoolean featMade = new AtomicBoolean(false);
         AtomicBoolean closed = new AtomicBoolean(false);
         JDialog featCreator = new JDialog(parent, "Create a new Feat");
@@ -65,11 +65,10 @@ public class Feats {
         bottom.add(add, BorderLayout.CENTER);
 
         add.addActionListener(e -> {
-            if(!(name.getText().equals("")||description.getText().equals(""))){
+            if(!(name.getText().equals("")||description.getText().equals("")))
                 featMade.set(true);
-            } else {
+            else
                 Pathfinder.showError("Not enough details","You must write a feat name and description.");
-            }
         });
 
         addAndSave.addActionListener(e -> {
@@ -106,6 +105,7 @@ public class Feats {
 
         featCreator.setSize(350,400);
         featCreator.setVisible(true);
+        featCreator.setLocationRelativeTo(parent);
 
         while(!featMade.get()){}
 
@@ -115,11 +115,11 @@ public class Feats {
         return new Feat(name.getText(), description.getText());
     }
 
-    public static void showFeatDetails(Feat feat){
-        showFeatDetails(feat, feat.name);
+    public static void showFeatDetails(Feat feat, List<Feat> collection1, JComponent toRepaint){
+        showFeatDetails(feat, feat.name, collection1, null, toRepaint);
     }
 
-    public static void showFeatDetails(Feat feat, String title){
+    public static void showFeatDetails(Feat feat, String title, List<Feat> collection1, List<Feat> collection2, JComponent toRepaint){
         JFrame detailsFrame = new JFrame(title);
         detailsFrame.setSize(450,550);
         detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
@@ -136,21 +136,20 @@ public class Feats {
 
         JButton toggleEdit = new JButton("Edit");
         toggleEdit.addActionListener(e ->{
-            text.setEditable(!text.isEditable());
-            if(text.isEditable()){
-                String current = text.getText();
-                text.setContentType("text/plain");
-                text.setText(current);
-                toggleEdit.setText("Save");
-            } else {
-                String current = text.getText();
-                text.setContentType("text/html");
-                text.setText(current);
-                feat.modified = true;
-                feat.fullText = text.getText();
-                toggleEdit.setText("Edit");
-            }
-            detailsFrame.repaint();
+            new Thread(){
+                public void run(){
+                    Feat edited = editFeat(detailsFrame, feat);
+                    if(edited != null && edited != feat && collection1 != null){
+                        collection1.set(collection1.indexOf(feat), edited);
+                        if(collection2 != null) collection2.set(collection2.indexOf(feat), edited);
+
+                        if(toRepaint != null) toRepaint.repaint();
+
+                        detailsFrame.dispose();
+                        showFeatDetails(edited, edited.name, collection1, collection2, toRepaint);
+                    }
+                }
+            }.start();
         });
 
         detailsFrame.add(detailsPanel);
@@ -159,8 +158,101 @@ public class Feats {
         detailsFrame.setVisible(true);
     }
 
-    public static void featAddedAutomatically(Feat feat){
-        Feats.showFeatDetails(feat, feat.name + " was added automatically");
+    public static Feat editFeat(Window parent, Feat feat){
+        JDialog featEditor = new JDialog(parent, feat.name);
+        JPanel panel = new JPanel(new BorderLayout());
+        featEditor.add(panel);
+        AtomicBoolean set = new AtomicBoolean(false);
+        AtomicBoolean closed = new AtomicBoolean(false);
+
+        JPanel top = new JPanel(new GridBagLayout());
+        JTextField name = new JTextField(feat.name);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        top.add(new JLabel("Name: "), c);
+        c.weightx = 1;
+        c.gridx = 1;
+        top.add(name, c);
+        panel.add(top, BorderLayout.NORTH);
+
+
+        JPanel middle = new JPanel(new BorderLayout());
+
+        JEditorPane text = new JEditorPane();
+        text.setContentType("text/html");
+        text.setText(feat.fullText);
+        text.setEditable(false);
+        String current = text.getText();
+        text.setContentType("text/plain");
+        text.setText(current);
+        text.setCaretPosition(0);
+
+        JScrollPane textScroll = new JScrollPane(text);
+        middle.add(new JLabel("Feat details (supports HTML formatting): "), BorderLayout.NORTH);
+        middle.add(textScroll, BorderLayout.CENTER);
+        panel.add(middle, BorderLayout.CENTER);
+
+
+        JPanel bottom = new JPanel(new GridBagLayout());
+        JButton save = new JButton("Save");
+        JButton saveToFile = new JButton("Save and save to file");
+        c.gridx = 0;
+        bottom.add(save, c);
+        c.gridx = 1;
+        bottom.add(saveToFile, c);
+        panel.add(bottom, BorderLayout.SOUTH);
+
+        save.addActionListener(e -> {
+            if(!(name.getText().equals("") || text.getText().equals(""))) set.set(true);
+            else Pathfinder.showError("Insufficient Details", "You must provide a name and a description.");
+        });
+
+        saveToFile.addActionListener(e -> {
+            if(name.getText().equals("") || text.getText().equals("")){
+                Pathfinder.showError("Insufficient Details", "You must provide a name and a description.");
+                return;
+            }
+
+            Feat edited = new Feat(feat, name.getText(), text.getText());
+
+            JFileChooser saver = new JFileChooser();
+            int returned = saver.showSaveDialog(featEditor);
+            if(returned == JFileChooser.APPROVE_OPTION){
+                try{
+                    FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+                    ObjectOutputStream out= new ObjectOutputStream(fileOut);
+                    out.writeObject(edited);
+                    set.set(true);
+                } catch (FileNotFoundException ex){
+                    Pathfinder.showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+                    ex.printStackTrace();
+                } catch (IOException ex){
+                    Pathfinder.showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        featEditor.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                closed.set(true);
+                set.set(true);
+            }
+        });
+
+        featEditor.setSize(350,400);
+        featEditor.setVisible(true);
+        featEditor.setLocationRelativeTo(parent);
+
+        while(!set.get()){}
+
+        if(closed.get()) return null;
+        return new Feat(feat, name.getText(), text.getText());
+    }
+
+    public static void featAddedAutomatically(Feat feat, List<Feat> collection1){
+        Feats.showFeatDetails(feat, feat.name + " was added automatically", collection1, null, null);
     }
 
     public static List<Feat> getFeats(){

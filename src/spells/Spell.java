@@ -97,6 +97,7 @@ public class Spell implements Serializable{
 		source = details[19];
 		formattedDescription = "<html>\n" + details[20].replaceAll("<h5>", "<br>").replaceAll("</h5>", "<br>") + "\n</html>";
 		deity = details[41];
+		hasDeity = !(deity.equals("") || deity.equalsIgnoreCase("Null"));
 		try{
 			slaLevel = details[42].equalsIgnoreCase("NULL") ? -1 : Integer.parseInt(details[42]);
 		} catch(Exception e){
@@ -134,13 +135,13 @@ public class Spell implements Serializable{
 		
 	}
 
-	public Spell(String name, String formattedDescription){
+	public Spell(String name, String formattedDescription, int[] spellLevels){
 		this.name = name;
 		this.formattedDescription = formattedDescription;
+		levelRequirements = spellLevels;
 
 		//The rest is just for being certain that searching etc. doesn't throw an error if it somehow manages to pull up a custom made spell.
-		//Generally, though, it won't ever find custom spells made like this - as they'll be saved as a file or directly added, not added to the tsv list of spells.
-		//Exception: Spell level requirements could actually be useful to set, so that they spell sits in the right place within the spell list.
+		//Generally, though, it won't ever find custom spells made like this - as they'll be saved as a file or directly added so generally not in the search window for long.
 
 		school = "";
 		subschool = "";
@@ -157,17 +158,55 @@ public class Spell implements Serializable{
 		duration = "";
 		savingThrow = "";
 		spellResistance = "";
-		source = "";
+		source = "Custom";
 		slaLevel = -1;
 		domain = "";
 		materialCost = 0;
 		mythicText = "";
 		deity = "";
 		augmentText = "";
+	}
 
-		for(int i = 0; i < levelRequirements.length; i++){
-			levelRequirements[i] = -1;
-		}
+	public Spell(Spell spell, String name, String formattedDescription, int[] spellLevels){
+		this.name = name;
+		this.formattedDescription = formattedDescription;
+		levelRequirements = spellLevels;
+
+		//Fill in base spell junk.
+		school = spell.school;
+		subschool = spell.subschool;
+		descriptor = spell.descriptor;
+		basicDescription = spell.basicDescription;
+		shortDescription = spell.shortDescription;
+		levelReqAsString = spell.levelReqAsString;
+		castingTime = spell.castingTime;
+		componentsRequired = spell.componentsRequired;
+		componentsRequiredAsString = spell.componentsRequiredAsString;
+		spellTypes = spell.spellTypes;
+		range = spell.range;
+		area = spell.area;
+		effect = spell.effect;
+		targets = spell.targets;
+		duration = spell.duration;
+		savingThrow = spell.savingThrow;
+		hasSavingThrow = spell.hasSavingThrow;
+		dismissible = spell.dismissible;
+		shapeable = spell.shapeable;
+		hasSpellResistance = spell.hasSpellResistance;
+		spellResistance = spell.spellResistance;
+		source = "Custom";
+		slaLevel = spell.slaLevel;
+		hasDomain = spell.hasDomain;
+		domain = spell.domain;
+		materialCost = spell.materialCost;
+		hasMythic = spell.hasMythic;
+		mythicText = spell.mythicText;
+		hasDeity = spell.hasDeity;
+		deity = spell.deity;
+		hasAugment = spell.hasAugment;
+		augmentText = spell.augmentText;
+		hasBloodline = spell.hasBloodline;
+		bloodlineLevels = spell.bloodlineLevels;
 	}
 	
 	public String toString(){

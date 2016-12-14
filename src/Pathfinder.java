@@ -87,17 +87,17 @@ public class Pathfinder{
 		loadCharacter.addActionListener(e -> loadExistingCharacter());
 		searchFeats.addActionListener(e -> new Thread() {
 			public void run(){
-				SelectionUtils.searchFeats(Feats.getFeats(),FRAME);
+				SelectionUtils.searchFeats(Feats.getFeats(), "Search all Feats", -1, FRAME);
 			}
 		}.start());
 		searchSpells.addActionListener(e -> new Thread() {
 			public void run(){
-				SelectionUtils.searchSpells(Spells.getSpells(),FRAME);
+				SelectionUtils.searchSpells(Spells.getSpells(),FRAME, "Search Spells", -1);
 			}
 		}.start());
 		itemSearch.addActionListener(e -> new Thread() {
 			public void run(){
-				SelectionUtils.searchItems(ItemUtil.getItems(),FRAME);
+				SelectionUtils.searchItems(ItemUtil.getItems(),FRAME, "Search All Items");
 			}
 		}.start());
 
@@ -422,6 +422,7 @@ public class Pathfinder{
 		JFileChooser chooser = new JFileChooser();
 		int returnVal = chooser.showOpenDialog(FRAME);
 		File characterFile = null;
+
 		if(returnVal == JFileChooser.APPROVE_OPTION) {
 			characterFile = chooser.getSelectedFile();
 		}
@@ -605,7 +606,7 @@ public class Pathfinder{
 				Rectangle actualBounds = new Rectangle(choose.getLocationOnScreen().x,choose.getLocationOnScreen().y, choose.getVisibleRect().width, choose.getVisibleRect().height);
 				if(actualBounds.contains(e.getLocationOnScreen())){
 					chooseAbilityPoints(currentRace);
-				}
+				} //Just forward clicks to items beneath, not only to button. Look at coding for non-working inventory list.
 			}
 		});
 

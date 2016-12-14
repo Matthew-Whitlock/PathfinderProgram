@@ -8,7 +8,6 @@ import src.feats.FeatCellRenderer;
 import src.feats.Feats;
 import src.items.*;
 import src.spells.Spell;
-import src.spells.SpellCellRenderer;
 import src.spells.Spells;
 import src.stats.Skill;
 import src.stats.SkillUtils;
@@ -18,8 +17,6 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.FileInputStream;
@@ -38,13 +35,13 @@ public class SelectionUtils {
 
     private static int[] indices;
 
-    public static int[] searchItems(List<Item> items, JFrame parent){
-        JDialog searchDialog = new JDialog(parent, "Item Search");
+    public static List<GenItem> searchItems(List<GenItem> items, Window parent, String title){
+        JDialog searchDialog = new JDialog(parent, title);
         JPanel parentPanel = new JPanel(new GridBagLayout());
 
         AtomicBoolean selected = new AtomicBoolean(false);
 
-        ArrayList<Item> results = new ArrayList<>();
+        ArrayList<GenItem> results = new ArrayList<>();
         results.addAll(items);
 
         CardLayout searchConstraintsLayout = new CardLayout(){
@@ -103,7 +100,7 @@ public class SelectionUtils {
         searchConstraintsParent.add(weaponSearch, WEAPON_PANEL);
         searchConstraintsParent.add(armorSearch, ARMOR_PANEL);
         searchConstraintsParent.add(adventureItemSearch, ADVENTURE_PANEL);
-        searchConstraintsParent.add(magicItemScroll, MAGIC_PANEL);
+        searchConstraintsParent.add(magicItemSearch, MAGIC_PANEL);
 
         //Set up parent panel
         JComboBox<String> searchType = new JComboBox<>(PANEL_NAMES);
@@ -112,8 +109,9 @@ public class SelectionUtils {
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
+        c.gridwidth = 2;
         parentPanel.add(new JLabel("Search these items as: "));
-        c.gridx = 1;
+        c.gridx = 2;
         c.weightx = 1;
         parentPanel.add(searchType, c);
 
@@ -121,37 +119,112 @@ public class SelectionUtils {
         c.gridy = 1;
         c.weighty = 0;
         c.weightx = 1;
-        c.gridwidth = 2;
+        c.gridwidth = 4;
         parentPanel.add(searchConstraintsParent, c);
         c.weighty = 1;
 
-        JList<Item> resultsList = new JList<>();
-        resultsList.setCellRenderer(new ItemCellRenderer(false));
+        JList<GenItem> resultsList = new JList<>();
+
+        JScrollPane resultsScroll = new JScrollPane(resultsList){
+            public void paintComponent(Graphics g){
+                resultsList.setListData(results.toArray(new GenItem[results.size()]));
+            }
+        };
 
         resultsList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 JList list = (JList)evt.getSource();
                 if (evt.getClickCount() > 1) {
                     int index = list.locationToIndex(evt.getPoint());
-                    Item.showItemDetails(results.get(index));
+                    int length = items.size();
+                    ItemUtil.showItemDetails(results.get(index), items, results, true, resultsScroll);
+                    resultsScroll.repaint();
                 }
             }
         });
 
-        JScrollPane resultsScroll = new JScrollPane(resultsList){
-            public void paintComponent(Graphics g){
-                resultsList.setListData(results.toArray(new Item[results.size()]));
-            }
-        };
+
 
         c.gridy = 2;
         parentPanel.add(resultsScroll, c);
 
-        JButton select = new JButton("Select chosen spell(s)");
+        JButton select = new JButton("Select chosen item(s)");
         select.addActionListener(e -> selected.set(true));
         c.weighty = 0;
         c.gridy = 3;
+        c.gridwidth = 2;
+        c.weightx = 1;
         parentPanel.add(select, c);
+
+        c.gridwidth = 1;
+        c.gridx = 2;
+        c.weightx = 0.5;
+
+        JButton load = new JButton("Load Item");
+        parentPanel.add(load, c);
+        load.addActionListener(e -> {
+            JFileChooser loadChooser = new JFileChooser();
+            int returned = loadChooser.showOpenDialog(searchDialog);
+            if(returned == JFileChooser.APPROVE_OPTION){
+                GenItem item = null;
+                try{
+                    FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+                    ObjectInputStream objIn = new ObjectInputStream(fileIn);
+                    item = (GenItem)(objIn.readObject());
+
+                } catch (FileNotFoundException ex){
+                    Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+                    ex.printStackTrace();
+                } catch (IOException ex){
+                    Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
+                    ex.printStackTrace();
+                } catch (ClassNotFoundException ex){
+                    Pathfinder.showError("Not an Item","It doesn't seem that there's an item saved in that file.\nThe file may be corrupt.");
+                } catch (ClassCastException ex){
+                    Pathfinder.showError("Not an Item", "It appears this is some other kind of Java object.");
+                }
+                if(item != null){
+                    items.add(item);
+                    results.add(item);
+                    int[] current = resultsList.getSelectedIndices();
+                    int[] newIndices = new int[current.length + 1];
+                    for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                    newIndices[newIndices.length - 1] = results.size() - 1;
+                    resultsList.setListData(results.toArray(new GenItem[items.size()]));
+                    resultsList.setSelectedIndices(newIndices);
+
+                    JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                    vertical.setValue( vertical.getMaximum() );
+                }
+            }
+        });
+
+
+        c.gridx++;
+        JButton create = new JButton("Create Item");
+        parentPanel.add(create, c);
+        create.addActionListener(e -> {
+            (new Thread(){
+                public void run(){
+                    GenItem item = ItemUtil.createNewItem(searchDialog);
+                    if(item != null){
+                        items.add(item);
+                        results.add(item);
+                        int[] current = resultsList.getSelectedIndices();
+                        int[] newIndices = new int[current.length + 1];
+                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                        newIndices[newIndices.length - 1] = results.size() - 1;
+                        resultsList.setListData(results.toArray(new GenItem[items.size()]));
+                        resultsList.setSelectedIndices(newIndices);
+
+                        JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                        vertical.setValue( vertical.getMaximum() );
+                    }
+                }
+            }).start();
+        });
+
+
 
         //Start making individual search panels
 
@@ -201,11 +274,11 @@ public class SelectionUtils {
         HashSet<String> gearSources = new HashSet<>();
         gearSources.add("");
 
-        for(Item item : ItemUtil.getItems()){
+        for(GenItem item : ItemUtil.getItems()){
             itemNames.add(item.getItemName());
 
-            if(item instanceof WeaponEnum){
-                WeaponEnum weapon = (WeaponEnum)item;
+            if(item.baseItem() instanceof WeaponEnum){
+                WeaponEnum weapon = (WeaponEnum)item.baseItem();
                 weaponNames.add(weapon.getItemName());
                 weaponSources.add(weapon.source());
                 weaponTypes.add(weapon.type());
@@ -221,12 +294,12 @@ public class SelectionUtils {
                 }
                 String[] specials = weapon.special().split(",");
                 for(String s : specials) weaponSpecials.add(s.trim().toLowerCase());
-            } else if(item instanceof ArmorEnum){
-                ArmorEnum armor = (ArmorEnum)item;
+            } else if(item.baseItem() instanceof ArmorEnum){
+                ArmorEnum armor = (ArmorEnum)item.baseItem();
                 armorNames.add(armor.getItemName());
                 armorTypes.add(armor.type());
-            } else if(item instanceof MagicItem){
-                MagicItem magic = (MagicItem)item;
+            } else if(item.baseItem() instanceof MagicItem){
+                MagicItem magic = (MagicItem)item.baseItem();
                 magicNames.add(magic.getItemName());
                 magicAuraStrengthSet.add(magic.auraStrength);
                 magicAlignmentSet.add(magic.alignment);
@@ -245,8 +318,8 @@ public class SelectionUtils {
                 magicGroupSet.add(magic.group);
                 magicSlotSet.add(magic.slot);
                 magicSourceSet.add(magic.source);
-            } else if(item instanceof AdventureGearEnum){
-                AdventureGearEnum gear = (AdventureGearEnum)item;
+            } else if(item.baseItem() instanceof AdventureGearEnum){
+                AdventureGearEnum gear = (AdventureGearEnum)item.baseItem();
                 gearNames.add(gear.getItemName());
                 gearTypes.add(gear.type());
                 gearSources.add(gear.source());
@@ -298,7 +371,7 @@ public class SelectionUtils {
             results.clear();
             results.addAll(items);
 
-            ArrayList<Item> intermediary = new ArrayList<>();
+            ArrayList<GenItem> intermediary = new ArrayList<>();
 
             if(!genName.getText().equals("")){
                 intermediary.addAll(results.stream().filter(item -> item.getItemName().toLowerCase().contains(genName.getText().toLowerCase())).collect(Collectors.toList()));
@@ -430,8 +503,8 @@ public class SelectionUtils {
             results.clear();
 
             ArrayList<WeaponEnum> intermediary = new ArrayList<>();
-            for(Item item : items){
-                if(item instanceof WeaponEnum) intermediary.add((WeaponEnum)item);
+            for(GenItem item : items){
+                if(item.baseItem() instanceof WeaponEnum) intermediary.add((WeaponEnum)item.baseItem());
             }
             ArrayList<WeaponEnum> temp = new ArrayList<>();
 
@@ -525,7 +598,7 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            results.addAll(intermediary);
+            results.addAll(items.stream().filter(item -> intermediary.contains(item.baseItem())).collect(Collectors.toList()));
             resultsScroll.repaint();
         });
 
@@ -607,8 +680,8 @@ public class SelectionUtils {
             results.clear();
 
             ArrayList<ArmorEnum> intermediary = new ArrayList<>();
-            for(Item item : items){
-                if(item instanceof ArmorEnum) intermediary.add((ArmorEnum)item);
+            for(GenItem item : items){
+                if(item.baseItem() instanceof ArmorEnum) intermediary.add((ArmorEnum)item.baseItem());
             }
             ArrayList<ArmorEnum> temp = new ArrayList<>();
 
@@ -674,7 +747,7 @@ public class SelectionUtils {
                 temp.clear();
             }
 
-            results.addAll(intermediary);
+            results.addAll(items.stream().filter(item -> intermediary.contains(item.baseItem())).collect(Collectors.toList()));
             resultsScroll.repaint();
         });
 
@@ -693,56 +766,53 @@ public class SelectionUtils {
         c.gridy++;
         magicItemSearch.add(new JLabel("Crafting Cost (gold): "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Crafting Prereqs: "), c);
-        c.gridy++;
-        magicItemSearch.add(new JLabel("Crafting Item Reqs: "), c);
-        c.gridy++;
         magicItemSearch.add(new JLabel("Weight (lbs): "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Base Item: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Caster Level: "), c);
         c.gridy++;
+        magicItemSearch.add(new JLabel("Has Scaling: "), c);
+        c.gridy++;
+        magicItemSearch.add(new JLabel("Scaling: "), c);
+        c.gridy++;
+        magicItemSearch.add(new JLabel("Group: "), c);
+        c.gridy++;
+        magicItemSearch.add(new JLabel("Slot: "), c);
+        c.gridy++;
+        c.gridx = 2;
+        c.gridy = 0;
         magicItemSearch.add(new JLabel("Is Alive: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Intelligence: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Wisdom: "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Communication: "), c);
-        c.gridy++;
-        magicItemSearch.add(new JLabel("Has Sense: "), c);
-        c.gridy++;
-        magicItemSearch.add(new JLabel("Has Scaling: "), c);
-        c.gridy++;
-        magicItemSearch.add(new JLabel("Group: "), c);
-        c.gridy++;
-        magicItemSearch.add(new JLabel("Source: "), c);
-        c.gridx = 2;
-        c.gridy = 10;
         magicItemSearch.add(new JLabel("Charisma: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Ego: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Alignment: "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Has Power: "), c);
+        magicItemSearch.add(new JLabel("Communication: "), c);
         c.gridy++;
         magicItemSearch.add(new JLabel("Language: "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Scaling: "), c);
+        magicItemSearch.add(new JLabel("Has Sense: "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Slot: "), c);
+        magicItemSearch.add(new JLabel("Has Power: "), c);
         c.gridy++;
-        magicItemSearch.add(new JLabel("Description Contains: "), c);
+        magicItemSearch.add(new JLabel("Source: "), c);
+        c.gridy++;
+        magicItemSearch.add(new JLabel("Description: "), c);
 
         AutofillTextArea magicName = new AutofillTextArea(magicNames, 5);
         JTextField magicAura = new JTextField();
         JComboBox<String> magicAuraStrength = new JComboBox<>(new Vector<>(magicAuraStrengthSet));
+        magicAuraStrength.setMinimumSize(new Dimension(0, (int)magicAuraStrength.getMinimumSize().getHeight()));
+        magicAuraStrength.setPreferredSize(new Dimension(0, (int)magicAuraStrength.getPreferredSize().getHeight()));
         NumberInequalityField magicCost = new NumberInequalityField();
         NumberInequalityField magicCraftingCost = new NumberInequalityField();
-        JTextField magicCraftingPrereqs = new JTextField();
-        JTextField magicCraftingItemReqs = new JTextField();
         NumberInequalityField magicWeight = new NumberInequalityField();
         JTextField magicBaseItem = new JTextField();
         NumberInequalityField magicCasterLevel = new NumberInequalityField();
@@ -755,78 +825,78 @@ public class SelectionUtils {
         NumberInequalityField magicWis = new NumberInequalityField();
         magicWis.setEditable(false);
         JComboBox<String> magicAlignment = new JComboBox<>(new Vector<>(magicAlignmentSet));
+        magicAlignment.setMinimumSize(new Dimension(0, (int)magicAlignment.getMinimumSize().getHeight()));
+        magicAlignment.setPreferredSize(new Dimension(0, (int)magicAlignment.getPreferredSize().getHeight()));
         JComboBox<String> magicCommunication = new JComboBox<>(new Vector<>(magicCommunicationSet));
+        magicCommunication.setMinimumSize(new Dimension(0, (int)magicCommunication.getMinimumSize().getHeight()));
+        magicCommunication.setPreferredSize(new Dimension(0, (int)magicCommunication.getPreferredSize().getHeight()));
         JComboBox<String> magicPowers = new JComboBox<>(new Vector<>(magicPowerSet));
+        magicPowers.setMinimumSize(new Dimension(0, (int)magicPowers.getMinimumSize().getHeight()));
+        magicPowers.setPreferredSize(new Dimension(0, (int)magicPowers.getPreferredSize().getHeight()));
         JComboBox<String> magicSenses = new JComboBox<>(new Vector<>(magicSensesSet));
+        magicSenses.setMinimumSize(new Dimension(0, (int)magicSenses.getMinimumSize().getHeight()));
+        magicSenses.setPreferredSize(new Dimension(0, (int)magicSenses.getPreferredSize().getHeight()));
         JTextField magicLanguage = new JTextField();
         magicLanguage.setEditable(false);
         JComboBox<String> magicScaling = new JComboBox<>(new Vector<>(magicScalingSet));
+        magicScaling.setMinimumSize(new Dimension(0, (int)magicScaling.getMinimumSize().getHeight()));
+        magicScaling.setPreferredSize(new Dimension(0, (int)magicScaling.getPreferredSize().getHeight()));
         JComboBox<String> magicGroup = new JComboBox<>(new Vector<>(magicGroupSet));
+        magicGroup.setMinimumSize(new Dimension(0, (int)magicGroup.getMinimumSize().getHeight()));
+        magicGroup.setPreferredSize(new Dimension(0, (int)magicGroup.getPreferredSize().getHeight()));
         JComboBox<String> magicSlot = new JComboBox<>(new Vector<>(magicSlotSet));
+        magicSlot.setMinimumSize(new Dimension(0, (int)magicSlot.getMinimumSize().getHeight()));
+        magicSlot.setPreferredSize(new Dimension(0, (int)magicSlot.getPreferredSize().getHeight()));
         JComboBox<String> magicSource = new JComboBox<>(new Vector<>(magicSourceSet));
+        magicSource.setMinimumSize(new Dimension(0, (int)magicSource.getMinimumSize().getHeight()));
+        magicSource.setPreferredSize(new Dimension(0, (int)magicSource.getPreferredSize().getHeight()));
         magicSource.setEditable(true);
         JTextField magicDesc = new JTextField();
 
-        AtomicBoolean isAlive = new AtomicBoolean(false);
-        AtomicBoolean hasScaling = new AtomicBoolean(false);
-        AtomicBoolean mythic = new AtomicBoolean(false);
-        AtomicBoolean legendaryWeapon = new AtomicBoolean(false);
-        AtomicBoolean illusion = new AtomicBoolean(false);
-        AtomicBoolean universal = new AtomicBoolean(false);
-        AtomicBoolean minorArtifact = new AtomicBoolean(false);
-        AtomicBoolean majorArtifact = new AtomicBoolean(false);
-        AtomicBoolean abjuration = new AtomicBoolean(false);
-        AtomicBoolean conjuration = new AtomicBoolean(false);
-        AtomicBoolean divination = new AtomicBoolean(false);
-        AtomicBoolean enchantment = new AtomicBoolean(false);
-        AtomicBoolean evocation = new AtomicBoolean(false);
-        AtomicBoolean necromancy = new AtomicBoolean(false);
-        AtomicBoolean transmutation = new AtomicBoolean(false);
+        YesNoEither isAliveOptions = new YesNoEither(true);
+        isAliveOptions.addActionListener( e -> {
+            if(isAliveOptions.notEither() && isAliveOptions.value()){
+                magicCha.setEditable(true);
+                magicInt.setEditable(true);
+                magicEgo.setEditable(true);
+                magicWis.setEditable(true);
+                magicAlignment.setEditable(true);
+                magicCommunication.setEditable(true);
+                magicPowers.setEditable(true);
+                magicSenses.setEditable(true);
+                magicLanguage.setEditable(true);
+            } else {
+                magicCha.setEditable(false);
+                magicInt.setEditable(false);
+                magicEgo.setEditable(false);
+                magicWis.setEditable(false);
+                magicAlignment.setEditable(false);
+                magicCommunication.setEditable(false);
+                magicPowers.setEditable(false);
+                magicSenses.setEditable(false);
+                magicLanguage.setEditable(false);
+            }
+        });
 
-        JCheckBox isAliveBox = new JCheckBox();
-        isAliveBox.addActionListener(e -> {
-            isAlive.set(!isAlive.get());
-            magicCha.setEditable(isAlive.get());
-            magicInt.setEditable(isAlive.get());
-            magicEgo.setEditable(isAlive.get());
-            magicWis.setEditable(isAlive.get());
-            magicAlignment.setEditable(isAlive.get());
-            magicCommunication.setEditable(isAlive.get());
-            magicPowers.setEditable(isAlive.get());
-            magicSenses.setEditable(isAlive.get());
-            magicLanguage.setEditable(isAlive.get());
+
+        YesNoEither hasScalingOptions = new YesNoEither(true);
+        hasScalingOptions.addActionListener(e -> {
+            magicScaling.setEditable(hasScalingOptions.notEither() && hasScalingOptions.value());
         });
-        JCheckBox hasScalingBox = new JCheckBox();
-        hasScalingBox.addActionListener(e -> {
-            hasScaling.set(!hasScaling.get());
-            magicScaling.setEditable(hasScaling.get());
-        });
-        JCheckBox mythicBox = new JCheckBox();
-        mythicBox.addActionListener(e -> mythic.set(!mythic.get()));
-        JCheckBox legendaryWeaponBox = new JCheckBox();
-        legendaryWeaponBox.addActionListener(e -> legendaryWeapon.set(!legendaryWeapon.get()));
-        JCheckBox illusionBox = new JCheckBox();
-        illusionBox.addActionListener(e -> illusion.set(!illusion.get()));
-        JCheckBox universalBox = new JCheckBox();
-        universalBox.addActionListener(e -> universal.set(!universal.get()));
-        JCheckBox minorArtifactBox = new JCheckBox();
-        minorArtifactBox.addActionListener(e -> minorArtifact.set(!minorArtifact.get()));
-        JCheckBox majorArtifactBox = new JCheckBox();
-        majorArtifactBox.addActionListener(e -> majorArtifact.set(!majorArtifact.get()));
-        JCheckBox abjurationBox = new JCheckBox();
-        abjurationBox.addActionListener(e -> abjuration.set(!abjuration.get()));
-        JCheckBox conjurationBox = new JCheckBox();
-        conjurationBox.addActionListener(e -> conjuration.set(!conjuration.get()));
-        JCheckBox divinationBox = new JCheckBox();
-        divinationBox.addActionListener(e -> divination.set(!divination.get()));
-        JCheckBox enchantmentBox = new JCheckBox();
-        enchantmentBox.addActionListener(e -> enchantment.set(!enchantment.get()));
-        JCheckBox evocationBox = new JCheckBox();
-        evocationBox.addActionListener(e -> evocation.set(!evocation.get()));
-        JCheckBox necromancyBox = new JCheckBox();
-        necromancyBox.addActionListener(e -> necromancy.set(!necromancy.get()));
-        JCheckBox transmutationBox = new JCheckBox();
-        transmutationBox.addActionListener(e -> transmutation.set(!transmutation.get()));
+
+        YesNoEither mythicBox = new YesNoEither(false);
+        YesNoEither legendaryWeaponBox = new YesNoEither(false);
+        YesNoEither illusionBox = new YesNoEither(false);
+        YesNoEither universalBox = new YesNoEither(false);
+        YesNoEither minorArtifactBox = new YesNoEither(false);
+        YesNoEither majorArtifactBox = new YesNoEither(false);
+        YesNoEither abjurationBox = new YesNoEither(false);
+        YesNoEither conjurationBox = new YesNoEither(false);
+        YesNoEither divinationBox = new YesNoEither(false);
+        YesNoEither enchantmentBox = new YesNoEither(false);
+        YesNoEither evocationBox = new YesNoEither(false);
+        YesNoEither necromancyBox = new YesNoEither(false);
+        YesNoEither transmutationBox = new YesNoEither(false);
 
         JPanel magicBoolPanel = new JPanel(new GridBagLayout());
         JScrollPane magicBoolScroll = new JScrollPane(magicBoolPanel);
@@ -834,6 +904,7 @@ public class SelectionUtils {
         c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1;
+        c.ipady = 1;
         magicBoolPanel.add(new JLabel("Mythic: "), c);
         c.gridy = 1;
         magicBoolPanel.add(new JLabel("Legendary Weapon: "), c);
@@ -888,19 +959,24 @@ public class SelectionUtils {
         c.gridy++;
         magicBoolPanel.add(transmutationBox, c);
 
-        c.gridx = 2;
+        c.gridx = 4;
         c.gridy = 0;
         c.gridwidth = 2;
-        c.gridheight = 10;
+        c.gridheight = 12;
+        c.weightx = 0;
+        c.weighty = 1;
+        c.ipady = 0;
         c.fill = GridBagConstraints.BOTH;
+        magicBoolScroll.setMinimumSize(new Dimension(200, 0));
         magicBoolScroll.setPreferredSize(magicBoolScroll.getMinimumSize());
         magicItemSearch.add(magicBoolScroll, c);
 
-        c.weightx = 1;
+        c.weightx = 0.01;
         c.gridheight = 1;
         c.gridwidth = 1;
         c.gridx = 1;
         c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
         magicItemSearch.add(magicName, c);
         c.gridy++;
         magicItemSearch.add(magicAura, c);
@@ -911,52 +987,50 @@ public class SelectionUtils {
         c.gridy++;
         magicItemSearch.add(magicCraftingCost, c);
         c.gridy++;
-        magicItemSearch.add(magicCraftingPrereqs, c);
-        c.gridy++;
-        magicItemSearch.add(magicCraftingItemReqs, c);
-        c.gridy++;
         magicItemSearch.add(magicWeight, c);
         c.gridy++;
         magicItemSearch.add(magicBaseItem, c);
         c.gridy++;
         magicItemSearch.add(magicCasterLevel, c);
         c.gridy++;
-        magicItemSearch.add(isAliveBox, c);
+        magicItemSearch.add(hasScalingOptions, c);
+        c.gridy++;
+        magicItemSearch.add(magicScaling, c);
+        c.gridy++;
+        magicItemSearch.add(magicGroup, c);
+        c.gridy++;
+        magicItemSearch.add(magicSlot, c);
+        c.gridy++;
+
+        c.gridy = 0;
+        c.gridx = 3;
+        magicItemSearch.add(isAliveOptions, c);
         c.gridy++;
         magicItemSearch.add(magicInt, c);
         c.gridy++;
         magicItemSearch.add(magicWis, c);
         c.gridy++;
-        magicItemSearch.add(magicCommunication, c);
-        c.gridy++;
-        magicItemSearch.add(magicSenses, c);
-        c.gridy++;
-        magicItemSearch.add(hasScalingBox, c);
-        c.gridy++;
-        magicItemSearch.add(magicGroup, c);
-        c.gridy++;
-        magicItemSearch.add(magicSource, c);
-        c.gridy = 10;
-        c.gridx = 3;
         magicItemSearch.add(magicCha, c);
         c.gridy++;
         magicItemSearch.add(magicEgo, c);
         c.gridy++;
         magicItemSearch.add(magicAlignment, c);
         c.gridy++;
-        magicItemSearch.add(magicPowers, c);
+        magicItemSearch.add(magicCommunication, c);
         c.gridy++;
         magicItemSearch.add(magicLanguage, c);
         c.gridy++;
-        magicItemSearch.add(magicScaling, c);
+        magicItemSearch.add(magicSenses, c);
         c.gridy++;
-        magicItemSearch.add(magicSlot, c);
+        magicItemSearch.add(magicPowers, c);
+        c.gridy++;
+        magicItemSearch.add(magicSource, c);
         c.gridy++;
         magicItemSearch.add(magicDesc, c);
 
         c.gridy++;
         c.gridx = 0;
-        c.gridwidth = 4;
+        c.gridwidth = 6;
         JButton magicSearch = new JButton("Search with these values");
         magicItemSearch.add(magicSearch, c);
 
@@ -966,8 +1040,8 @@ public class SelectionUtils {
             results.clear();
 
             ArrayList<MagicItem> intermediary = new ArrayList<>();
-            for(Item item : items){
-                if(item instanceof MagicItem) intermediary.add((MagicItem) item);
+            for(GenItem item : items){
+                if(item.baseItem() instanceof MagicItem) intermediary.add((MagicItem)item.baseItem());
             }
             ArrayList<MagicItem> temp = new ArrayList<>();
 
@@ -1001,18 +1075,6 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(!magicCraftingPrereqs.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.craftingRequirements.toLowerCase().contains(magicCraftingPrereqs.getText().toLowerCase())).collect(Collectors.toList()));
-                intermediary.clear();
-                intermediary.addAll(temp);
-                temp.clear();
-            }
-            if(!magicCraftingItemReqs.getText().equals("")){
-                temp.addAll(intermediary.stream().filter(item -> item.magicItemRequirements.toLowerCase().contains(magicCraftingItemReqs.getText().toLowerCase())).collect(Collectors.toList()));
-                intermediary.clear();
-                intermediary.addAll(temp);
-                temp.clear();
-            }
             if(!magicWeight.isEmpty()){
                 temp.addAll(intermediary.stream().filter(item -> magicWeight.numberSatisfies(item.weight)).collect(Collectors.toList()));
                 intermediary.clear();
@@ -1036,77 +1098,92 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(isAlive.get()){
-                temp.addAll(intermediary.stream().filter(item -> item.isLiving).collect(Collectors.toList()));
-                intermediary.clear();
-                intermediary.addAll(temp);
-                temp.clear();
-                if(!magicCha.isEmpty()){
-                    temp.addAll(intermediary.stream().filter(item -> magicCha.numberSatisfies(item.cha)).collect(Collectors.toList()));
+            if(isAliveOptions.notEither()){
+                if(isAliveOptions.value()){
+                    temp.addAll(intermediary.stream().filter(item -> item.isLiving).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
-                }
-                if(!magicCasterLevel.isEmpty()){
-                    temp.addAll(intermediary.stream().filter(item -> magicInt.numberSatisfies(item.intel)).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicEgo.isEmpty()){
-                    temp.addAll(intermediary.stream().filter(item -> magicEgo.numberSatisfies(item.ego)).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicWis.isEmpty()){
-                    temp.addAll(intermediary.stream().filter(item -> magicWis.numberSatisfies(item.wis)).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicAlignment.getSelectedItem().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.alignment.toLowerCase().contains(((String)magicAlignment.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicCommunication.getSelectedItem().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.communication.toLowerCase().contains(((String)magicCommunication.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicPowers.getSelectedItem().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.powers.toLowerCase().contains(((String)magicPowers.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicSenses.getSelectedItem().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.senses.toLowerCase().contains(((String)magicSenses.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    intermediary.clear();
-                    intermediary.addAll(temp);
-                    temp.clear();
-                }
-                if(!magicLanguage.getText().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.languages.toLowerCase().contains(magicLanguage.getText().toLowerCase())).collect(Collectors.toList()));
+                    if(!magicCha.isEmpty()){
+                        temp.addAll(intermediary.stream().filter(item -> magicCha.numberSatisfies(item.cha)).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicCasterLevel.isEmpty()){
+                        temp.addAll(intermediary.stream().filter(item -> magicInt.numberSatisfies(item.intel)).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicEgo.isEmpty()){
+                        temp.addAll(intermediary.stream().filter(item -> magicEgo.numberSatisfies(item.ego)).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicWis.isEmpty()){
+                        temp.addAll(intermediary.stream().filter(item -> magicWis.numberSatisfies(item.wis)).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicAlignment.getSelectedItem().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.alignment.toLowerCase().contains(((String)magicAlignment.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicCommunication.getSelectedItem().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.communication.toLowerCase().contains(((String)magicCommunication.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicPowers.getSelectedItem().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.powers.toLowerCase().contains(((String)magicPowers.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicSenses.getSelectedItem().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.senses.toLowerCase().contains(((String)magicSenses.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                    if(!magicLanguage.getText().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.languages.toLowerCase().contains(magicLanguage.getText().toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                } else {
+                    temp.addAll(intermediary.stream().filter(item -> (!(item.isLiving))).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
             }
-            if(hasScaling.get()){
-                temp.addAll(intermediary.stream().filter(item -> item.hasScaling).collect(Collectors.toList()));
-                intermediary.clear();
-                intermediary.addAll(temp);
-                temp.clear();
-                if(!magicScaling.getSelectedItem().equals("")){
-                    temp.addAll(intermediary.stream().filter(item -> item.scaling.toLowerCase().contains(((String)magicScaling.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+            if(hasScalingOptions.notEither()){
+                if(hasScalingOptions.value()){
+                    temp.addAll(intermediary.stream().filter(item -> item.hasScaling).collect(Collectors.toList()));
+                    intermediary.clear();
+                    intermediary.addAll(temp);
+                    temp.clear();
+                    if(!magicScaling.getSelectedItem().equals("")){
+                        temp.addAll(intermediary.stream().filter(item -> item.scaling.toLowerCase().contains(((String)magicScaling.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                        intermediary.clear();
+                        intermediary.addAll(temp);
+                        temp.clear();
+                    }
+                } else {
+                    temp.addAll(intermediary.stream().filter(item -> !item.hasScaling).collect(Collectors.toList()));
                     intermediary.clear();
                     intermediary.addAll(temp);
                     temp.clear();
                 }
+
             }
             if(!magicGroup.getSelectedItem().equals("")){
                 temp.addAll(intermediary.stream().filter(item -> item.group.toLowerCase().contains(((String)magicGroup.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
@@ -1132,85 +1209,85 @@ public class SelectionUtils {
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(mythic.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.mythic).collect(Collectors.toList()));
+            if(mythicBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.mythic == mythicBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(legendaryWeapon.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.legendaryWeapon).collect(Collectors.toList()));
+            if(legendaryWeaponBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.legendaryWeapon == legendaryWeaponBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(illusion.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.illusion).collect(Collectors.toList()));
+            if(illusionBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.illusion == illusionBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(universal.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.universal).collect(Collectors.toList()));
+            if(universalBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.universal == universalBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(minorArtifact.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.minorArtifact).collect(Collectors.toList()));
+            if(minorArtifactBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.minorArtifact == minorArtifactBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(majorArtifact.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.majorArtifact).collect(Collectors.toList()));
+            if(majorArtifactBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.majorArtifact == majorArtifactBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(abjuration.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.abjuration).collect(Collectors.toList()));
+            if(abjurationBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.abjuration == abjurationBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(conjuration.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.conjuration).collect(Collectors.toList()));
+            if(conjurationBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.conjuration == conjurationBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(divination.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.divination).collect(Collectors.toList()));
+            if(divinationBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.divination == divinationBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(enchantment.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.enchantment).collect(Collectors.toList()));
+            if(enchantmentBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.enchantment == enchantmentBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(evocation.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.evocation).collect(Collectors.toList()));
+            if(evocationBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.evocation == evocationBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(necromancy.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.necromancy).collect(Collectors.toList()));
+            if(necromancyBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.necromancy == necromancyBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            if(transmutation.get()) {
-                temp.addAll(intermediary.stream().filter(item -> item.transmutation).collect(Collectors.toList()));
+            if(transmutationBox.notEither()) {
+                temp.addAll(intermediary.stream().filter(item -> item.transmutation == transmutationBox.value()).collect(Collectors.toList()));
                 intermediary.clear();
                 intermediary.addAll(temp);
                 temp.clear();
             }
-            results.addAll(intermediary);
+            results.addAll(items.stream().filter(item -> intermediary.contains(item.baseItem())).collect(Collectors.toList()));
             resultsScroll.repaint();
         });
 
@@ -1286,8 +1363,8 @@ public class SelectionUtils {
             results.clear();
 
             ArrayList<AdventureGearEnum> intermediary = new ArrayList<>();
-            for(Item item : items){
-                if(item instanceof AdventureGearEnum) intermediary.add((AdventureGearEnum) item);
+            for(GenItem item : items){
+                if(item.baseItem() instanceof AdventureGearEnum) intermediary.add((AdventureGearEnum)item.baseItem());
             }
             ArrayList<AdventureGearEnum> temp = new ArrayList<>();
 
@@ -1377,7 +1454,7 @@ public class SelectionUtils {
                 }
             }
 
-            results.addAll(intermediary);
+            results.addAll(items.stream().filter(item -> intermediary.contains(item.baseItem())).collect(Collectors.toList()));
             resultsScroll.repaint();
         });
 
@@ -1385,162 +1462,24 @@ public class SelectionUtils {
         //End making individual search panels
 
         searchDialog.add(parentPanel);
-        searchDialog.setSize(500,600);
+        searchDialog.setSize(750,700);
         searchDialog.setLocationRelativeTo(null);
         searchDialog.setVisible(true);
 
         while(!selected.get()){}
 
-        ArrayList<Item> itemsSelected = new ArrayList<>();
+        ArrayList<GenItem> toReturn = new ArrayList<>();
         int[] indices = resultsList.getSelectedIndices();
-        for(int i : indices) itemsSelected.add(results.get(i));
-        int[] toReturn = new int[itemsSelected.size()];
-        int index = 0;
-        for(int i = 0; i < items.size(); i++){
-            if(itemsSelected.contains(items.get(i))){
-                toReturn[index] = i;
-                index++;
-            }
-        }
+        for(int i : indices) toReturn.add(results.get(i));
 
         searchDialog.dispose();
 
         return toReturn;
     }
 
-    public static List<GenItem> chooseItemFromList(List<Item> itemChoices, String title){
-        AtomicBoolean indexSet = new AtomicBoolean(false);
-        JFrame itemChooseFrame = new JFrame(title);
-        JPanel panel = new JPanel(new BorderLayout());
-        itemChooseFrame.add(panel);
-        JList<Item> list = new JList<>(itemChoices.toArray(new Item[itemChoices.size()]));
-        list.setCellRenderer(new ItemCellRenderer(false));
-
-        list.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                JList list = (JList)evt.getSource();
-                if (evt.getClickCount() > 1) {
-                    int index = list.locationToIndex(evt.getPoint());
-                    Item.showItemDetails(itemChoices.get(index));
-                }
-            }
-        });
-
-        JScrollPane scrollList = new JScrollPane(list);
-        panel.add(scrollList,BorderLayout.CENTER);
-        JButton choose = new JButton("Choose selected item(s)");
-        choose.addActionListener(e -> {
-            if(list.getSelectedIndex() > -1){
-                indices = list.getSelectedIndices();
-                indexSet.set(true);
-            }
-        });
-        panel.add(choose, BorderLayout.SOUTH);
-
-        JButton searchButton = new JButton("Search these items");
-        searchButton.addActionListener(e ->{
-            (new Thread(){
-                public void run(){
-                    int[] indexes = searchItems(itemChoices, itemChooseFrame);
-                    int[] current = list.getSelectedIndices();
-                    int[] newSet;
-                    if(current.length > 0) {
-                        newSet = new int[indexes.length + current.length];
-                        for (int i = 0; i < current.length; i++) newSet[i] += current[i];
-                        for (int i = current.length; i < newSet.length; i++) {
-                            newSet[i] = indexes[i - current.length];
-                        }
-                    } else newSet = indexes;
-
-                    list.setSelectedIndices(newSet);
-                }
-            }).start();
-        });
-
-        JButton customItem = new JButton("Choose custom item");
-        customItem.addActionListener(e -> {
-            JDialog customItemDialog = new JDialog(itemChooseFrame, "Choose a custom item");
-            customItemDialog.setSize(340,80);
-            JPanel customFeatPanel = new JPanel();
-            customItemDialog.add(customFeatPanel);
-            JButton create = new JButton("Create a new item");
-            JButton load = new JButton("Load an existing item");
-            customFeatPanel.add(create);
-            customFeatPanel.add(load);
-            create.addActionListener(evt -> {
-                customItemDialog.dispose();
-                (new Thread(){
-                    public void run(){
-                        Item item = Item.createNewItem(itemChooseFrame);
-                        if(item != null){
-                            itemChoices.add(item);
-                            int[] current = list.getSelectedIndices();
-                            int[] newIndices = new int[current.length + 1];
-                            for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = itemChoices.size() - 1;
-                            list.setListData(itemChoices.toArray(new Item[itemChoices.size()]));
-                            list.setSelectedIndices(newIndices);
-                        }
-                    }
-                }).start();
-            });
-
-            load.addActionListener(evt -> {
-                customItemDialog.dispose();
-                JFileChooser loadChooser = new JFileChooser();
-                int returned = loadChooser.showOpenDialog(itemChooseFrame);
-                if(returned == JFileChooser.APPROVE_OPTION){
-                    Item item = null;
-                    try{
-                        FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
-                        ObjectInputStream objIn = new ObjectInputStream(fileIn);
-                        item = (Item)(objIn.readObject());
-
-                    } catch (FileNotFoundException ex){
-                        Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (IOException ex){
-                        Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (ClassNotFoundException ex){
-                        Pathfinder.showError("Not an item","It doesn't seem that there's an item saved in that file.\nThe file may be corrupt.");
-                    } catch (ClassCastException ex){
-                        Pathfinder.showError("Not an item", "It appears this is some other kind of Java object.");
-                    }
-                    if(item != null){
-                        itemChoices.add(item);
-                        int[] current = list.getSelectedIndices();
-                        int[] newIndices = new int[current.length + 1];
-                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = itemChoices.size() - 1;
-                        list.setListData(itemChoices.toArray(new Item[itemChoices.size()]));
-                        list.setSelectedIndices(newIndices);
-                    }
-                }
-            });
-            customItemDialog.setVisible(true);
-        });
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(searchButton, BorderLayout.CENTER);
-        top.add(customItem, BorderLayout.WEST);
-        panel.add(top, BorderLayout.NORTH);
-
-        itemChooseFrame.setSize(340, ((20+itemChoices.size()*10) < 600 ? (20+itemChoices.size()*15) : 600));
-        itemChooseFrame.setLocationRelativeTo(null);
-        itemChooseFrame.setVisible(true);
-
-        while(!indexSet.get()){}
-        itemChooseFrame.dispose();
-        ArrayList<GenItem> toReturn = new ArrayList<>();
-        for(int i : indices) toReturn.add( itemChoices.get(i) instanceof GenItem ? (GenItem)itemChoices.get(i) : new GenItem(itemChoices.get(i)) );
-        return toReturn;
-    }
-
-    public static int[] searchSpells(List<Spell> spells, JFrame parent){
-        JDialog searchDialog = new JDialog(parent, "Spell Search");
+    public static List<Spell> searchSpells(List<Spell> spells, Window parent, String title, int maxPicks){
+        JDialog searchDialog = new JDialog(parent, title);
         AtomicBoolean selected = new AtomicBoolean(false);
-        AtomicBoolean needsMythic = new AtomicBoolean(false);
-        AtomicBoolean needsAugment = new AtomicBoolean(false);
 
         ArrayList<Spell> results = new ArrayList<>();
         results.addAll(spells);
@@ -1549,8 +1488,8 @@ public class SelectionUtils {
         GridBagConstraints c = new GridBagConstraints();
         JLabel name = new JLabel("Name: ");
         name.setBorder(BorderFactory.createLineBorder(Color.black));
-        JLabel subschool = new JLabel("Subschool: ");
-        subschool.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel school = new JLabel("School: ");
+        school.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel descriptor = new JLabel("Descriptor: ");
         descriptor.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel classLabel = new JLabel("Class: ");
@@ -1559,7 +1498,7 @@ public class SelectionUtils {
         level.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel bloodline = new JLabel("Bloodline");
         bloodline.setBorder(BorderFactory.createLineBorder(Color.black));
-        JLabel bloodlineLevel = new JLabel("Level: ");
+        JLabel bloodlineLevel = new JLabel("Bloodline Level: ");
         bloodlineLevel.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel domain = new JLabel("Domain: ");
         domain.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -1576,10 +1515,10 @@ public class SelectionUtils {
 
         JTextField classField = new JTextField();
 
-        JComboBox<String> subschoolField = new JComboBox<>();
-        subschoolField.addItem("");
-        subschoolField.setPreferredSize(new Dimension(146, 25));
-        subschoolField.setEditable(true);
+        JComboBox<String> schoolfield = new JComboBox<>();
+        schoolfield.addItem("");
+        schoolfield.setPreferredSize(new Dimension(146, 25));
+        schoolfield.setEditable(true);
         JComboBox<String> descriptorField = new JComboBox<>();
         descriptorField.addItem("");
         descriptorField.setPreferredSize(new Dimension(146, 25));
@@ -1604,8 +1543,8 @@ public class SelectionUtils {
         for(String s : Spells.spellTypeNames) typeField.addItem(s);
 
         ArrayList<String> spellNames = new ArrayList<>();
-        ArrayList<String> subschoolDone = new ArrayList<>();
-        subschoolDone.add("");
+        ArrayList<String> schoolDone = new ArrayList<>();
+        schoolDone.add("");
         ArrayList<String> descriptorDone = new ArrayList<>();
         descriptorDone.add("");
         ArrayList<String> bloodlineDone = new ArrayList<>();
@@ -1617,9 +1556,9 @@ public class SelectionUtils {
 
         for(Spell spell : Spells.getSpells()){
             spellNames.add(spell.name);
-            if(!subschoolDone.contains(spell.subschool.toLowerCase())){
-                subschoolField.addItem(spell.subschool);
-                subschoolDone.add(spell.subschool.toLowerCase());
+            if(!schoolDone.contains(spell.school.toLowerCase())){
+                schoolfield.addItem(spell.school);
+                schoolDone.add(spell.school.toLowerCase());
             }
             for(String s : spell.descriptor.split(",")){
                 s = s.trim();
@@ -1652,10 +1591,10 @@ public class SelectionUtils {
 
         AutofillTextArea nameField = new AutofillTextArea(spellNames, 5);
 
-        JTextField levelField = new JTextField();
-        JTextField bloodlineLevelField = new JTextField();
-        JCheckBox hasMythicBox = new JCheckBox();
-        JCheckBox hasAugmentBox = new JCheckBox();
+        NumberInequalityField levelField = new NumberInequalityField();
+        NumberInequalityField bloodlineLevelField = new NumberInequalityField();
+        YesNoEither augment = new YesNoEither(true);
+        YesNoEither mythic = new YesNoEither(true);
         JTextField descriptionContainsField = new JTextField();
 
         c.weighty = 0;
@@ -1663,7 +1602,7 @@ public class SelectionUtils {
         c.fill = GridBagConstraints.BOTH;
         panel.add(name, c);
         c.gridy = 1;
-        panel.add(subschool, c);
+        panel.add(school, c);
         c.gridy = 2;
         panel.add(descriptor, c);
         c.gridy = 3;
@@ -1695,7 +1634,7 @@ public class SelectionUtils {
         c.weightx = 1;
         panel.add(nameField, c);
         c.gridy = 1;
-        panel.add(subschoolField, c);
+        panel.add(schoolfield, c);
         c.gridy = 2;
         panel.add(descriptorField, c);
         c.gridy = 3;
@@ -1715,13 +1654,13 @@ public class SelectionUtils {
         c.gridy = 1;
         panel.add(domainField, c);
         c.gridy = 2;
-        panel.add(hasAugmentBox, c);
+        panel.add(augment, c);
         c.gridy = 3;
         panel.add(levelField, c);
         c.gridy = 4;
         panel.add(bloodlineLevelField, c);
         c.gridy = 5;
-        panel.add(hasMythicBox, c);
+        panel.add(mythic, c);
 
         JButton searchButton = new JButton("Search with these values");
         c.gridy = 7;
@@ -1731,23 +1670,24 @@ public class SelectionUtils {
 
 
         JList<Spell> resultsList = new JList<>();
-        resultsList.setCellRenderer(new SpellCellRenderer());
-
-        resultsList.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                JList list = (JList)evt.getSource();
-                if (evt.getClickCount() > 1) {
-                    int index = list.locationToIndex(evt.getPoint());
-                    Spells.showSpellDetails(results.get(index));
-                }
-            }
-        });
 
         JScrollPane resultsScroll = new JScrollPane(resultsList){
             public void paintComponent(Graphics g){
                 resultsList.setListData(results.toArray(new Spell[results.size()]));
             }
         };
+
+        resultsList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                JList list = (JList)evt.getSource();
+                if (evt.getClickCount() > 1) {
+                    int index = list.locationToIndex(evt.getPoint());
+                    Spells.showSpellDetails(results.get(index), results.get(index).name, spells, results, resultsScroll);
+                }
+            }
+        });
+
+
         c.gridy++;
         c.weightx = 1;
         c.weighty = 1;
@@ -1756,113 +1696,196 @@ public class SelectionUtils {
         JButton select = new JButton("Select chosen spell(s)");
         c.gridy++;
         c.weighty = 0;
+        c.gridwidth = 2;
         panel.add(select, c);
 
-        select.addActionListener(e -> selected.set(true));
+        JButton create = new JButton("Create New");
+        c.gridx = 2;
+        c.gridwidth = 1;
+        panel.add(create, c);
+
+        JButton load = new JButton("Load Spell");
+        c.gridx = 3;
+        panel.add(load, c);
+
+        load.addActionListener(e -> {
+            JFileChooser loadChooser = new JFileChooser();
+            int returned = loadChooser.showOpenDialog(searchDialog);
+            if(returned == JFileChooser.APPROVE_OPTION){
+                Spell spell = null;
+                try{
+                    FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+                    ObjectInputStream objIn = new ObjectInputStream(fileIn);
+                    spell = (Spell)(objIn.readObject());
+
+                } catch (FileNotFoundException ex){
+                    Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+                    ex.printStackTrace();
+                } catch (IOException ex){
+                    Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
+                    ex.printStackTrace();
+                } catch (ClassNotFoundException ex){
+                    Pathfinder.showError("Not a spell","It doesn't seem that there's a spell saved in that file.\nThe file may be corrupt.");
+                } catch (ClassCastException ex){
+                    Pathfinder.showError("Not a spell", "It appears this is some other kind of Java object.");
+                }
+                if(spell != null){
+                    spells.add(spell);
+                    results.add(spell);
+                    int[] current = resultsList.getSelectedIndices();
+                    int[] newIndices = new int[current.length + 1];
+                    for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                    newIndices[newIndices.length - 1] = results.size() - 1;
+                    resultsList.setListData(results.toArray(new Spell[results.size()]));
+                    resultsScroll.repaint();
+                    resultsList.setSelectedIndices(newIndices);
+
+                    JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                    vertical.setValue( vertical.getMaximum() );
+                }
+            }
+        });
+
+        create.addActionListener(e -> {
+            (new Thread(){
+                public void run(){
+                    Spell spell = Spells.createNewSpell(searchDialog);
+                    if(spell != null){
+                        spells.add(spell);
+                        results.add(spell);
+                        int[] current = resultsList.getSelectedIndices();
+                        int[] newIndices = new int[current.length + 1];
+                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                        newIndices[newIndices.length - 1] = results.size() - 1;
+                        resultsList.setListData(results.toArray(new Spell[results.size()]));
+                        resultsScroll.repaint();
+                        resultsList.setSelectedIndices(newIndices);
+
+                        JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                        vertical.setValue( vertical.getMaximum() );
+                    }
+                }
+            }).start();
+        });
+
+        select.addActionListener(e -> {
+            if(resultsList.getSelectedIndex() > -1){
+                if(maxPicks == -1 || resultsList.getSelectedIndices().length == maxPicks || (resultsList.getSelectedIndices().length < maxPicks && Pathfinder.askYesNo("You have only selected " + resultsList.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (resultsList.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
+                    selected.set(true);
+                }
+            }
+        });
 
         searchDialog.add(panel);
-        searchDialog.setSize(500,600);
+        searchDialog.setSize(535,600);
         searchDialog.setLocationRelativeTo(null);
         searchDialog.setVisible(true);
 
-        hasAugmentBox.addActionListener(e -> needsAugment.set(!needsAugment.get()));
-        hasMythicBox.addActionListener(e -> needsMythic.set(!needsMythic.get()));
 
+        searchButton.addActionListener( e -> {
+            results.clear();
+            results.addAll(spells);
 
-        searchButton.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
+            ArrayList<Spell> intermediary = new ArrayList<>();
+
+            if(!nameField.getText().equals("")){
+                intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
                 results.clear();
-                results.addAll(spells);
-
-                ArrayList<Spell> intermediary = new ArrayList<>();
-
-                if(!nameField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.name.toLowerCase().contains(nameField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!((String)subschoolField.getSelectedItem()).equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.subschool.toLowerCase().contains(((String)subschoolField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!((String)descriptorField.getSelectedItem()).equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> spell.descriptor.toLowerCase().contains(((String)descriptorField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!classField.getText().equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> Spells.spellLevelFor(classField.getText(), spell) != -1).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                    if(!levelField.getText().trim().equals("")){
-                        intermediary.addAll(results.stream().filter(spell -> Spells.spellLevelFor(classField.getText(), spell) == Integer.parseInt(levelField.getText())).collect(Collectors.toList()));
-                        results.clear();
-                        results.addAll(intermediary);
-                        intermediary.clear();
-                    }
-                }
-                if(!((String)bloodlineField.getSelectedItem()).equals("")){
-                    intermediary.addAll(results.stream().filter(spell -> {
-                        for(String key : spell.bloodlineLevels.keySet()){
-                            if(((String)bloodlineField.getSelectedItem()).equalsIgnoreCase(key))
-                                return true;
-                        }
-                        return false;
-                    }).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                    if(!bloodlineLevelField.getText().trim().equals("")) {
-                        intermediary.addAll(results.stream().filter(spell -> spell.bloodlineLevels.get(((String)bloodlineField.getSelectedItem())) == Integer.parseInt(bloodlineLevelField.getText())).collect(Collectors.toList()));
-                        results.clear();
-                        results.addAll(intermediary);
-                        intermediary.clear();
-                    }
-                }
-                if(!((String)domainField.getSelectedItem()).equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.hasDomain && spell.domain.toLowerCase().contains(((String)domainField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsAugment.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.hasAugment).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(needsMythic.get()) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.hasMythic).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!((String)deityField.getSelectedItem()).equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.hasDeity && spell.deity.toLowerCase().contains(((String)deityField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!((String)typeField.getSelectedItem()).equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> Spells.spellHasType(((String)typeField.getSelectedItem()), spell)).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-                if(!descriptionContainsField.getText().equals("")) {
-                    intermediary.addAll(results.stream().filter(spell -> spell.basicDescription.toLowerCase().contains(descriptionContainsField.getText().toLowerCase())).collect(Collectors.toList()));
-                    results.clear();
-                    results.addAll(intermediary);
-                    intermediary.clear();
-                }
-
-                resultsScroll.repaint();
+                results.addAll(intermediary);
+                intermediary.clear();
             }
+            if(!((String)schoolfield.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(spell -> spell.school.toLowerCase().contains(((String)schoolfield.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)descriptorField.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(spell -> spell.descriptor.toLowerCase().contains(((String)descriptorField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!classField.getText().equals("")){
+                intermediary.addAll(results.stream().filter(spell -> Spells.spellLevelFor(classField.getText(), spell) != -1).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+                if(!levelField.isEmpty()){
+                    intermediary.addAll(results.stream().filter(spell -> levelField.numberSatisfies(Spells.spellLevelFor(classField.getText(), spell))).collect(Collectors.toList()));
+                    results.clear();
+                    results.addAll(intermediary);
+                    intermediary.clear();
+                }
+            }
+            if(!levelField.isEmpty()){
+                intermediary.addAll(results.stream().filter(spell -> levelField.anySatisfiesExcept(spell.levelRequirements, -1)).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)bloodlineField.getSelectedItem()).equals("")){
+                intermediary.addAll(results.stream().filter(spell -> {
+                    for(String key : spell.bloodlineLevels.keySet()){
+                        if(((String)bloodlineField.getSelectedItem()).equalsIgnoreCase(key))
+                            return true;
+                    }
+                    return false;
+                }).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+                if(!bloodlineLevelField.isEmpty()) {
+                    intermediary.addAll(results.stream().filter(spell -> bloodlineLevelField.numberSatisfies(spell.bloodlineLevels.get((String)bloodlineField.getSelectedItem()))).collect(Collectors.toList()));
+                    results.clear();
+                    results.addAll(intermediary);
+                    intermediary.clear();
+                }
+            }
+            if(!bloodlineLevelField.isEmpty()) {
+                intermediary.addAll(results.stream().filter(spell -> bloodlineLevelField.anySatisfiesExcept(spell.bloodlineLevels.values(), -1)).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)domainField.getSelectedItem()).equals("")) {
+                intermediary.addAll(results.stream().filter(spell -> spell.hasDomain && spell.domain.toLowerCase().contains(((String)domainField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(augment.notEither()) {
+                intermediary.addAll(results.stream().filter(spell -> spell.hasAugment == augment.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(mythic.notEither()) {
+                intermediary.addAll(results.stream().filter(spell -> spell.hasMythic == mythic.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)deityField.getSelectedItem()).equals("")) {
+                intermediary.addAll(results.stream().filter(spell -> spell.hasDeity && spell.deity.toLowerCase().contains(((String)deityField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!((String)typeField.getSelectedItem()).equals("")) {
+                intermediary.addAll(results.stream().filter(spell -> Spells.spellHasType(((String)typeField.getSelectedItem()), spell)).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(!descriptionContainsField.getText().equals("")) {
+                intermediary.addAll(results.stream().filter(spell -> spell.basicDescription.toLowerCase().contains(descriptionContainsField.getText().toLowerCase())).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+
+            resultsScroll.repaint();
         });
 
 
@@ -1871,41 +1894,16 @@ public class SelectionUtils {
         ArrayList<Spell> spellsSelected = new ArrayList<>();
         int[] indices = resultsList.getSelectedIndices();
         for(int i : indices) spellsSelected.add(results.get(i));
-        int[] toReturn = new int[spellsSelected.size()];
-        int index = 0;
-        for(int i = 0; i < spells.size(); i++){
-            if(spellsSelected.contains(spells.get(i))){
-                toReturn[index] = i;
-                index++;
-            }
-        }
 
         searchDialog.dispose();
 
-        return toReturn;
+        return spellsSelected;
     }
 
-    public static int[] searchFeats(List<Feat> feats, JFrame parent){
-        JDialog searchDialog = new JDialog(parent, "Feat Search");
+    public static List<Feat> searchFeats(List<Feat> feats, String title, int maxPicks, Window parent){
+        JDialog searchDialog = new JDialog(parent, title);
 
         AtomicBoolean selected = new AtomicBoolean(false);
-        AtomicBoolean needsTeamwork = new AtomicBoolean(false);
-        AtomicBoolean needsCritical = new AtomicBoolean(false);
-        AtomicBoolean needsGrit = new AtomicBoolean(false);
-        AtomicBoolean needsStyle = new AtomicBoolean(false);
-        AtomicBoolean needsPerformance = new AtomicBoolean(false);
-        AtomicBoolean needsRacial = new AtomicBoolean(false);
-        AtomicBoolean needsCompanionFamiliar = new AtomicBoolean(false);
-        AtomicBoolean needsCanDoMultiple = new AtomicBoolean(false);
-        AtomicBoolean needsPanache = new AtomicBoolean(false);
-        AtomicBoolean needsBetrayal = new AtomicBoolean(false);
-        AtomicBoolean needsTargeting = new AtomicBoolean(false);
-        AtomicBoolean needsEsoteric = new AtomicBoolean(false);
-        AtomicBoolean needsStare = new AtomicBoolean(false);
-        AtomicBoolean needsWeaponMastery = new AtomicBoolean(false);
-        AtomicBoolean needsItemMastery = new AtomicBoolean(false);
-        AtomicBoolean needsArmorMastery = new AtomicBoolean(false);
-        AtomicBoolean needsShieldMastery = new AtomicBoolean(false);
 
         ArrayList<Feat> results = new ArrayList<>();
         results.addAll(feats);
@@ -1915,10 +1913,8 @@ public class SelectionUtils {
 
         JLabel name = new JLabel("Name: ");
         name.setBorder(BorderFactory.createLineBorder(Color.black));
-        JLabel type = new JLabel("Type: ");
-        type.setBorder(BorderFactory.createLineBorder(Color.black));
-        JLabel subType = new JLabel("Sub-type: ");
-        subType.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel source = new JLabel("Source: ");
+        source.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel racial = new JLabel("Racial: ");
         racial.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel raceName = new JLabel("Race Name: ");
@@ -1957,108 +1953,135 @@ public class SelectionUtils {
         armorMastery.setBorder(BorderFactory.createLineBorder(Color.black));
         JLabel shieldMastery = new JLabel("Shield mastery: ");
         shieldMastery.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel general = new JLabel("General: ");
+        general.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel combat = new JLabel("Combat: ");
+        combat.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel itemCreation = new JLabel("Item Creation: ");
+        itemCreation.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel metamagic = new JLabel("Metamagic: ");
+        metamagic.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel monster = new JLabel("Monster: ");
+        monster.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel achievement = new JLabel("Achievement: ");
+        achievement.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel story = new JLabel("Story: ");
+        story.setBorder(BorderFactory.createLineBorder(Color.black));
+        JLabel mythic = new JLabel("Mythic: ");
+        mythic.setBorder(BorderFactory.createLineBorder(Color.black));
 
-        JTextField fullTextField = new JTextField();
 
         JComboBox<String> raceNameField = new JComboBox<>();
-        JComboBox<String> subtypeField = new JComboBox<>();
-        JComboBox<String> typeField = new JComboBox<>();
         raceNameField.setEditable(true);
-        subtypeField.setEditable(true);
-        typeField.setEditable(true);
-        typeField.addItem("");
         ArrayList<String> alreadyAddedRace = new ArrayList<>();
-        ArrayList<String> alreadyAddedType = new ArrayList<>();
-        ArrayList<String> alreadyAddedSubtype = new ArrayList<>();
         ArrayList<String> featNames = new ArrayList<>();
         for(Feat feat : Feats.getFeats()){
             featNames.add(feat.name);
-            String[] names;
-            if(feat.raceName.contains(",")) names = feat.raceName.split(",");
-            else names = feat.raceName.split("\\|");
-            for(String race : names){
+
+            String[] races;
+            if(feat.raceName.contains(",")) races = feat.raceName.split(",");
+            else races = feat.raceName.split("\\|");
+            for(String race : races){
                 String toCheck = race.trim();
                 if(!alreadyAddedRace.contains(toCheck.toLowerCase())){
                     raceNameField.addItem(toCheck);
                     alreadyAddedRace.add(toCheck.toLowerCase());
                 }
             }
-            if(!alreadyAddedType.contains(feat.type.toLowerCase())){
-                alreadyAddedType.add(feat.type.toLowerCase());
-                typeField.addItem(feat.type);
-            }
-            if(!alreadyAddedSubtype.contains(feat.subType.toLowerCase())){
-                alreadyAddedSubtype.add(feat.subType.toLowerCase());
-                subtypeField.addItem(feat.subType);
-            }
         }
 
+        JTextField fullTextField = new JTextField();
         AutofillTextArea nameField = new AutofillTextArea(featNames, 5);
+        JTextField sourceField = new JTextField();
 
+        YesNoEither racialBox = new YesNoEither(true);
+        YesNoEither generalBox = new YesNoEither(false);
+        YesNoEither combatBox = new YesNoEither(false);
+        YesNoEither itemCreationBox = new YesNoEither(false);
+        YesNoEither metamagicBox = new YesNoEither(false);
+        YesNoEither monsterBox = new YesNoEither(false);
+        YesNoEither achievementBox = new YesNoEither(false);
+        YesNoEither storyBox = new YesNoEither(false);
+        YesNoEither mythicBox = new YesNoEither(false);
+        YesNoEither teamworkBox = new YesNoEither(false);
+        YesNoEither criticalBox = new YesNoEither(false);
+        YesNoEither gritBox = new YesNoEither(false);
+        YesNoEither styleBox = new YesNoEither(false);
+        YesNoEither performanceBox = new YesNoEither(false);
+        YesNoEither companionFamiliarBox = new YesNoEither(false);
+        YesNoEither canDoMultipleBox = new YesNoEither(false);
+        YesNoEither panacheBox = new YesNoEither(false);
+        YesNoEither betrayalBox = new YesNoEither(false);
+        YesNoEither targetingBox = new YesNoEither(false);
+        YesNoEither esotericBox = new YesNoEither(false);
+        YesNoEither stareBox = new YesNoEither(false);
+        YesNoEither weaponMasteryBox = new YesNoEither(false);
+        YesNoEither itemMasteryBox = new YesNoEither(false);
+        YesNoEither armorMasteryBox = new YesNoEither(false);
+        YesNoEither shieldMasteryBox = new YesNoEither(false);
 
-        JCheckBox racialBox = new JCheckBox();
-        JCheckBox teamworkBox = new JCheckBox();
-        JCheckBox criticalBox = new JCheckBox();
-        JCheckBox gritBox = new JCheckBox();
-        JCheckBox styleBox = new JCheckBox();
-        JCheckBox performanceBox = new JCheckBox();
-        JCheckBox companionFamiliarBox = new JCheckBox();
-        JCheckBox canDoMultipleBox = new JCheckBox();
-        JCheckBox panacheBox = new JCheckBox();
-        JCheckBox betrayalBox = new JCheckBox();
-        JCheckBox targetingBox = new JCheckBox();
-        JCheckBox esotericBox = new JCheckBox();
-        JCheckBox stareBox = new JCheckBox();
-        JCheckBox weaponMasteryBox = new JCheckBox();
-        JCheckBox itemMasteryBox = new JCheckBox();
-        JCheckBox armorMasteryBox = new JCheckBox();
-        JCheckBox shieldMasteryBox = new JCheckBox();
-
-        c.fill = GridBagConstraints.BOTH;
-        c.weightx = 0;
-        c.weighty = 0;
         c.gridy = 0;
-        c.gridx = 0;
+        c.weightx = 0;
+        c.fill = GridBagConstraints.BOTH;
+        c.gridwidth = 1;
         panel.add(name, c);
-        c.gridy = 1;
-        panel.add(type,c);
-        c.gridy = 2;
-        panel.add(subType, c);
-        c.gridy = 3;
+        c.gridy++;
         panel.add(containsText, c);
-        c.gridy = 4;
+        c.gridy++;
+        panel.add(source, c);
+        c.gridy++;
         panel.add(racial, c);
-        c.gridx = 2;
+        c.gridy++;
         panel.add(raceName, c);
+
+        c.gridx = 1;
         c.weightx = 1;
         c.gridy = 0;
-        c.gridx = 1;
         panel.add(nameField, c);
-        c.gridy = 1;
-        panel.add(typeField, c);
-        c.gridy = 2;
-        panel.add(subtypeField, c);
-        c.gridy = 3;
+        c.gridy++;
         panel.add(fullTextField, c);
-        c.gridy = 4;
+        c.gridy++;
+        panel.add(sourceField, c);
+        c.gridy++;
         panel.add(racialBox, c);
-        c.gridx = 3;
+        c.gridy++;
         panel.add(raceNameField, c);
+
+
+
 
         JPanel inner = new JPanel(new GridBagLayout());
         JScrollPane scroll = new JScrollPane(inner);
-        scroll.setPreferredSize(new Dimension(0,0));
+        scroll.setPreferredSize(new Dimension(210,0));
+        scroll.setMinimumSize(new Dimension(210,0));
         c.gridx = 2;
         c.gridy = 0;
         c.gridwidth = 2;
-        c.gridheight = 4;
-        c.weightx = 1;
+        c.gridheight = 5;
+        c.weightx = 0;
         c.weighty = 0;
         panel.add(scroll, c);
         c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
+        c.gridy = 0;
+        inner.add(general, c);
+        c.gridy++;
+        inner.add(combat, c);
+        c.gridy++;
+        inner.add(itemCreation, c);
+        c.gridy++;
+        inner.add(metamagic, c);
+        c.gridy++;
+        inner.add(monster, c);
+        c.gridy++;
+        inner.add(achievement, c);
+        c.gridy++;
+        inner.add(story, c);
+        c.gridy++;
+        inner.add(mythic, c);
+        c.gridy++;
         inner.add(teamwork, c);
-        c.gridy = 1;
+        c.gridy++;
         inner.add(critical,c );
         c.gridy++;
         inner.add(grit, c);
@@ -2091,6 +2114,22 @@ public class SelectionUtils {
         c.gridy = 0;
         c.gridx = 1;
         c.weightx = 1;
+        inner.add(generalBox, c);
+        c.gridy++;
+        inner.add(combatBox, c);
+        c.gridy++;
+        inner.add(itemCreationBox, c);
+        c.gridy++;
+        inner.add(metamagicBox, c);
+        c.gridy++;
+        inner.add(monsterBox, c);
+        c.gridy++;
+        inner.add(achievementBox, c);
+        c.gridy++;
+        inner.add(storyBox, c);
+        c.gridy++;
+        inner.add(mythicBox, c);
+        c.gridy++;
         inner.add(teamworkBox, c);
         c.gridy++;
         inner.add(criticalBox, c);
@@ -2123,25 +2162,6 @@ public class SelectionUtils {
         c.gridy++;
         inner.add(shieldMasteryBox, c);
 
-        racialBox.addActionListener(e -> needsRacial.set(!needsRacial.get()));
-        teamworkBox.addActionListener(e -> needsTeamwork.set(!needsTeamwork.get()));
-        criticalBox.addActionListener(e -> needsCritical.set(!needsCritical.get()));
-        gritBox.addActionListener(e -> needsGrit.set(!needsGrit.get()));
-        styleBox.addActionListener(e -> needsStyle.set(!needsStyle.get()));
-        performanceBox.addActionListener(e -> needsPerformance.set(!needsPerformance.get()));
-        companionFamiliarBox.addActionListener(e -> needsCompanionFamiliar.set(!needsCompanionFamiliar.get()));
-        canDoMultipleBox.addActionListener(e -> needsCanDoMultiple.set(!needsCanDoMultiple.get()));
-        panacheBox.addActionListener(e -> needsPanache.set(!needsPanache.get()));
-        betrayalBox.addActionListener(e -> needsBetrayal.set(!needsBetrayal.get()));
-        targetingBox.addActionListener(e -> needsTargeting.set(!needsTargeting.get()));
-        esotericBox.addActionListener(e -> needsEsoteric.set(!needsEsoteric.get()));
-        stareBox.addActionListener(e -> needsStare.set(!needsStare.get()));
-        weaponMasteryBox.addActionListener(e -> needsWeaponMastery.set(!needsWeaponMastery.get()));
-        itemMasteryBox.addActionListener(e -> needsItemMastery.set(!needsItemMastery.get()));
-        armorMasteryBox.addActionListener(e -> needsArmorMastery.set(!needsArmorMastery.get()));
-        shieldMasteryBox.addActionListener(e -> needsShieldMastery.set(!needsShieldMastery.get()));
-
-
         JButton searchButton = new JButton("Search with these values");
         c.gridy = 7;
         c.gridx = 0;
@@ -2150,23 +2170,23 @@ public class SelectionUtils {
 
 
         JList<Feat> resultsList = new JList<>();
-        resultsList.setCellRenderer(new FeatCellRenderer());
-
-        resultsList.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                JList list = (JList)evt.getSource();
-                if (evt.getClickCount() > 1) {
-                    int index = list.locationToIndex(evt.getPoint());
-                    Feats.showFeatDetails(results.get(index));
-                }
-            }
-        });
 
         JScrollPane resultsScroll = new JScrollPane(resultsList){
             public void paintComponent(Graphics g){
                 resultsList.setListData(results.toArray(new Feat[results.size()]));
             }
         };
+
+        resultsList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                JList list = (JList)evt.getSource();
+                if (evt.getClickCount() > 1) {
+                    int index = list.locationToIndex(evt.getPoint());
+                    Feats.showFeatDetails(results.get(index), results.get(index).name, results, feats, resultsScroll);
+                }
+            }
+        });
+
         c.gridy++;
         c.weightx = 1;
         c.weighty = 1;
@@ -2175,9 +2195,86 @@ public class SelectionUtils {
         JButton select = new JButton("Select chosen feat(s)");
         c.gridy++;
         c.weighty = 0;
+        c.gridwidth = 2;
         panel.add(select, c);
 
-        select.addActionListener(e -> selected.set(true));
+        JButton create = new JButton("Create new");
+        c.gridx = 2;
+        c.gridwidth = 1;
+        panel.add(create, c);
+
+        JButton load = new JButton("Load Feat");
+        c.gridx = 3;
+        panel.add(load, c);
+
+        create.addActionListener(e -> {
+            (new Thread(){
+                public void run(){
+                    Feat feat = Feats.createNewFeat(searchDialog);
+                    if(feat != null){
+                        feats.add(feat);
+                        results.add(feat);
+                        int[] current = resultsList.getSelectedIndices();
+                        int[] newIndices = new int[current.length + 1];
+                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                        newIndices[newIndices.length - 1] = results.size() - 1;
+                        resultsList.setListData(results.toArray(new Feat[results.size()]));
+                        resultsScroll.repaint();
+                        resultsList.setSelectedIndices(newIndices);
+
+                        JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                        vertical.setValue( vertical.getMaximum() );
+                    }
+                }
+            }).start();
+        });
+
+        load.addActionListener(e -> {
+            JFileChooser loadChooser = new JFileChooser();
+            int returned = loadChooser.showOpenDialog(searchDialog);
+            if(returned == JFileChooser.APPROVE_OPTION){
+                Feat feat = null;
+                try{
+                    FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
+                    ObjectInputStream objIn = new ObjectInputStream(fileIn);
+                    feat = (Feat)(objIn.readObject());
+
+                } catch (FileNotFoundException ex){
+                    Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
+                    ex.printStackTrace();
+                } catch (IOException ex){
+                    Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
+                    ex.printStackTrace();
+                } catch (ClassNotFoundException ex){
+                    Pathfinder.showError("Not a feat","It doesn't seem that there's a feat saved in that file.\nThe file may be corrupt.");
+                } catch (ClassCastException ex){
+                    Pathfinder.showError("Not a feat", "It appears this is some other kind of Java object.");
+                }
+                if(feat != null){
+                    feats.add(feat);
+                    results.add(feat);
+                    int[] current = resultsList.getSelectedIndices();
+                    int[] newIndices = new int[current.length + 1];
+                    for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
+                    newIndices[newIndices.length - 1] = results.size() - 1;
+                    resultsList.setListData(results.toArray(new Feat[results.size()]));
+                    resultsScroll.repaint();
+                    resultsList.setSelectedIndices(newIndices);
+
+                    JScrollBar vertical = resultsScroll.getVerticalScrollBar();
+                    vertical.setValue( vertical.getMaximum() );
+                }
+            }
+        });
+
+        select.addActionListener(e -> {
+            if(resultsList.getSelectedIndices().length > 0){
+                if(maxPicks == -1 || resultsList.getSelectedIndices().length == maxPicks || (resultsList.getSelectedIndices().length < maxPicks && Pathfinder.askYesNo("You have only selected " + resultsList.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (resultsList.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
+                    indices = resultsList.getSelectedIndices();
+                    selected.set(true);
+                }
+            }
+        });
 
 
         searchButton.addActionListener(e -> {
@@ -2192,128 +2289,170 @@ public class SelectionUtils {
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(!((String)typeField.getSelectedItem()).equals("")){
-                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains(((String)typeField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                results.clear();
-                results.addAll(intermediary);
-                intermediary.clear();
-            }
-            if(!((String)subtypeField.getSelectedItem()).equals("")){
-                intermediary.addAll(results.stream().filter(feat -> feat.subType.toLowerCase().contains(((String)subtypeField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
-                results.clear();
-                results.addAll(intermediary);
-                intermediary.clear();
-            }
             if(!fullTextField.getText().equals("")){
                 intermediary.addAll(results.stream().filter(feat -> feat.fullText.toLowerCase().contains(fullTextField.getText().toLowerCase())).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsRacial.get()){
-                intermediary.addAll(results.stream().filter(feat -> feat.racial).collect(Collectors.toList()));
+            if(!sourceField.getText().equals("")){
+                intermediary.addAll(results.stream().filter(feat -> feat.source.toLowerCase().contains(sourceField.getText().toLowerCase())).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
-                if(!((String)raceNameField.getSelectedItem()).trim().equals("")) {
+            }
+            if(racialBox.notEither()){
+                intermediary.addAll(results.stream().filter(feat -> feat.racial == racialBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+                if(!((String)raceNameField.getSelectedItem()).trim().equals("") && racialBox.value()) {
                     intermediary.addAll(results.stream().filter(feat -> feat.raceName.toLowerCase().contains(((String)raceNameField.getSelectedItem()).toLowerCase())).collect(Collectors.toList()));
                     results.clear();
                     results.addAll(intermediary);
                     intermediary.clear();
                 }
             }
-            if(needsTeamwork.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.teamwork).collect(Collectors.toList()));
+            if(generalBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("general") == generalBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsCritical.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.critical).collect(Collectors.toList()));
+            if(combatBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("combat") == combatBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsGrit.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.grit).collect(Collectors.toList()));
+            if(itemCreationBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("item creation") == itemCreationBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsStyle.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.style).collect(Collectors.toList()));
+            if(metamagicBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("metamagic") == metamagicBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsPerformance.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.performance).collect(Collectors.toList()));
+            if(monsterBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("monster") == monsterBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsCompanionFamiliar.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.companionOrFamiliar).collect(Collectors.toList()));
+            if(achievementBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("achievement") == achievementBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsCanDoMultiple.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.canDoMultiple).collect(Collectors.toList()));
+            if(storyBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("story") == storyBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsPanache.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.panache).collect(Collectors.toList()));
+            if(mythicBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.type.toLowerCase().contains("mythic") == mythicBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsBetrayal.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.betrayal).collect(Collectors.toList()));
+            if(teamworkBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.teamwork == teamworkBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsTargeting.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.targeting).collect(Collectors.toList()));
+            if(criticalBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.critical == criticalBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsEsoteric.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.esoteric).collect(Collectors.toList()));
+            if(gritBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.grit == gritBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsStare.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.stare).collect(Collectors.toList()));
+            if(styleBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.style == styleBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsWeaponMastery.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.weaponMastery).collect(Collectors.toList()));
+            if(performanceBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.performance == performanceBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsItemMastery.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.itemMastery).collect(Collectors.toList()));
+            if(companionFamiliarBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.companionOrFamiliar == companionFamiliarBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsArmorMastery.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.armorMastery).collect(Collectors.toList()));
+            if(canDoMultipleBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.canDoMultiple == canDoMultipleBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
             }
-            if(needsShieldMastery.get()) {
-                intermediary.addAll(results.stream().filter(feat -> feat.shieldMastery).collect(Collectors.toList()));
+            if(panacheBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.panache == panacheBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(betrayalBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.betrayal == betrayalBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(targetingBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.targeting == targetingBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(esotericBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.esoteric == esotericBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(stareBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.stare == stareBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(weaponMasteryBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.weaponMastery == weaponMasteryBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(itemMasteryBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.itemMastery == itemMasteryBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(armorMasteryBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.armorMastery == armorMasteryBox.value()).collect(Collectors.toList()));
+                results.clear();
+                results.addAll(intermediary);
+                intermediary.clear();
+            }
+            if(shieldMasteryBox.notEither()) {
+                intermediary.addAll(results.stream().filter(feat -> feat.shieldMastery == shieldMasteryBox.value()).collect(Collectors.toList()));
                 results.clear();
                 results.addAll(intermediary);
                 intermediary.clear();
@@ -2323,292 +2462,19 @@ public class SelectionUtils {
         });
 
         searchDialog.add(panel);
-        searchDialog.setSize(500,600);
+        searchDialog.setSize(460,600);
         searchDialog.setLocationRelativeTo(null);
         searchDialog.setVisible(true);
 
         while(!selected.get()){}
 
-        ArrayList<Feat> spellsSelected = new ArrayList<>();
+        ArrayList<Feat> featsSelected = new ArrayList<>();
         int[] indices = resultsList.getSelectedIndices();
-        for(int i : indices) spellsSelected.add(results.get(i));
-        int[] toReturn = new int[spellsSelected.size()];
-        int index = 0;
-        for(int i = 0; i < feats.size(); i++){
-            if(spellsSelected.contains(feats.get(i))){
-                toReturn[index] = i;
-                index++;
-            }
-        }
+        for(int i : indices) featsSelected.add(results.get(i));
 
         searchDialog.dispose();
 
-        return toReturn;
-    }
-
-    public static List<Spell> chooseSpellFromList(List<Spell> spellChoices, String title, int maxPicks){
-        AtomicBoolean indexSet = new AtomicBoolean(false);
-        String[] choices = new String[spellChoices.size()];
-        for(int i = 0; i < choices.length; i++) choices[i] = spellChoices.get(i).toString();
-        JFrame spellChooseFrame = new JFrame(title);
-        JPanel panel = new JPanel(new BorderLayout());
-        spellChooseFrame.add(panel);
-        JList<Spell> list = new JList<>(spellChoices.toArray(new Spell[spellChoices.size()]));
-        list.setCellRenderer(new SpellCellRenderer());
-
-        list.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                JList list = (JList)evt.getSource();
-                if (evt.getClickCount() > 1) {
-                    int index = list.locationToIndex(evt.getPoint());
-                    Spells.showSpellDetails(spellChoices.get(index));
-                }
-            }
-        });
-
-        JScrollPane scrollList = new JScrollPane(list);
-        panel.add(scrollList,BorderLayout.CENTER);
-        JButton choose = new JButton("Learn selected spell(s)");
-        choose.addActionListener(e -> {
-            if(list.getSelectedIndex() > -1){
-                if(maxPicks == -1 || list.getSelectedIndices().length == maxPicks || (list.getSelectedIndices().length < maxPicks && Pathfinder.askYesNo("You have only selected " + list.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (list.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
-                    indices = list.getSelectedIndices();
-                    indexSet.set(true);
-                }
-            }
-        });
-        panel.add(choose, BorderLayout.SOUTH);
-
-        JButton searchButton = new JButton("Search these spells");
-        searchButton.addActionListener(e ->{
-            (new Thread(){
-                public void run(){
-                    int[] indexes = searchSpells(spellChoices, spellChooseFrame);
-                    int[] current = list.getSelectedIndices();
-                    int[] newSet;
-                    if(current.length > 0) {
-                        newSet = new int[indexes.length + current.length];
-                        for (int i = 0; i < current.length; i++) newSet[i] += current[i];
-                        for (int i = current.length; i < newSet.length; i++) {
-                            newSet[i] = indexes[i - current.length];
-                        }
-                    } else newSet = indexes;
-
-                    list.setSelectedIndices(newSet);
-                }
-            }).start();
-        });
-
-        JButton customSpell = new JButton("Choose custom spell");
-        customSpell.addActionListener(e -> {
-            JDialog customFeatDialog = new JDialog(spellChooseFrame, "Choose a custom spell");
-            customFeatDialog.setSize(340,80);
-            JPanel customFeatPanel = new JPanel();
-            customFeatDialog.add(customFeatPanel);
-            JButton create = new JButton("Create a new spell");
-            JButton load = new JButton("Load an existing spell");
-            customFeatPanel.add(create);
-            customFeatPanel.add(load);
-            create.addActionListener(evt -> {
-                customFeatDialog.dispose();
-                (new Thread(){
-                    public void run(){
-                        Spell spell = Spells.createNewSpell(spellChooseFrame);
-                        if(spell != null){
-                            spellChoices.add(spell);
-                            int[] current = list.getSelectedIndices();
-                            int[] newIndices = new int[current.length + 1];
-                            for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = spellChoices.size() - 1;
-                            list.setListData(spellChoices.toArray(new Spell[spellChoices.size()]));
-                            list.setSelectedIndices(newIndices);
-                        }
-                    }
-                }).start();
-            });
-
-            load.addActionListener(evt -> {
-                customFeatDialog.dispose();
-                JFileChooser loadChooser = new JFileChooser();
-                int returned = loadChooser.showOpenDialog(spellChooseFrame);
-                if(returned == JFileChooser.APPROVE_OPTION){
-                    Spell spell = null;
-                    try{
-                        FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
-                        ObjectInputStream objIn = new ObjectInputStream(fileIn);
-                        spell = (Spell)(objIn.readObject());
-
-                    } catch (FileNotFoundException ex){
-                        Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (IOException ex){
-                        Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (ClassNotFoundException ex){
-                        Pathfinder.showError("Not a spell","It doesn't seem that there's a spell saved in that file.\nThe file may be corrupt.");
-                    } catch (ClassCastException ex){
-                        Pathfinder.showError("Not a spell", "It appears this is some other kind of Java object.");
-                    }
-                    if(spell != null){
-                        spellChoices.add(spell);
-                        int[] current = list.getSelectedIndices();
-                        int[] newIndices = new int[current.length + 1];
-                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = spellChoices.size() - 1;
-                        list.setListData(spellChoices.toArray(new Spell[spellChoices.size()]));
-                        list.setSelectedIndices(newIndices);
-                    }
-                }
-            });
-            customFeatDialog.setVisible(true);
-        });
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(searchButton, BorderLayout.CENTER);
-        top.add(customSpell, BorderLayout.WEST);
-        panel.add(top, BorderLayout.NORTH);
-
-        spellChooseFrame.setSize(340, ((20+spellChoices.size()*10) < 600 ? (20+spellChoices.size()*15) : 600));
-        spellChooseFrame.setLocationRelativeTo(null);
-        spellChooseFrame.setVisible(true);
-
-        while(!indexSet.get()){}
-        spellChooseFrame.dispose();
-        ArrayList<Spell> toReturn = new ArrayList<>();
-        for(int i : indices) toReturn.add(spellChoices.get(i));
-        return toReturn;
-    }
-
-    public static List<Feat> chooseFeatFromList(List<Feat> featChoices, String title, int maxPicks){
-        AtomicBoolean indexSet = new AtomicBoolean(false);
-        JFrame featChooseFrame = new JFrame(title);
-        JPanel panel = new JPanel(new BorderLayout());
-        featChooseFrame.add(panel);
-        JList<Feat> list = new JList<>(featChoices.toArray(new Feat[featChoices.size()]));
-        list.setCellRenderer(new FeatCellRenderer());
-
-        list.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                JList list = (JList)evt.getSource();
-                if (evt.getClickCount() > 1) {
-                    int index = list.locationToIndex(evt.getPoint());
-                    Feats.showFeatDetails(featChoices.get(index));
-                }
-            }
-        });
-
-        JScrollPane scrollList = new JScrollPane(list);
-        panel.add(scrollList,BorderLayout.CENTER);
-        JButton choose = new JButton("Learn selected feat");
-        choose.addActionListener(e -> {
-            if(list.getSelectedIndices().length > 0){
-                if(maxPicks == -1 || list.getSelectedIndices().length == maxPicks || (list.getSelectedIndices().length < maxPicks && Pathfinder.askYesNo("You have only selected " + list.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (list.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
-                    indices = list.getSelectedIndices();
-                    indexSet.set(true);
-                }
-            }
-        });
-        panel.add(choose, BorderLayout.SOUTH);
-
-
-        JButton searchButton = new JButton("Search these feats");
-        searchButton.addActionListener(e ->{
-            (new Thread(){
-                public void run(){
-                    int[] indexes = searchFeats(featChoices, featChooseFrame);
-                    int[] current = list.getSelectedIndices();
-                    int[] newSet;
-                    if(current.length > 0) {
-                        newSet = new int[indexes.length + current.length];
-                        for (int i = 0; i < current.length; i++) newSet[i] += current[i];
-                        for (int i = current.length; i < newSet.length; i++) {
-                            newSet[i] = indexes[i - current.length];
-                        }
-                    } else newSet = indexes;
-
-                    list.setSelectedIndices(newSet);
-                }
-            }).start();
-        });
-
-        JButton customFeat = new JButton("Choose custom feat");
-        customFeat.addActionListener(e -> {
-            JDialog customFeatDialog = new JDialog(featChooseFrame, "Choose a custom feat");
-            customFeatDialog.setSize(320,80);
-            JPanel customFeatPanel = new JPanel();
-            customFeatDialog.add(customFeatPanel);
-            JButton create = new JButton("Create a new feat");
-            JButton load = new JButton("Load an existing feat");
-            customFeatPanel.add(create);
-            customFeatPanel.add(load);
-            create.addActionListener(evt -> {
-                customFeatDialog.dispose();
-                (new Thread(){
-                    public void run(){
-                        Feat feat = Feats.createNewFeat(featChooseFrame);
-                        if(feat != null){
-                            featChoices.add(feat);
-                            int[] current = list.getSelectedIndices();
-                            int[] newIndices = new int[current.length + 1];
-                            for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                            newIndices[newIndices.length - 1] = featChoices.size() - 1;
-                            list.setListData(featChoices.toArray(new Feat[featChoices.size()]));
-                            list.setSelectedIndices(newIndices);
-                        }
-                    }
-                }).start();
-            });
-
-            load.addActionListener(evt -> {
-                customFeatDialog.dispose();
-                JFileChooser loadChooser = new JFileChooser();
-                int returned = loadChooser.showOpenDialog(featChooseFrame);
-                if(returned == JFileChooser.APPROVE_OPTION){
-                    Feat feat = null;
-                    try{
-                        FileInputStream fileIn = new FileInputStream(loadChooser.getSelectedFile());
-                        ObjectInputStream objIn = new ObjectInputStream(fileIn);
-                        feat = (Feat)(objIn.readObject());
-
-                    } catch (FileNotFoundException ex){
-                        Pathfinder.showError("Could not load file","You may not have permissions to access the file.\nRun this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (IOException ex){
-                        Pathfinder.showError("Unknown IO Exception","Run this in command for more details.");
-                        ex.printStackTrace();
-                    } catch (ClassNotFoundException ex){
-                        Pathfinder.showError("Not a feat","It doesn't seem that there's a feat saved in that file.\nThe file may be corrupt.");
-                    } catch (ClassCastException ex){
-                        Pathfinder.showError("Not a feat","It seems this is some other type of Java object.");
-                    }
-                    if(feat != null){
-                        featChoices.add(feat);
-                        int[] current = list.getSelectedIndices();
-                        int[] newIndices = new int[current.length + 1];
-                        for(int i = 0; i < current.length; i++) newIndices[i] = current[i];
-                        newIndices[newIndices.length - 1] = featChoices.size() - 1;
-                        list.setListData(featChoices.toArray(new Feat[featChoices.size()]));
-                        list.setSelectedIndices(newIndices);
-                    }
-                }
-            });
-            customFeatDialog.setVisible(true);
-        });
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(searchButton, BorderLayout.CENTER);
-        top.add(customFeat, BorderLayout.WEST);
-        panel.add(top, BorderLayout.NORTH);
-
-
-        featChooseFrame.setSize(320, ((60+featChoices.size()*20) < 600 ? (20+featChoices.size()*15) : 600));
-        featChooseFrame.setLocationRelativeTo(null);
-        featChooseFrame.setVisible(true);
-
-        while(!indexSet.get()){}
-        indexSet.set(false);
-        featChooseFrame.dispose();
-        ArrayList<Feat> toReturn = new ArrayList<>();
-        for(int i : indices) toReturn.add(featChoices.get(i));
-        return toReturn;
+        return featsSelected;
     }
 
     public static void chooseClassToLevel(Character me, Component characterDisplay){
@@ -2893,5 +2759,4 @@ public class SelectionUtils {
 
         skillChooser.setVisible(true);
     }
-
 }

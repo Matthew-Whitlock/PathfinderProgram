@@ -35,6 +35,8 @@ public class Feat implements Serializable{
 	public String subType = "";
 	public boolean modified = false;
 
+	private static final long serialVersionUID = 9083369667247591191L;
+
 	public Feat(String detailString){
 		String[] details = detailString.split("\t");
 		name = details[1];
@@ -116,8 +118,42 @@ public class Feat implements Serializable{
 		prereqsSkillsAsString = "";
 	}
 
+	public Feat(Feat base, String name, String details){
+		this.name = name;
+		fullText = details;
+
+		source = base.source;
+		type = base.type;
+		description = base.description;
+		prereqsAsString = base.prereqsAsString;
+		prereqFeatsAsString = base.prereqFeatsAsString;
+		benefit = base.benefit;
+		normal = base.normal;
+		special = base.special;
+		raceName = base.raceName;
+		prereqsSkillsAsString = base.prereqsSkillsAsString;
+		teamwork = base.teamwork;
+		critical = base.critical;
+		grit = base.grit;
+		style = base.style;
+		performance = base.performance;
+		racial = base.racial;
+		companionOrFamiliar = base.companionOrFamiliar;
+		canDoMultiple = base.canDoMultiple;
+		panache = base.panache;
+		betrayal = base.betrayal;
+		targeting = base.targeting;
+		esoteric = base.esoteric;
+		stare = base.stare;
+		weaponMastery = base.weaponMastery;
+		itemMastery = base.itemMastery;
+		armorMastery = base.armorMastery;
+		shieldMastery = base.shieldMastery;
+		subType = base.subType;
+	}
+
 
 	public String toString(){
-		return name + " (" + type + ")";
+		return name;
 	}
 }

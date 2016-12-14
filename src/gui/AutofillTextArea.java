@@ -16,7 +16,7 @@ import java.util.Collection;
  */
 public class AutofillTextArea extends JTextField{
     private Collection<String> suggestedFills;
-    public int maxSuggestions;
+    private int maxSuggestions;
     private JPopupMenu popup;
     private String currentSearchTerm = "";
 
@@ -25,28 +25,12 @@ public class AutofillTextArea extends JTextField{
     public AutofillTextArea(Collection<String> suggestedFills, int maxSuggestions){
         this.suggestedFills = suggestedFills;
         this.maxSuggestions = maxSuggestions;
-
         popup = new JPopupMenu();
-        popup.addMenuKeyListener(new MenuKeyListener(){
-            public void menuKeyTyped(MenuKeyEvent e) {}
-            public void menuKeyPressed(MenuKeyEvent e) {}
-
-            public void menuKeyReleased(MenuKeyEvent e){
-                if(isMenuKey(e.getKeyCode())) return;
-                popup.setVisible(false);
-                AutofillTextArea.this.requestFocus();
-                if(e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && (java.lang.Character.isLetterOrDigit(e.getKeyCode()) || e.getKeyCode() == KeyEvent.VK_SPACE))
-                    AutofillTextArea.this.dispatchEvent(new KeyEvent(AutofillTextArea.this, KeyEvent.KEY_TYPED, e.getWhen(), e.getModifiers(), KeyStroke.getKeyStroke(e.getKeyChar()).getKeyCode(), e.getKeyChar()));
-                else {
-                    AutofillTextArea.this.dispatchEvent(new KeyEvent(AutofillTextArea.this, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), e.getKeyCode(), e.getKeyChar()));
-                    AutofillTextArea.this.dispatchEvent(new KeyEvent(AutofillTextArea.this, KeyEvent.KEY_RELEASED, e.getWhen(), e.getModifiers(), e.getKeyCode(), e.getKeyChar()));
-                }
-            }
-        });
 
         getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
+                popup.setVisible(false);
                 if(settingText){
                     settingText = false;
                     return;
@@ -56,6 +40,7 @@ public class AutofillTextArea extends JTextField{
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                popup.setVisible(false);
                 if(settingText){
                     settingText = false;
                     return;
@@ -65,6 +50,7 @@ public class AutofillTextArea extends JTextField{
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                popup.setVisible(false);
                 if(settingText){
                     settingText = false;
                     return;
@@ -72,17 +58,17 @@ public class AutofillTextArea extends JTextField{
                 showSuggestions(getText());
             }
         });
-
-        addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                super.focusLost(e);
-                getCaret().setVisible(true);
-            }
-        });
     }
 
     public void showSuggestions(String toSearch){
+        new Thread(){
+            public void run(){
+                displayPopup(toSearch);
+            }
+        }.start();
+    }
+
+    private synchronized void displayPopup(String toSearch){
         if(toSearch.equalsIgnoreCase(currentSearchTerm)){
             if(popup.isVisible()) return;
             popup.show(this, 0, this.getHeight());
@@ -94,6 +80,7 @@ public class AutofillTextArea extends JTextField{
         for(String term : suggestedFills){
             if(term.toLowerCase().contains(toSearch.toLowerCase())) {
                 JMenuItem toShow = new JMenuItem(term);
+                //Not triggered on pressing enter, oddly, but is triggered by clicking. Weird, and I don't know why.
                 toShow.addActionListener(e -> {
                     settingText = true;
                     AutofillTextArea.this.setText(toShow.getText());
@@ -107,6 +94,8 @@ public class AutofillTextArea extends JTextField{
         currentSearchTerm = toSearch;
         popup.setPreferredSize(new Dimension(this.getWidth(), currentlyMade * 25));
         popup.show(this, 0, this.getHeight());
+
+        AutofillTextArea.this.requestFocus();
     }
 
     public static boolean isMenuKey(int keyCode){

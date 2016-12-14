@@ -2180,7 +2180,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Feats.showFeatDetails(me.currentFeats.get(index));
+						Feats.showFeatDetails(me.currentFeats.get(index), me.currentFeats, FeatBox.this);
 					}
 				}
 			});
@@ -2212,7 +2212,7 @@ public class CharacterDisplay extends JTabbedPane{
 			add(removalButton, c);
 
 			forceNewFeats.addActionListener(e -> new Thread(() -> {
-				me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getFeats(), "Choose the feats(s) to add", -1));
+				me.currentFeats.addAll(SelectionUtils.searchFeats(Feats.getFeats(), "Choose the feats(s) to add", -1, Pathfinder.FRAME));
 				repaint();
 			}).start());
 		}
@@ -2260,14 +2260,14 @@ public class CharacterDisplay extends JTabbedPane{
 			setLayout(new GridBagLayout());
 			listContainer = new JList<>(new Vector<Item>(me.inventory.keySet()));
 			currentlyDisplayed.addAll(me.inventory.keySet());
-			listContainer.setCellRenderer(new ItemCellRenderer(true));
+			listContainer.setCellRenderer(new ItemCellRenderer(true, me));
 
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Item.showItemDetails((Item)list.getModel().getElementAt(index));
+						ItemUtil.showItemDetails((Item)list.getModel().getElementAt(index), me, false, InventoryBox.this);
 					}
 				}
 			});
@@ -2392,7 +2392,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void buy(){
 			(new Thread(){
 				public void run(){
-					java.util.List<GenItem> itemsSelected = SelectionUtils.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
+					java.util.List<GenItem> itemsSelected = SelectionUtils.searchItems(ItemUtil.getItems(), Pathfinder.FRAME, "Choose the items to add");
 					int[] totalValue = new int[4];
 					for(GenItem item : itemsSelected){
 						int[] value = item.cost();
@@ -2480,7 +2480,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void addItem(){
 			(new Thread(){
 				public void run(){
-					java.util.List<GenItem> itemsSelected = SelectionUtils.chooseItemFromList(ItemUtil.getItems(), "Choose the items to add");
+					java.util.List<GenItem> itemsSelected = SelectionUtils.searchItems(ItemUtil.getItems(), Pathfinder.FRAME, "Choose the items to add");
 					for(GenItem item : itemsSelected){
 						if(me.inventory.containsKey(item))
 							me.inventory.put(item, me.inventory.get(item) + item.getPurchaseAmount());
@@ -2520,7 +2520,6 @@ public class CharacterDisplay extends JTabbedPane{
 		}
 
 		public void update(){
-			System.out.println(currentlyDisplayed.equals(me.inventory.keySet()));
 			if(!currentlyDisplayed.equals(me.inventory.keySet()))
 				listContainer.setListData(new Vector<>(me.inventory.keySet()));
 			currentlyDisplayed.clear();
@@ -2545,14 +2544,30 @@ public class CharacterDisplay extends JTabbedPane{
 			this.parent = parent;
 			setLayout(new GridBagLayout());
 			listContainer = new JList<>();
-			listContainer.setCellRenderer(new ItemCellRenderer(true));
+			listContainer.setCellRenderer(new ItemCellRenderer(false, me));
 
 			listContainer.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
 					JList<Item> list = (JList<Item>)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Item.showItemDetails(list.getModel().getElementAt(index));
+						ItemUtil.showItemDetails(list.getModel().getElementAt(index), me, true, EquippedBox.this);
+					} else {
+						Container container = listContainer;
+						Point containerPoint = evt.getPoint();
+
+						if (containerPoint.y >= 0) {
+							Component component = SwingUtilities.getDeepestComponentAt(
+									container, containerPoint.x, containerPoint.y);
+
+							if (component != null && component instanceof JTextField) {
+								System.out.println("Successfully found.");
+								component.requestFocusInWindow();
+							} else {
+								if(component == null) System.out.println("null");
+								else System.out.println(component);
+							}
+						}
 					}
 				}
 			});
@@ -2837,7 +2852,7 @@ public class CharacterDisplay extends JTabbedPane{
 		
 		private JList<Spell> listContainer;
 		private JButton removalButton = new JButton("Remove Selected Spell(s)");
-		private JButton forceNewSpells = new JButton("Force a new Spell");
+		private JButton forceNewSpells = new JButton("Add a new Spell");
 		private JButton getSpellDetails = new JButton("Get Spell Details");
 		private ArrayList<Spell> currentlyDisplayed;
 		private JScrollPane listScroll;
@@ -2855,7 +2870,7 @@ public class CharacterDisplay extends JTabbedPane{
 					JList list = (JList)evt.getSource();
 					if (evt.getClickCount() > 1) {
 						int index = list.locationToIndex(evt.getPoint());
-						Spells.showSpellDetails(spellcaster.knownSpells.get(index));
+						Spells.showSpellDetails(spellcaster.knownSpells.get(index), spellcaster.knownSpells, KnownSpellBox.this);
 					}
 				}
 			});
@@ -2873,7 +2888,7 @@ public class CharacterDisplay extends JTabbedPane{
 			add(forceNewSpells, c);
 
 			forceNewSpells.addActionListener(e -> new Thread(() -> {
-                spellcaster.knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.getSpells(), "Choose the spell(s) to add", -1));
+                spellcaster.knownSpells.addAll(SelectionUtils.searchSpells(Spells.getSpells(), Pathfinder.FRAME, "Choose the spell(s) to add", -1));
                 repaint();
 			}).start());
 
@@ -2903,7 +2918,7 @@ public class CharacterDisplay extends JTabbedPane{
 		
 		public void showDetails(int[] indices){
 			for(int i : indices){
-				Spells.showSpellDetails(spellCaster.knownSpells.get(i));
+				Spells.showSpellDetails(spellCaster.knownSpells.get(i), spellCaster.knownSpells, KnownSpellBox.this);
 			}
 		}
 

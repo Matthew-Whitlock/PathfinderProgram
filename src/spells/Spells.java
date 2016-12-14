@@ -17,7 +17,7 @@ import javax.swing.*;
 
 public class Spells implements Comparator<Spell>{
 	public static String[] classTypes = new String[]{"Sorcerer","Wizard","Cleric","Druid","Ranger","Bard","Paladin","Alchemist","Summoner",
-		"Witch","Inquisitor","Oracle","AntiPaladin","Magus","Adept","Deity","Bloodrager","Shaman","Psychic","Medium","Mesmerist",
+		"Witch","Inquisitor","Oracle","AntiPaladin","Magus","Adept","Bloodrager","Shaman","Psychic","Medium","Mesmerist",
 		"Occultist","Spiritualist","Skald"};
 	public static String[] componentTypes = new String[]{"Verbal", "Somatic", "Material", "Focus", "Divine Focus","Costly Components"};
 	public static String[] spellTypeNames = new String[]{"Acid", "Air", "Chaotic", "Cold", "Curse", "Darkness", "Death", "Disease", "Earth", "Electricity",
@@ -168,23 +168,58 @@ public class Spells implements Comparator<Spell>{
 		return spell.levelRequirements[index];
 	}
 
-	public static Spell createNewSpell(JFrame parent){
+	//GUI
+	public static Spell createNewSpell(Window parent){
 		AtomicBoolean spellMade = new AtomicBoolean(false);
 		AtomicBoolean closed = new AtomicBoolean(false);
 		JDialog spellCreator = new JDialog(parent, "Create a new spell");
 		JPanel panel = new JPanel(new BorderLayout());
-		JPanel top = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new GridBagLayout());
 		JPanel bottom = new JPanel(new BorderLayout());
 		JPanel middle = new JPanel(new BorderLayout());
 		spellCreator.add(panel);
 		panel.add(top, BorderLayout.NORTH);
 		panel.add(bottom, BorderLayout.SOUTH);
 		panel.add(middle, BorderLayout.CENTER);
-		top.add(new JLabel("Name: "), BorderLayout.WEST);
 		middle.add(new JLabel("Spell details (supports HTML formatting): "), BorderLayout.NORTH);
 
 		JTextField name = new JTextField();
-		top.add(name, BorderLayout.CENTER);
+
+		JPanel levels = new JPanel(new GridBagLayout());
+		JScrollPane levelsScroll = new JScrollPane(levels);
+		List<JTextField> levelValues = new ArrayList<>();
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.weightx = 1;
+		c.gridy = 0;
+		c.fill = GridBagConstraints.BOTH;
+
+		for(int i = 0; i < Spells.classTypes.length; i++){
+			JLabel className = new JLabel(Spells.classTypes[i]);
+			JTextField classLevel = new JTextField("-1");
+			levelValues.add(classLevel);
+			c.gridx = 0;
+			c.weightx = 0.25;
+			levels.add(className, c);
+			c.gridx = 1;
+			c.weightx = 1;
+			levels.add(classLevel, c);
+			c.gridy++;
+		}
+
+		levelsScroll.setPreferredSize(new Dimension((int)levelsScroll.getPreferredSize().getHeight(), 100));
+		levelsScroll.setMinimumSize(new Dimension((int)levelsScroll.getMinimumSize().getHeight(), 100));
+
+		c.gridy = 0;
+		c.gridx = 0;
+		top.add(new JLabel("Spell name: "), c);
+		c.gridx = 1;
+		top.add(name, c);
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		top.add(levelsScroll, c);
+
 
 		JTextArea description = new JTextArea();
 		JScrollPane descScroll = new JScrollPane(description);
@@ -198,6 +233,16 @@ public class Spells implements Comparator<Spell>{
 
 		add.addActionListener(e -> {
 			if(!(name.getText().equals("")||description.getText().equals(""))){
+				for(int i = 0; i < levelValues.size(); i++){
+					try{
+						if(Integer.parseInt(levelValues.get(i).getText()) < -1){
+							Pathfinder.showError("Error", "Invalid level entered for " + Spells.classTypes[i] + "\nEnter -1 for classes unable to cast the spell.");
+							return;
+						}
+					} catch(NumberFormatException ex){
+						Pathfinder.showError("Number Format Exception", "Value entered for " + Spells.classTypes[i] + " level is not an integer.");
+					}
+				}
 				spellMade.set(true);
 			} else {
 				Pathfinder.showError("Not enough details","You must write a spell name and description.");
@@ -206,7 +251,22 @@ public class Spells implements Comparator<Spell>{
 
 		addAndSave.addActionListener(e -> {
 			if(!(name.getText().equals("")||description.getText().equals(""))){
-				Spell spell = new Spell(name.getText(), description.getText());
+				int[] classLevels = new int[Spells.classTypes.length];
+				for(int i = 0; i < levelValues.size(); i++){
+					try{
+						if(Integer.parseInt(levelValues.get(i).getText()) < -1){
+							Pathfinder.showError("Error", "Invalid level entered for " + Spells.classTypes[i] + "\nEnter -1 for classes unable to cast the spell.");
+							return;
+						} else {
+							classLevels[i] = Integer.parseInt(levelValues.get(i).getText());
+						}
+					} catch(NumberFormatException ex){
+						Pathfinder.showError("Number Format Exception", "Value entered for " + Spells.classTypes[i] + " level is not an integer.");
+					}
+				}
+
+				Spell spell = new Spell(name.getText(), description.getText(), classLevels);
+
 				JFileChooser saver = new JFileChooser();
 				int returned = saver.showSaveDialog(spellCreator);
 				if(returned == JFileChooser.APPROVE_OPTION){
@@ -237,6 +297,7 @@ public class Spells implements Comparator<Spell>{
 		});
 
 		spellCreator.setSize(350,400);
+		spellCreator.setLocationRelativeTo(parent);
 		spellCreator.setVisible(true);
 
 		while(!spellMade.get()){}
@@ -244,14 +305,177 @@ public class Spells implements Comparator<Spell>{
 		spellCreator.dispose();
 
 		if(closed.get()) return null;
-		return new Spell(name.getText(), description.getText());
+
+		int[] spellLevels = new int[Spells.classTypes.length];
+		for(int i = 0; i < spellLevels.length; i++){
+			spellLevels[i] = Integer.parseInt(levelValues.get(i).getText());
+		}
+
+		return new Spell(name.getText(), description.getText(), spellLevels);
 	}
 
-	public static void showSpellDetails(Spell spell){
-		showSpellDetails(spell, spell.name);
+	public static Spell editSpell(Window parent, Spell base){
+		AtomicBoolean spellMade = new AtomicBoolean(false);
+		AtomicBoolean closed = new AtomicBoolean(false);
+		JDialog spellCreator = new JDialog(parent, "Edit Spell");
+		JPanel panel = new JPanel(new BorderLayout());
+		JPanel top = new JPanel(new GridBagLayout());
+		JPanel bottom = new JPanel(new BorderLayout());
+		JPanel middle = new JPanel(new BorderLayout());
+		spellCreator.add(panel);
+		panel.add(top, BorderLayout.NORTH);
+		panel.add(bottom, BorderLayout.SOUTH);
+		panel.add(middle, BorderLayout.CENTER);
+		middle.add(new JLabel("Spell details (supports HTML formatting): "), BorderLayout.NORTH);
+
+		JTextField name = new JTextField(base.name);
+
+		JPanel levels = new JPanel(new GridBagLayout());
+		JScrollPane levelsScroll = new JScrollPane(levels);
+		List<JTextField> levelValues = new ArrayList<>();
+
+		GridBagConstraints c = new GridBagConstraints();
+		c.weightx = 1;
+		c.gridy = 0;
+		c.fill = GridBagConstraints.BOTH;
+
+		for(int i = 0; i < Spells.classTypes.length; i++){
+			JLabel className = new JLabel(Spells.classTypes[i]);
+			JTextField classLevel = new JTextField(Integer.toString(base.levelRequirements[i]));
+			levelValues.add(classLevel);
+			c.gridx = 0;
+			c.weightx = 0.25;
+			levels.add(className, c);
+			c.gridx = 1;
+			c.weightx = 1;
+			levels.add(classLevel, c);
+			c.gridy++;
+		}
+
+		levelsScroll.setPreferredSize(new Dimension((int)levelsScroll.getPreferredSize().getHeight(), 100));
+		levelsScroll.setMinimumSize(new Dimension((int)levelsScroll.getMinimumSize().getHeight(), 100));
+
+		c.gridy = 0;
+		c.gridx = 0;
+		top.add(new JLabel("Spell name: "), c);
+		c.gridx = 1;
+		top.add(name, c);
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridx = 0;
+		top.add(levelsScroll, c);
+
+
+
+		JEditorPane description = new JEditorPane();
+		description.setContentType("text/html");
+		description.setText(base.formattedDescription);
+		description.setCaretPosition(0);
+		String current = description.getText();
+		description.setContentType("text/plain");
+		description.setText(current);
+
+		JScrollPane descScroll = new JScrollPane(description);
+		middle.add(descScroll, BorderLayout.CENTER);
+
+		JButton add = new JButton("Save");
+		JButton addAndSave = new JButton("Save and save to file");
+
+		bottom.add(addAndSave, BorderLayout.EAST);
+		bottom.add(add, BorderLayout.CENTER);
+
+		add.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				for(int i = 0; i < levelValues.size(); i++){
+					try{
+						if(Integer.parseInt(levelValues.get(i).getText()) < -1){
+							Pathfinder.showError("Error", "Invalid level entered for " + Spells.classTypes[i] + "\nEnter -1 for classes unable to cast the spell.");
+							return;
+						}
+					} catch(NumberFormatException ex){
+						Pathfinder.showError("Number Format Exception", "Value entered for " + Spells.classTypes[i] + " level is not an integer.");
+					}
+				}
+				spellMade.set(true);
+			} else {
+				Pathfinder.showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		addAndSave.addActionListener(e -> {
+			if(!(name.getText().equals("")||description.getText().equals(""))){
+				int[] classLevels = new int[Spells.classTypes.length];
+				for(int i = 0; i < levelValues.size(); i++){
+					try{
+						if(Integer.parseInt(levelValues.get(i).getText()) < -1){
+							Pathfinder.showError("Error", "Invalid level entered for " + Spells.classTypes[i] + "\nEnter -1 for classes unable to cast the spell.");
+							return;
+						} else {
+							classLevels[i] = Integer.parseInt(levelValues.get(i).getText());
+						}
+					} catch(NumberFormatException ex){
+						Pathfinder.showError("Number Format Exception", "Value entered for " + Spells.classTypes[i] + " level is not an integer.");
+					}
+				}
+
+				Spell spell = new Spell(base, name.getText(), description.getText(), classLevels);
+
+				JFileChooser saver = new JFileChooser();
+				int returned = saver.showSaveDialog(spellCreator);
+				if(returned == JFileChooser.APPROVE_OPTION){
+					try{
+						FileOutputStream fileOut = new FileOutputStream(saver.getSelectedFile());
+						ObjectOutputStream out= new ObjectOutputStream(fileOut);
+						out.writeObject(spell);
+						spellMade.set(true);
+					} catch (FileNotFoundException ex){
+						Pathfinder.showError("File Not Found","The file cannot be saved to this location.\nYou either do not have permissions to save to this location, or the filename is invalid.");
+						ex.printStackTrace();
+					} catch (IOException ex){
+						Pathfinder.showError("Unknown Exception","The file could not be saved.\nRun this in command for more information.");
+						ex.printStackTrace();
+					}
+				}
+			} else {
+				Pathfinder.showError("Not enough details","You must write a spell name and description.");
+			}
+		});
+
+		spellCreator.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				closed.set(true);
+				spellMade.set(true);
+			}
+		});
+
+		spellCreator.setSize(350,400);
+		spellCreator.setLocationRelativeTo(parent);
+		spellCreator.setVisible(true);
+
+		while(!spellMade.get()){}
+
+		spellCreator.dispose();
+
+		if(closed.get()) return null;
+
+		int[] spellLevels = new int[Spells.classTypes.length];
+		for(int i = 0; i < spellLevels.length; i++){
+			spellLevels[i] = Integer.parseInt(levelValues.get(i).getText());
+		}
+
+		return new Spell(base, name.getText(), description.getText(), spellLevels);
 	}
 
-	public static void showSpellDetails(Spell spell, String title){
+	public static void showSpellDetails(Spell spell, List<Spell> collection, JComponent toRepaint){
+		showSpellDetails(spell, spell.name, collection, toRepaint);
+	}
+
+	public static void showSpellDetails(Spell spell, String title, List<Spell> collection, JComponent toRepaint){
+		showSpellDetails(spell, title, collection, null, toRepaint);
+	}
+
+	public static void showSpellDetails(Spell spell, String title, List<Spell> collection1, List<Spell> collection2, JComponent toRepaint){
 		JFrame detailsFrame = new JFrame(title);
 		detailsFrame.setSize(450,550);
 		detailsFrame.setLocationRelativeTo(Pathfinder.FRAME);
@@ -268,21 +492,20 @@ public class Spells implements Comparator<Spell>{
 
 		JButton toggleEdit = new JButton("Edit");
 		toggleEdit.addActionListener(e ->{
-			text.setEditable(!text.isEditable());
-			if(text.isEditable()){
-				String current = text.getText();
-				text.setContentType("text/plain");
-				text.setText(current);
-				toggleEdit.setText("Save");
-			} else {
-				String current = text.getText();
-				text.setContentType("text/html");
-				text.setText(current);
-				spell.modified = true;
-				spell.formattedDescription = text.getText();
-				toggleEdit.setText("Edit");
-			}
-			detailsFrame.repaint();
+			new Thread(){
+				public void run(){
+					Spell edited = editSpell(detailsFrame, spell);
+					if(edited != null && edited != spell && collection1 != null){
+						collection1.set(collection1.indexOf(spell), edited);
+						if(collection2 != null) collection2.set(collection2.indexOf(spell), edited);
+
+						if(toRepaint != null) toRepaint.repaint();
+
+						detailsFrame.dispose();
+						showSpellDetails(edited, edited.name, collection1, collection2, toRepaint);
+					}
+				}
+			}.start();
 		});
 
 		detailsFrame.add(detailsPanel);
@@ -291,8 +514,8 @@ public class Spells implements Comparator<Spell>{
 		detailsFrame.setVisible(true);
 	}
 
-	public static void spellAddedAutomatically(Spell spell){
-		Spells.showSpellDetails(spell, spell.name + " was added automatically!");
+	public static void spellAddedAutomatically(Spell spell, List<Spell> spells){
+		Spells.showSpellDetails(spell, spell.name + " was added automatically!", spells, null);
 	}
 
 	public static URL getIcon(Spell spell){
@@ -300,5 +523,4 @@ public class Spells implements Comparator<Spell>{
 		//The spell related icons I have focus on elements (earth, fire), not schools (divination, conjuration).
 		return Spells.class.getResource("/src/pictures/SpellIcons/W_Book04.png");
 	}
-
 }

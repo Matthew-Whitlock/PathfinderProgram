@@ -25,7 +25,7 @@ public class UnchainedRogue extends CharacterClass implements Serializable{
         super.levelUp();
 
         if(level%2 == 1){
-            me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getAvailableFeats(me), "Choose a feat!", 1));
+            me.currentFeats.addAll(SelectionUtils.searchFeats(Feats.getAvailableFeats(me), "Choose a feat!", 1, Pathfinder.FRAME));
         }
 
         if(level == 1){

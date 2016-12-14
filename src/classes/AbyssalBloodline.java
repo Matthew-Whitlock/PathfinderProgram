@@ -1,6 +1,7 @@
 package src.classes;
 
 import src.Character;
+import src.Pathfinder;
 import src.gui.SelectionUtils;
 import src.feats.Feat;
 import src.feats.Feats;
@@ -40,7 +41,7 @@ public class AbyssalBloodline extends Sorcerer implements Serializable{
 		} else if(level%2 == 1 && level < 20) {
 			Spell toAdd = Spells.searchByName(bonusSpells[level/2]);
 			knownSpells.add(toAdd);
-			Spells.spellAddedAutomatically(toAdd);
+			Spells.spellAddedAutomatically(toAdd, knownSpells);
 		}
 		
 		if(level == 3){
@@ -56,7 +57,7 @@ public class AbyssalBloodline extends Sorcerer implements Serializable{
 			if((level - (i * 7))%6 == 0){
 				ArrayList<Feat> bonusFeatsList = new ArrayList<Feat>();
 				for(String s : bonusFeats) bonusFeatsList.add(Feats.getFeatByName(s));
-				me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat.", 1));
+				me.currentFeats.addAll(SelectionUtils.searchFeats(bonusFeatsList, "Choose an Abyssal Bloodline bonus feat.", 1, Pathfinder.FRAME));
 			}
 		}
 	}

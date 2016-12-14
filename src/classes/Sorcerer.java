@@ -27,7 +27,7 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 		super.levelUp();
 
 		if(level%2 == 1){
-			me.currentFeats.addAll(SelectionUtils.chooseFeatFromList(Feats.getAvailableFeats(me), "Choose a feat!", 1));
+			me.currentFeats.addAll(SelectionUtils.searchFeats(Feats.getAvailableFeats(me), "Choose a feat!", 1, Pathfinder.FRAME));
 		}
 
 		if(level == 1){
@@ -83,7 +83,7 @@ public abstract class Sorcerer extends SpellCaster implements Serializable{
 				Pathfinder.showError("Cannot learn spell level " + spellLevel,"You do not have a high enough Charisma modifier to learn spells of level " + spellLevel + " and higher.");
 				break;
 			}else if(newSpellsByLevel[level][spellLevel] > 0){
-				knownSpells.addAll(SelectionUtils.chooseSpellFromList(Spells.search(this,spellLevel),"Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
+				knownSpells.addAll(SelectionUtils.searchSpells(Spells.search(this,spellLevel), Pathfinder.FRAME, "Choose " + newSpellsByLevel[level][spellLevel] + " level " + spellLevel + " spells", newSpellsByLevel[level][spellLevel]));
 			}
 		}
 	}
