@@ -1834,7 +1834,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void remove(int[] indices){
 			//Go backward to avoid shifting indices of the next ones to remove;
 			for(int i = indices.length - 1; i >= 0; i--){
-				me.miscAbilities.remove(indices[i]);
+				me.miscAbilities.remove(model[indices[i]]);
 			}
 			repaint();
 		}
@@ -2143,7 +2143,7 @@ public class CharacterDisplay extends JTabbedPane{
 		public void remove(int[] indices){
 			//Go backward to avoid shifting indices of the next ones to remove;
 			for(int i = indices.length - 1; i >= 0; i--){
-				me.notes.remove(indices[i]);
+				me.notes.remove(model[indices[i]]);
 			}
 			repaint();
 		}

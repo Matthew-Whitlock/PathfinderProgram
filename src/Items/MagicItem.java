@@ -60,7 +60,7 @@ public class MagicItem implements Serializable, Item{
 		casterLevel = !(details[2].equalsIgnoreCase("NULL") || details[2].equals("")) ? Feats.getNumberFromString(details[2]) : -1;
 
 		slot = details[3];
-		price = details[34].equalsIgnoreCase("null") ? 0 : Integer.parseInt(details[34]);
+		price = details[33].equalsIgnoreCase("null") ? 0 : Integer.parseInt(details[33]);
 		weight = details[32].equalsIgnoreCase("null") ? 0 : Double.parseDouble(details[32]);
 		basicDescription = details[6];
 		craftingRequirements = details[7];
@@ -96,6 +96,11 @@ public class MagicItem implements Serializable, Item{
 		universal = details[42].equals("1");
 		hasScaling = details.length > 43;
 		scaling = hasScaling ? details[43] : "";
+
+		//Occasionally the price is found here, but not in the unformatted box which is faster to use.
+		if(price == 0 && details[4].toLowerCase().contains("gp")) price = getNumber(details[4]);
+
+		if(price == -1) price = 0;
 
 	}
 
@@ -250,5 +255,22 @@ public class MagicItem implements Serializable, Item{
 		//Need to find something for genie seals.
 
 		return MagicItem.class.getResource("/src/pictures/ItemIcons/S_Sword10.png"); //A terrible generic magic item sprite.
+	}
+
+	private int getNumber(String s){
+		s = s.trim();
+		StringBuilder number = new StringBuilder();
+		for(int i = 0; i < s.length(); i++){
+			if(java.lang.Character.isDigit(s.charAt(i))) number.append(s.charAt(i));
+		}
+
+		int toReturn = 0;
+		try{
+			toReturn = Integer.parseInt(number.toString());
+		} catch (NumberFormatException e){
+			toReturn = 0;
+		}
+
+		return toReturn;
 	}
 }

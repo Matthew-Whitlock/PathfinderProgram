@@ -204,7 +204,7 @@ public enum AdventureGearEnum implements Serializable, Item{
     }
 
     public String toString(){
-        return name + " (" + type + ")";
+        return name + (amount != 1 ? " (" + amount + ")" : "");
     }
 
     public String getFormattedDetails(){

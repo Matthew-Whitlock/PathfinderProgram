@@ -67,22 +67,48 @@ public class GenItem implements Item, Serializable{
         }
     }
 
-    public GenItem(String name, String description, int[] cost, int amount, double weight){
+    public GenItem(String name, int acPenalty, int acBonus, int maxDex, int amountPerPurchase, double weight, int[] cost, String description, URL image){
         this.name = name;
         this.description = description;
         inventoryLine = name;
         attackMultiplier = new int[]{2};
         minCritThreat = 20;
-        acPen = 0;
-        acBoost = 0;
-        maxDEX = -1;
+        acPen = acPenalty;
+        acBoost = acBonus;
+        maxDEX = maxDex;
         this.cost = cost;
-        this.amount = amount;
+        this.amount = amountPerPurchase;
         speedFromThirty = 30;
         speedFromTwenty = 20;
         this.weight = weight;
+        this.iconURL = image;
 
         backingType = GENERIC;
+    }
+
+    public GenItem(Item item, String name, int acPenalty, int acBonus, int maxDex, int amountPerPurchase, double weight, int[] cost, String description, URL image){
+        itemBase = item;
+
+        if(item instanceof ArmorEnum){
+            backingType = ARMOR;
+        } else if (item instanceof WeaponEnum){
+            backingType = WEAPON;
+        } else if (item instanceof MagicItem){
+            backingType = MAGIC;
+        }else {
+            backingType = OTHER;
+        }
+
+        this.newName = name;
+        this.newACPen = acPenalty;
+        this.newACBoost = acBonus;
+        this.newMaxDex = maxDex;
+        this.newAmount = amountPerPurchase;
+        this.newWeight = weight;
+        this.newCost = cost;
+        this.newDescription = description;
+        this.newInventoryLine = name;
+        this.newURL = image;
     }
 
     public int getMaxDex(){
@@ -133,7 +159,7 @@ public class GenItem implements Item, Serializable{
     }
 
     public String getFormattedDetails(){
-        if(newDescription != null) return null;
+        if(newDescription != null) return newDescription;
         if(backingType == GENERIC) return description;
         return itemBase.getFormattedDetails();
     }
@@ -145,11 +171,24 @@ public class GenItem implements Item, Serializable{
     }
 
     public String toString(){
-        if(newName != null) return newName;
+
+        if(newName != null)
+            return newName + (newAmount == NOT_SET ?
+                (backingType == GENERIC ?
+                        ((amount != 1 ?
+                                " (" + amount + ")"
+                                : ""))
+                        : (itemBase.getPurchaseAmount() != 1 ?
+                                " (" + itemBase.getPurchaseAmount() + ")"
+                                : ""))
+                : (newAmount != 1 ?
+                        (" (" + newAmount + ")")
+                        : (""))) ;
+
         if(backingType == GENERIC){
-            return name + (amount > 1 ? " (" + amount + ")" : "");
+            return name + (newAmount == NOT_SET ? (amount != 1 ? " (" + amount + ")" : "") : (newAmount != 1 ? " (" + newAmount + ")" : ""));
         }
-        return itemBase.toString();
+        return itemBase.getItemName() + (newAmount == NOT_SET ? (itemBase.getPurchaseAmount() != 1 ? " (" + itemBase.getPurchaseAmount() + ")" : "") : newAmount != 1 ? " (" + newAmount + ")" : "");
     }
 
     public int getPurchaseAmount(){
@@ -181,6 +220,10 @@ public class GenItem implements Item, Serializable{
         newSpeedFromTwenty = NOT_SET;
         newSpeedFromThirty = NOT_SET;
         newURL = null;
+    }
+
+    public Item baseItem(){
+        return itemBase;
     }
 
     @Override

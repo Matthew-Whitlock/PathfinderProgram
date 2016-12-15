@@ -102,7 +102,7 @@ public enum WeaponEnum implements Serializable, Item {
     CROSSBOW_LIGHT_UNDERWATER("Crossbow, light (underwater)","Simple","Ranged",70,"1d6","1d8", 19,new int[]{2},80,4, "Piercing", "","CRB", "Race Merfolk<br>" +
             "<br>" +
             "Benefit: An underwater crossbow functions like its normal counterpart above water, and can be used underwater. When fired underwater, the crossbow has a range increment of 20 feet. Anyone proficient with a normal crossbow can use an underwater crossbow.", 1),
-    DART("Dart","Simple","Ranged",0,"1d3","1d4", 20,new int[]{2},20,0.5, "Piercing", "","CRB", "Darts are missile weapons, designed to fly such that a sharp, often weighted point will strike first. They can be distinguished from javelins by fletching (i.e., feathers on the tail) and a shaft that is shorter and/or more flexible, and from arrows by the fact that they are not of the right length to use with a normal bow.", 1),
+    DART("Dart","Simple","Ranged",1,"1d3","1d4", 20,new int[]{2},20,0.5, "Piercing", "","CRB", "Darts are missile weapons, designed to fly such that a sharp, often weighted point will strike first. They can be distinguished from javelins by fletching (i.e., feathers on the tail) and a shaft that is shorter and/or more flexible, and from arrows by the fact that they are not of the right length to use with a normal bow.", 2),
     JAVELIN("Javelin","Simple","Ranged",1,"1d4","1d6", 20,new int[]{2},30,2, "Piercing", "","CRB", "A javelin is a thin throwing spear.<br>" +
             "<br>" +
             "Note: Since a javelin is not designed for melee, you are treated as non-proficient with it and take a –4 penalty on attack rolls if you use a javelin as a melee weapon.", 1),
@@ -144,13 +144,13 @@ public enum WeaponEnum implements Serializable, Item {
             "<br>" +
             "Note: Alchemical fire bolts do not cause any splash damage, and the fire burst isn’t enough to ignite targets (unless they are particularly flammable).", 1),
     BULLET_GROANING("Bullet, groaning","Simple","Ammunition",2," "," ", 20,new int[]{},0,5, "", "see text","AA", "These sling bullets are honeycombed with overlapping perforations that cause them to emit an eerie moan audible within 500 feet of their flight path.", 10),
-    BULLET_SLING("Bullet, sling","Simple","Ammunition",0," "," ", 20,new int[]{},0,5, "", "","CRB", "Sling bullets are shaped metal balls, designed to be used with a sling or halfling sling staff.<br>" +
+    BULLET_SLING("Bullet, sling","Simple","Ammunition",1," "," ", 20,new int[]{},0,5, "", "","CRB", "Sling bullets are shaped metal balls, designed to be used with a sling or halfling sling staff.<br>" +
             "<br>" +
-            "Benefit: Bullets come in a leather pouch that holds 10 bullets.", 10),
+            "Benefit: Bullets come in a leather pouch that holds 10 bullets.", 100),
     BULLET_SMOKE("Bullet, smoke","Simple","Ammunition",100," "," ", 20,new int[]{},0,5, "", "see text","PCS", "Benefit: Smoke bullets require only a successful touch attack to release the smoke. When they strike a target, they burst, releasing a cloud of noxious gas that requires the creature struck to attempt a DC 13 Fortitude save. If the save fails, the target is nauseated for 2 rounds.", 10),
-    DART_BLOWGUN("Dart, blowgun","Simple","Ammunition",0," "," ", 20,new int[]{},0,1, "", "","CRB", "These light darts have tiny grooves behind the tips.<br>" +
+    DART_BLOWGUN("Dart, blowgun","Simple","Ammunition",1," "," ", 20,new int[]{},0,1, "", "","CRB", "These light darts have tiny grooves behind the tips.<br>" +
             "<br>" +
-            "Benefit: A character can apply poison to a blowgun dart without risk of poisoning himself.", 10),
+            "Benefit: A character can apply poison to a blowgun dart without risk of poisoning himself.", 20),
     AXE_BOARDING("Axe, boarding", "Martial", "Light", 6, "1d4", "1d6", 20, new int[]{3}, 0, 3, "Piercing or Slashing", "", "PPC:Pirates", "Basically a hand axe with a backward-pointing spike, a boarding axe is used to chop through hatches or rigging, to drag burning debris off a ship, or as a weapon. A boarding axe is a one-handed martial weapon that uses the same statistics as a handaxe, except it deals slashing or piercing damage. In addition, the spike grants a +2 circumstance bonus on Climb checks on wooden surfaces.", 1),
     AXE_THROWING("Axe, throwing","Martial","Light",8,"1d4","1d6", 20,new int[]{2},10,2, "Slashing", "","CRB", "Benefit: This is a small axe balanced for throwing.", 1),
     BLADE_BOOT("Blade boot","Martial","Light",25,"1d3","1d4", 20,new int[]{2},0,2, "Piercing", "see text","AA", "Blade boots come with a spring-mounted knife that pops out when triggered with the right combination of toe presses.<br>" +
@@ -198,7 +198,7 @@ public enum WeaponEnum implements Serializable, Item {
             "<br>" +
             "Benefit: Both the crescent and the tip of the hilt are sharpened for combat. They can be wielded as single weapons or with two-weapon fighting styles. The weapons gain the disarm special weapon feature when used individually. A pair of shang gou can also be formed into a single one-handed weapon to gain the trip special feature.", 1),
     SPIKED_ARMOR("Spiked armor","Martial","Light",0,"1d4","1d6", 20,new int[]{2},0,0, "Piercing", "","CRB", "Description: You can outfit your armor with spikes, which can deal damage in a grapple or as a separate attack.", 1),
-    SPIKED_SHIELD_LIGHT("Spiked shield, light","Martial","Light",0,"1d3","1d4", 20,new int[]{2},0,0, "Piercing", "","CRB", "Description: You can bash with a spiked shield instead of using it for defense.<br>" +
+    SPIKED_SHIELD_LIGHT("Spiked shield, light","Martial","Light",13,"1d3","1d4", 20,new int[]{2},0,0, "Piercing", "","CRB", "Description: You can bash with a spiked shield instead of using it for defense.<br>" +
             "<br>" +
             "Shield Bash Attacks<br>" +
             "<br>" +
@@ -246,7 +246,7 @@ public enum WeaponEnum implements Serializable, Item {
     SIBAT("Sibat","Martial","One-Handed",2,"1d4","1d6", 20,new int[]{3},10,2, "Piercing or Slashing", "see text","UC", "This weapon is similar to a shortspear with a flexible rattan or bamboo shaft and an elaborately barbed head.<br>" +
             "<br>" +
             "Benefit: On a critical hit, the spear grabs flesh or armor. The wielder can then attempt a combat maneuver check to attempt to grapple its opponent as a free action. This grapple attempt does not provoke an attack of opportunity from the creature you are attempting to grapple. While grappling the target with a sibat, the wielder can only move or damage the target on its turn. The wielder is still considered grappled, though it does not have to be adjacent to the target to continue the grapple. If you move far away to be out of the sibat’s reach, you end the grapple with that action.", 1),
-    SPIKED_SHIELD_HEAVY("Spiked shield, heavy","Martial","One-Handed",0,"1d4","1d6", 20,new int[]{2},0,0, "Piercing", "","CRB", "Description: You can bash with a spiked shield instead of using it for defense.<br>" +
+    SPIKED_SHIELD_HEAVY("Spiked shield, heavy","Martial","One-Handed",19,"1d4","1d6", 20,new int[]{2},0,0, "Piercing", "","CRB", "Description: You can bash with a spiked shield instead of using it for defense.<br>" +
             "<br>" +
             "Shield Bash Attacks<br>" +
             "<br>" +
@@ -474,9 +474,9 @@ public enum WeaponEnum implements Serializable, Item {
             "Benefit: If you are proficient with this weapon, add +4 on your disarm or sunder attempts against bladed weapons.<br>" +
             "<br>" +
             "Weapon Feature(s): disarm, sunder", 1),
-    DAN_BONG("Dan bong","Exotic","Light",0,"1d2","1d3", 19,new int[]{2},10,0, "Bludgeoning", "blocking, monk","UC", "These short, blunt sticks are held in the hands to enhance unarmed martial techniques.<br>" +
+    DAN_BONG("Dan bong","Exotic","Light",1,"1d2","1d3", 19,new int[]{2},10,0, "Bludgeoning", "blocking, monk","UC", "These short, blunt sticks are held in the hands to enhance unarmed martial techniques.<br>" +
             "<br>" +
-            "Benefit: They provide the wielder with the ability to lock an opponent and target pressure points that grant her a +2 bonus on her combat maneuver to grapple.", 1),
+            "Benefit: They provide the wielder with the ability to lock an opponent and target pressure points that grant her a +2 bonus on her combat maneuver to grapple.", 10),
     EMEI_PIERCER("Emei piercer","Exotic","Light",3,"1d2","1d3", 19,new int[]{2},0,0, "Piercing", "monk, see text","UC", "This weapon is used to augment unarmed martial techniques. It consists of an 8- to 10-inch-long, dual-pointed steel spike set on swivels and mounted on a ring, so that it can be spun around at high speeds when slipped over the wielder’s ring finger.<br>" +
             "<br>" +
             "Benefit: The ring prevents the wielder from being disarmed and turns unarmed strikes into piercing attacks.", 1),
@@ -508,13 +508,13 @@ public enum WeaponEnum implements Serializable, Item {
     QUADRENS("Quadrens","Exotic","Light",8,"1d4","1d6", 19,new int[]{2},0,2, "Piercing", "performance","UC", "A quadrens looks like a dagger, but with four spikes mounted in a square pattern in place of a blade.<br>" +
             "<br>" +
             "Benefit: When you score a critical hit with a quadrens, the resulting gaping wound causes 1 point of bleed damage.", 1),
-    ROPE_GAUNTLET("Rope gauntlet","Exotic","Light",0,"1d3","1d4", 20,new int[]{2},0,2, "Bludgeoning (or Slashing)", "","AA", "By wrapping your hands and forearms in thin but tough hemp ropes and then soaking the makeshift gloves in water for weight and expansion, you can transform your fists into rockhard weapons easily capable of killing in a fistfight.<br>" +
+    ROPE_GAUNTLET("Rope gauntlet","Exotic","Light",1,"1d3","1d4", 20,new int[]{2},0,2, "Bludgeoning (or Slashing)", "","AA", "By wrapping your hands and forearms in thin but tough hemp ropes and then soaking the makeshift gloves in water for weight and expansion, you can transform your fists into rockhard weapons easily capable of killing in a fistfight.<br>" +
             "<br>" +
             "Description: Each rope gauntlet takes a full minute to wrap and another minute to soak, but once applied can be worn for a day; removing a rope gauntlet takes 1 full round.<br>" +
             "<br>" +
             "When wearing rope gauntlets, you are considered armed and your attacks deal normal damage. If you are proficient with rope gauntlets, you may use the rough edges of the ropes to deal slashing damage rather than bludgeoning damage.<br>" +
             "<br>" +
-            "Your fingers are mostly exposed, allowing you to wield or carry items in your hands while wearing rope gauntlets, but the constriction of the weapon at your knuckles gives you a –2 penalty on all precision based tasks involving your hands (such as opening locks).", 1),
+            "Your fingers are mostly exposed, allowing you to wield or carry items in your hands while wearing rope gauntlets, but the constriction of the weapon at your knuckles gives you a –2 penalty on all precision based tasks involving your hands (such as opening locks).", 5),
     SAI("Sai","Exotic","Light",1,"1d3","1d4", 20,new int[]{2},0,1, "Bludgeoning", "disarm, monk","CRB", "A sai is a metal spike flanked by a pair of prongs used to trap an enemy's weapon. Though pointed, a sai is used primarily to bludgeon foes and to disarm weapons.<br>" +
             "<br>" +
             "Description: With a sai, you get a +2 bonus on Combat Maneuver Checks to sunder an enemy's weapon.<br>" +
@@ -542,7 +542,7 @@ public enum WeaponEnum implements Serializable, Item {
             "Weapon Feature(s): performance (plus disarm, reach, and trip if you are proficient with whip.)", 1),
     AXE_HOOKED("Axe, hooked","Exotic","One-Handed",20,"1d6","1d8", 20,new int[]{3},0,7, "Slashing", "disarm, performance, trip","UC", "Benefit: The hooked end of this axe’s blade can be used to disarm foes or pull them off balance. A hooked axe can be used as a martial weapon (in which case it functions like a battleaxe).", 1),
     FALCATA("Falcata","Exotic","One-Handed",18,"1d6","1d8", 19,new int[]{3},0,4, "Slashing", "","APG", "This heavy blade has a single sharp, concave edge and a hook-shaped hilt. Its shape distributes the weight to give it the momentum of an axe with the cutting edge of a sword.", 1),
-    FLINDBAR("Flindbar","Exotic","One-Handed",0,"1d6","1d8", 20,new int[]{},0,0, "Bludgeoning", "disarm","CMR", "This one-handed weapon is similar to a nunchaku in that it consists of a pair of bars linked with heavy chain. However, a flindbar’s bars are made of iron and are capped with a ring of spikes or studs. Since it’s much heaver than a nunchaku, it is not a light weapon.<br>" +
+    FLINDBAR("Flindbar","Exotic","One-Handed",9,"1d6","1d8", 20,new int[]{},0,0, "Bludgeoning", "disarm","CMR", "This one-handed weapon is similar to a nunchaku in that it consists of a pair of bars linked with heavy chain. However, a flindbar’s bars are made of iron and are capped with a ring of spikes or studs. Since it’s much heaver than a nunchaku, it is not a light weapon.<br>" +
             "<br>" +
             "Weapon Feature(s): disarm", 1),
     KATANA("Katana","Exotic","One-Handed",50,"1d6","1d8", 18,new int[]{2},0,6, "Slashing", "deadly","UC", "Specifically constructed for samurai, katanas employ multiple types of steel combined in a distinctive forging process. The result are swords noted for their wickedly sharp yet slender, gently curved blades, designed to make graceful hacking strokes capable of severing opponents’ heads and limbs. Though finely balanced, these blades are difficult to master.<br>" +
@@ -739,11 +739,11 @@ public enum WeaponEnum implements Serializable, Item {
     FLASK_THROWER("Flask Thrower","Exotic","Ranged",25," "," ", 20,new int[]{},20,4, "", "see text","GoG", "This weapon resembles a halfling sling staff, except that the cradle at the end is designed to hold and hurl flasks as well as stones or bullets.<br>" +
             "<br>" +
             "Benefit: A flask thrower significantly extends the range of thrown substances that deal splash damage, such as acid, alchemist’s fire, or holy water, as well as that of tools such as tanglefoot bags, thunderstones, or caltrops.", 1),
-    LASSO("Lasso","Exotic","Ranged",0," "," ", 20,new int[]{},0,5, "", "see text","APG", "This thrown weapon is a length of rope with a simple open knot on one end.<br>" +
+    LASSO("Lasso","Exotic","Ranged",1," "," ", 20,new int[]{},0,5, "", "see text","APG", "This thrown weapon is a length of rope with a simple open knot on one end.<br>" +
             "<br>" +
             "Benefit: A lasso allows you to entangle a foe like you would using a net. An entangled creature can slip free with a DC 15 Escape Artist check as a full-round action. The lasso has 2 hit points and AC 10. It requires a DC 23 Strength check to break it. The concentration DC to cast a spell while entangled with a lasso is 10 + the spell level being cast. <br>" +
             "<br>" +
-            "Special: On a successful hit, the lasso tightens; to use it again you must spend a standard action sliding the knot to enlarge the loop.", 1),
+            "Special: On a successful hit, the lasso tightens; to use it again you must spend a standard action sliding the knot to enlarge the loop.", 10),
     NET("Net","Exotic","Ranged",20," "," ", 20,new int[]{},10,6, "", "","CRB", "A net is used to entangle enemies.<br>" +
             "<br>" +
             "Benefit: When you throw a net, you make a ranged touch attack against your target. A net's maximum range is 10 feet. If you hit, the target is entangled. An entangled creature takes a –2 penalty on attack rolls and a –4 penalty on Dexterity, can move at only half speed, and cannot charge or run. If you control the trailing rope by succeeding on an opposed Strength check while holding it, the entangled creature can move only within the limits that the rope allows. If the entangled creature attempts to cast a spell, it must make a concentration check with a DC of 15 + the spell's level or be unable to cast the spell.<br>" +
@@ -782,7 +782,7 @@ public enum WeaponEnum implements Serializable, Item {
     CROSSBOW_BOLT_REPEATING_HEAVY_LIGHT("Crossbow bolt, repeating, heavy/light","Exotic","Ammunition",1," "," ", 20,new int[]{},0,1, "", "","CRB", "Benefit: Bolts come in a case or quiver that holds 10 bolts (or 5 for a repeating crossbow).<br>" +
             "<br>" +
             "Special: A crossbow bolt used as a melee weapon is treated as a light improvised weapon (–4 penalty on attack rolls) and deals damage as a dagger of its size (crit ×2).", 5),
-    LITTLE_STARSTONES("Little starstones","Exotic","Ammunition",0,"1","1", 20,new int[]{},0,2, "Bludgeoning", "nonlethal","HoG", "Though they are technically sling ammunition, these thread- or cloth-wrapped pebbles are mainly used for signaling or celebration rather than battle, as they barely hit hard enough to sting. When soaked in oil or strong alcohol, they burn brightly for 1 round, illuminating an area like a candle and creating brief streaks of light as they fly through the air. They generally aren’t hot enough and burn out too quickly to ignite combustibles.", 10),
+    LITTLE_STARSTONES("Little starstones","Exotic","Ammunition",1,"1","1", 20,new int[]{},0,2, "Bludgeoning", "nonlethal","HoG", "Though they are technically sling ammunition, these thread- or cloth-wrapped pebbles are mainly used for signaling or celebration rather than battle, as they barely hit hard enough to sting. When soaked in oil or strong alcohol, they burn brightly for 1 round, illuminating an area like a candle and creating brief streaks of light as they fly through the air. They generally aren’t hot enough and burn out too quickly to ignite combustibles.", 200),
     SHARPSTONES("Sharpstones","Exotic","Ammunition",1,"1d3","1d4", 20,new int[]{},0,5, "Piercing or Slashing", "","HoG", "A thin layer of baked clay covers the spikes and jagged ridges covering this specially designed bullet. A proficient user knows how to crack the clay (a free action) so that it peels off from either the spikes or ridges when fired, dealing either piercing or slashing damage.", 10),
     SHURIKEN("Shuriken","Exotic","Ammunition",1,"1","1d2", 20,new int[]{2},10,0.5, "Piercing", "monk","CRB", "A shuriken is a small piece of metal with sharpened edges, designed for throwing.<br>" +
             "<br>" +
@@ -791,7 +791,7 @@ public enum WeaponEnum implements Serializable, Item {
             "Drawback: A shuriken can't be used as a melee weapon.<br>" +
             "<br>" +
             "Traits: ammunition, monk", 5),
-    SOFTSTONES("Softstones","Exotic","Ammunition",0," "," ", 20,new int[]{},0,4, "Bludgeoning", "nonlethal","HoG", "These tight bundles of elastic fibers deal nonlethal damage when fired from a sling.", 10),
+    SOFTSTONES("Softstones","Exotic","Ammunition",1," "," ", 20,new int[]{},0,4, "Bludgeoning", "nonlethal","HoG", "These tight bundles of elastic fibers deal nonlethal damage when fired from a sling.", 100),
     SPONGESTONES("Spongestones","Exotic","Ammunition",10," "," ", 20,new int[]{},0,2, "Piercing", "","HoG", "These bullets are actually made from a porous stone or heavy wood that absorbs liquids and shatters on impact.<br>" +
             "<br>" +
             "Soakstones are often used to deliver poison or burning oil. A flask of oil completely saturates 10 soakstones. When ignited (a free action if fire is available), a burning, oil-soaked soakstone deals +1d2 fire damage and can ignite combustible materials (such as a thatched roof ). Allowing a soakstone to burn in a sling’s cup for more than 1d3 rounds gives the sling the broken condition.", 10),
@@ -832,11 +832,11 @@ public enum WeaponEnum implements Serializable, Item {
     }
 
     public String toString() {
-        return name + " (" + type + ")(" + subtype + ")" + (amount > 1 ? " (" + amount + ")" : "");
+        return name +  (amount > 1 ? " (" + amount + ")" : "");
     }
 
     public int getMaxDex(){
-        return 100;
+        return -1;
     }
 
     public int getACPen(){
@@ -881,7 +881,7 @@ public enum WeaponEnum implements Serializable, Item {
     }
 
     public String getInventoryLine(){
-        return name + " (" + type + ")(" + subtype + ")";
+        return name;
     }
 
     public int getPurchaseAmount(){

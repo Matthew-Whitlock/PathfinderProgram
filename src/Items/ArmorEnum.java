@@ -116,7 +116,7 @@ public enum ArmorEnum implements Serializable, Item{
 	}
 
 	public String toString(){
-		return name + " (" + type + ")";
+		return name;
 	}
 
 	public int getMaxDex(){
