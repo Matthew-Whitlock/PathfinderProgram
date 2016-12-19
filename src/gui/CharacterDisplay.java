@@ -167,6 +167,8 @@ public class CharacterDisplay extends JTabbedPane{
 			removeClassConfirm.addActionListener(e ->{
 				if(Pathfinder.askYesNo("Remove your " + ((CharacterClass)removeClassOptions.getSelectedItem()) + " class?")){
 					me.classes.remove(removeClassOptions.getSelectedItem());
+					if(removeClassOptions.getSelectedItem() instanceof SpellCaster)
+						Pathfinder.popupDialog("Info", "The spellcasting tab for this class will remain until your character is saved and reopened.");
 				}
 			});
 
@@ -182,6 +184,7 @@ public class CharacterDisplay extends JTabbedPane{
 					if(charClass instanceof SpellCaster && charClass.name.equals("Spells")) return;
 				}
 				me.classes.add(new SpellCaster(me, "Spells"));
+				Pathfinder.FRAME.repaint();
 			});
 
 			saveChar.addActionListener(e -> Pathfinder.saveCharacter(me));

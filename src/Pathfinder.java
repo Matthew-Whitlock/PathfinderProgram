@@ -42,6 +42,26 @@ public class Pathfinder{
 	public static final JFrame FRAME = new JFrame("Pathfinder Character Sheet");
 
 	public static void main(String[] args){
+		if(args.length != 0){
+			try{
+				String characterFile = args[0];
+				FileInputStream fileIn = new FileInputStream(characterFile);
+				ObjectInputStream objIn = new ObjectInputStream(fileIn);
+
+				Character me = (Character) objIn.readObject();
+
+				CharacterDisplay display = new CharacterDisplay(me);
+			} catch (FileNotFoundException e){
+				showError("File Not Found Exception", "Could not load the specified file.\n I may not have permission, or the file may not exist.");
+				e.printStackTrace();
+			} catch (ClassNotFoundException e){
+				showError("Class Not Found Exception", "The file provided does not seem to contain a Java class.\nAre you sure it's a character file?");
+				e.printStackTrace();
+			} catch (IOException e){
+				showError("IO Exception", "Unable to load the character from the specified file.\nI'm not sure why, run in CMD for more info.");
+				e.printStackTrace();
+			}
+		}
 		FRAME.setSize(523,200);
 		FRAME.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		

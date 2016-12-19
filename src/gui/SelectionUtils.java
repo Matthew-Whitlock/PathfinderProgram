@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
  */
 public class SelectionUtils {
 
-    private static int[] indices;
-
     public static List<GenItem> searchItems(List<GenItem> items, Window parent, String title){
         JDialog searchDialog = new JDialog(parent, title);
         JPanel parentPanel = new JPanel(new GridBagLayout());
@@ -2270,7 +2268,6 @@ public class SelectionUtils {
         select.addActionListener(e -> {
             if(resultsList.getSelectedIndices().length > 0){
                 if(maxPicks == -1 || resultsList.getSelectedIndices().length == maxPicks || (resultsList.getSelectedIndices().length < maxPicks && Pathfinder.askYesNo("You have only selected " + resultsList.getSelectedIndices().length + " of " + maxPicks + " spells. Continue?")) || (resultsList.getSelectedIndices().length > maxPicks && Pathfinder.askYesNo("You have selected too many spells. Continue anyway?"))) {
-                    indices = resultsList.getSelectedIndices();
                     selected.set(true);
                 }
             }
@@ -2469,8 +2466,7 @@ public class SelectionUtils {
         while(!selected.get()){}
 
         ArrayList<Feat> featsSelected = new ArrayList<>();
-        int[] indices = resultsList.getSelectedIndices();
-        for(int i : indices) featsSelected.add(results.get(i));
+        for(int i : resultsList.getSelectedIndices()) featsSelected.add(results.get(i));
 
         searchDialog.dispose();
 
@@ -2482,6 +2478,7 @@ public class SelectionUtils {
         String[] classNames = CharacterClass.getClassNames();
 
         for(CharacterClass charClass : me.classes){
+            if(charClass.name.equalsIgnoreCase("spells")) continue;
             boolean containsClass = false;
             for(int i = 0; i < classNames.length; i++){
                 if(charClass.toString().toLowerCase().contains(classNames[i].toLowerCase())) {

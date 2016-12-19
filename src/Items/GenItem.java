@@ -16,9 +16,11 @@ public class GenItem implements Item, Serializable{
 
     public final int NOT_SET = -6516583;
 
-    private Item itemBase;
+    public Item itemBase;
 
-    private int backingType;
+    public int backingType;
+
+    private static final long serialVersionUID = -3057623547626092542L;
 
     //For custom generic items only
     public String name;
